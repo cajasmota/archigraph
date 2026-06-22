@@ -3,11 +3,13 @@
 package watchers
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // darwinLoader implements Loader using launchctl for macOS LaunchAgents.
@@ -16,8 +18,51 @@ type darwinLoader struct{}
 // NewLoader returns the macOS launchctl-based Loader.
 func NewLoader() Loader { return darwinLoader{} }
 
+// launchctlRunner runs `launchctl <args...>` and returns its combined output
+// and error. It is a package var so tests can inject a fake launchctl (e.g. to
+// simulate the flaky err-5 bootstrap) without shelling out.
+var launchctlRunner = func(args ...string) ([]byte, error) {
+	return exec.Command("launchctl", args...).CombinedOutput()
+}
+
+// SetLaunchctlRunnerForTest swaps the launchctl command runner and returns a
+// restore func. It exists so cross-package tests (e.g. install.Apply's
+// watcher-activation path) can simulate launchctl failures without shelling
+// out. Test-only; do not use in production code.
+func SetLaunchctlRunnerForTest(fn func(args ...string) ([]byte, error)) (restore func()) {
+	orig := launchctlRunner
+	launchctlRunner = fn
+	return func() { launchctlRunner = orig }
+}
+
+// bootstrapRetries is the number of bootout→bootstrap attempts made when
+// launchctl bootstrap returns the flaky err 5 (EIO / "Input/output error").
+// launchd intermittently fails the very first bootstrap of a freshly written
+// plist with exit 5; a bounded retry (with a small backoff) clears it.
+const bootstrapRetries = 3
+
+// bootstrapBackoff is the pause between err-5 bootstrap retries.
+var bootstrapBackoff = 200 * time.Millisecond
+
+// isLaunchctlErr5 reports whether err is a launchctl exit-code-5 failure.
+// launchctl returns exit 5 for the transient "Bootstrap failed: 5:
+// Input/output error" condition; it is locale-invariant (exit code, not text).
+func isLaunchctlErr5(err error) bool {
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		return ee.ExitCode() == 5
+	}
+	return false
+}
+
 // Load writes the plist (via Write) and bootstraps it into the current user's
 // launchd domain. If the unit is already running it is a no-op.
+//
+// launchd intermittently fails the first bootstrap of a freshly written plist
+// with the flaky exit code 5 ("Bootstrap failed: 5: Input/output error"). This
+// is not a real configuration error — a bootout→bootstrap retry clears it. We
+// therefore retry the bootout+bootstrap pair a bounded number of times,
+// specifically on err 5, with a small backoff between attempts.
 func (darwinLoader) Load(u Unit) error {
 	path, err := UnitPath(u)
 	if err != nil {
@@ -28,14 +73,29 @@ func (darwinLoader) Load(u Unit) error {
 	}
 
 	uid := strconv.Itoa(os.Getuid())
-	// Bootout any stale entry so bootstrap succeeds cleanly.
-	_ = exec.Command("launchctl", "bootout", "gui/"+uid+"/"+u.Label()).Run()
+	label := u.Label()
 
-	out, err := exec.Command("launchctl", "bootstrap", "gui/"+uid, path).CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("launchctl bootstrap %s: %w\n%s", u.Label(), err, out)
+	var lastOut []byte
+	var lastErr error
+	for attempt := 1; attempt <= bootstrapRetries; attempt++ {
+		// Bootout any stale entry so bootstrap succeeds cleanly.
+		_, _ = launchctlRunner("bootout", "gui/"+uid+"/"+label)
+
+		out, berr := launchctlRunner("bootstrap", "gui/"+uid, path)
+		if berr == nil {
+			return nil
+		}
+		lastOut, lastErr = out, berr
+
+		// Only the flaky err-5 is worth retrying; any other failure is real.
+		if !isLaunchctlErr5(berr) {
+			break
+		}
+		if attempt < bootstrapRetries {
+			time.Sleep(bootstrapBackoff)
+		}
 	}
-	return nil
+	return fmt.Errorf("launchctl bootstrap %s: %w\n%s", label, lastErr, lastOut)
 }
 
 // Unload bootouts the LaunchAgent for the given unit. Errors are suppressed

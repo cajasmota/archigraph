@@ -30,6 +30,7 @@ func newWizardCmd() *cobra.Command {
 		gitHooks       bool
 		agentHooks     bool
 		runInstall     bool
+		noIndex        bool
 	)
 	cmd := &cobra.Command{
 		Use:   "wizard",
@@ -48,6 +49,8 @@ func newWizardCmd() *cobra.Command {
 				GitHooks:       gitHooks,
 				AgentHooks:     agentHooks,
 				RunInstall:     runInstall,
+				NoIndex:        noIndex,
+				ErrOut:         cmd.ErrOrStderr(),
 			}
 			return runWizard(out, opts)
 		},
@@ -63,6 +66,7 @@ func newWizardCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&gitHooks, "git-hooks", true, "enable git hooks")
 	cmd.Flags().BoolVar(&agentHooks, "agent-hooks", false, "opt-in: install the Claude Code PreToolUse grep-interceptor hook that nudges toward grafel on structural greps (advisory-only, never blocks; Claude Code only)")
 	cmd.Flags().BoolVar(&runInstall, "install", true, "run install at the end")
+	cmd.Flags().BoolVar(&noIndex, "no-index", false, "skip indexing the group at the end (default: index with live progress; requires a running daemon)")
 	return cmd
 }
 
@@ -76,6 +80,16 @@ type wizardOptions struct {
 	Watchers, GitHooks  bool
 	AgentHooks          bool
 	RunInstall          bool
+	NoIndex             bool
+	ErrOut              io.Writer // stderr sink for warnings; nil → os.Stderr
+}
+
+// errWriter returns the configured stderr sink, defaulting to os.Stderr.
+func (o wizardOptions) errWriter() io.Writer {
+	if o.ErrOut != nil {
+		return o.ErrOut
+	}
+	return os.Stderr
 }
 
 func runWizard(out io.Writer, opts wizardOptions) error {
@@ -128,9 +142,12 @@ func runWizard(out io.Writer, opts wizardOptions) error {
 	cfg.Repos = append(cfg.Repos, repos...)
 
 	// Group name — prompted AFTER the action so "add to existing group" can skip
-	// it. Pre-fill a suggestion from the first repo's basename.
+	// it. Pre-fill a suggestion from the CONTAINER folder (the common parent of
+	// the selected repos), not a child repo's slug: from ivivo/ holding
+	// backend+frontend the default is "ivivo", not "backend" (#5338). For a
+	// single repo the repo's own basename is the sensible default.
 	if opts.GroupName == "" {
-		opts.GroupName = filepath.Base(repos[0].Path)
+		opts.GroupName = defaultGroupName(repos)
 		if err := huh.NewInput().
 			Title("Group name").
 			Description("Used as the registry key and the per-group config filename.").
@@ -178,8 +195,41 @@ func finishWizard(out io.Writer, cfg *registry.GroupConfig, opts wizardOptions) 
 
 	// Steps 5-7 — persist + register + manifests + install. Shared with the
 	// non-interactive `group add` command via applyGroupConfig.
-	_, err := applyGroupConfig(out, cfg, groupApplyOptions{RunInstall: opts.RunInstall})
-	return err
+	if _, err := applyGroupConfig(out, cfg, groupApplyOptions{RunInstall: opts.RunInstall}); err != nil {
+		return err
+	}
+
+	// Step 8 — index the freshly-registered group with live phase progress so
+	// the wizard ends register → "Indexing…" → "Done", matching the dashboard
+	// (#5338). Opt out with --no-index. A down daemon is a warning, not a
+	// failure: the group is registered and will index later.
+	//
+	// The non-interactive (scripting/CI) path does NOT auto-index — it is
+	// flag-driven and callers there opt in explicitly (e.g. `group add
+	// --index`), so a missing daemon never breaks an automated `wizard
+	// --non-interactive` run.
+	if opts.NonInteractive {
+		return nil
+	}
+	return maybeIndexGroup(out, opts.errWriter(), cfg.Name, opts.NoIndex)
+}
+
+// maybeIndexGroup indexes group with live progress unless noIndex is set. A
+// daemon-not-running condition is downgraded to a warning so the wizard still
+// completes successfully (the group is already registered).
+func maybeIndexGroup(out, errOut io.Writer, group string, noIndex bool) error {
+	if noIndex {
+		fmt.Fprintf(out, "skipping index (--no-index); run `grafel rebuild %s` when ready\n", group)
+		return nil
+	}
+	if err := indexGroupWithProgress(out, errOut, group); err != nil {
+		if errors.Is(err, errDaemonNotRunning) {
+			fmt.Fprintf(out, "daemon not running — group registered but not indexed; run `grafel rebuild %s` once the daemon is up\n", group)
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 // groupApplyOptions controls the side-effecting half of group registration
@@ -235,6 +285,9 @@ func applyGroupConfig(out io.Writer, cfg *registry.GroupConfig, ga groupApplyOpt
 	}
 	fmt.Fprintf(out, "installed %d hooks, %d watchers, %d MCP entries\n",
 		len(res.HooksInstalled), len(res.WatcherUnits), len(res.MCPSettings))
+	for _, warn := range res.WatcherWarnings {
+		fmt.Fprintf(out, "warning: %s\n", warn)
+	}
 	return res, nil
 }
 
@@ -251,6 +304,33 @@ const (
 	actionMonorepo wizardAction = "monorepo"
 	actionAddGroup wizardAction = "add-group"
 )
+
+// defaultGroupName suggests a group name for the selected repos. For a single
+// repo it is that repo's basename. For multiple repos it is the basename of
+// their common parent directory — the CONTAINER folder (e.g. ivivo/ for
+// ivivo/backend + ivivo/frontend) — so the default is the umbrella name rather
+// than an arbitrary child repo's slug (#5338). Falls back to the first repo's
+// basename when no common parent can be derived.
+func defaultGroupName(repos []registry.Repo) string {
+	if len(repos) == 0 {
+		return ""
+	}
+	if len(repos) == 1 {
+		return filepath.Base(repos[0].Path)
+	}
+	parent := filepath.Dir(repos[0].Path)
+	for _, r := range repos[1:] {
+		if filepath.Dir(r.Path) != parent {
+			// Repos don't share a single parent — fall back to the first
+			// repo's container folder rather than an unrelated ancestor.
+			return filepath.Base(filepath.Dir(repos[0].Path))
+		}
+	}
+	if base := filepath.Base(parent); base != "" && base != "." && base != string(filepath.Separator) {
+		return base
+	}
+	return filepath.Base(repos[0].Path)
+}
 
 // repoFromPath builds a registry.Repo for an absolute path, detecting its stack.
 func repoFromPath(abs string) registry.Repo {
@@ -277,14 +357,16 @@ func runInteractiveRepoSelect(out io.Writer) (repos []registry.Repo, addToGroup 
 	action := defaultAction(class)
 	if err := huh.NewSelect[wizardAction]().
 		Title("What do you want to index?").
-		Description(fmt.Sprintf("Detected: %s", describeClassification(class))).
+		Description(fmt.Sprintf("Detected: %s\n%s", describeClassification(class), navHintSelect)).
 		Options(
 			huh.NewOption("Index a single repository", actionSingle),
 			huh.NewOption("Index a group of related repositories", actionGroup),
 			huh.NewOption("Index a monorepo", actionMonorepo),
 			huh.NewOption("Add a repository to an existing group", actionAddGroup),
 		).
+		Height(wizardListHeight(4)).
 		Value(&action).
+		WithTheme(wizardTheme()).
 		Run(); err != nil {
 		return nil, "", err
 	}
@@ -433,10 +515,12 @@ func resolveMonorepoAction(out io.Writer, class detect.Classification) ([]regist
 	var chosen []string
 	if err := huh.NewMultiSelect[string]().
 		Title(fmt.Sprintf("%d packages found", len(class.Packages))).
+		Description(navHintMulti).
 		Options(opts...).
 		Filterable(true).
-		Height(min(len(class.Packages)+4, 18)).
+		Height(wizardListHeight(len(class.Packages))).
 		Value(&chosen).
+		WithTheme(wizardTheme()).
 		Run(); err != nil {
 		return nil, err
 	}
@@ -475,8 +559,11 @@ func resolveAddToGroupAction(out io.Writer) ([]registry.Repo, string, error) {
 	var target string
 	if err := huh.NewSelect[string]().
 		Title("Add to which group?").
+		Description(navHintSelect).
 		Options(gopts...).
+		Height(wizardListHeight(len(gopts))).
 		Value(&target).
+		WithTheme(wizardTheme()).
 		Run(); err != nil {
 		return nil, "", err
 	}
@@ -546,10 +633,12 @@ func addReposToExistingGroup(out io.Writer, group string, repos []registry.Repo,
 		return errors.New("all selected repos are already in the group")
 	}
 	_, err = applyGroupConfig(out, cfg, groupApplyOptions{RunInstall: opts.RunInstall})
-	if err == nil {
-		fmt.Fprintf(out, "added %d repo(s) to group %q\n", added, group)
+	if err != nil {
+		return err
 	}
-	return err
+	fmt.Fprintf(out, "added %d repo(s) to group %q\n", added, group)
+	// Re-index so the newly-added repos are queryable immediately (#5338).
+	return maybeIndexGroup(out, opts.errWriter(), group, opts.NoIndex)
 }
 
 // multiSelectRepos renders a scrollable, type-to-filter [ ]/[✓] multiselect of
@@ -566,10 +655,12 @@ func multiSelectRepos(candidates []string) (chosen []string, rescan bool, err er
 	var selected []string
 	if err := huh.NewMultiSelect[string]().
 		Title(fmt.Sprintf("%d repos found", len(candidates))).
+		Description(navHintMulti).
 		Options(opts...).
 		Filterable(true).
-		Height(min(len(candidates)+5, 18)).
+		Height(wizardListHeight(len(candidates) + 1)).
 		Value(&selected).
+		WithTheme(wizardTheme()).
 		Run(); err != nil {
 		return nil, false, err
 	}

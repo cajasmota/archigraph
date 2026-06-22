@@ -66,6 +66,12 @@ type Result struct {
 	// PreToolUse grep-interceptor hook (#4273). Empty unless agent hooks
 	// were enabled.
 	AgentHooksInstalled []string
+	// WatcherWarnings collects non-fatal watcher-activation failures. The
+	// group config is fully saved before watchers are activated, so a watcher
+	// that fails to load (e.g. a flaky launchctl error that survives the
+	// bounded retry) must NOT abort the install — the group is still
+	// registered and will index. Callers surface these as warnings.
+	WatcherWarnings []string
 }
 
 // Apply registers the group, writes its config, then installs hooks +
@@ -194,9 +200,14 @@ func Apply(opts Options) (*Result, error) {
 
 				// Activate the watcher unit through the OS-native loader
 				// (launchctl on macOS, systemctl on Linux, schtasks on Windows).
+				// A watcher that fails to activate is a NON-FATAL warning: the
+				// group config is already persisted (above), so the group is
+				// registered and will index regardless. Aborting here used to
+				// fail the whole wizard on a flaky launchctl error (#5338).
 				loader := watchers.NewLoader()
 				if lerr := loader.Load(u); lerr != nil && !watchers.IsNonFatal(lerr) {
-					return nil, fmt.Errorf("activate watcher for %s: %w", repo, lerr)
+					res.WatcherWarnings = append(res.WatcherWarnings,
+						fmt.Sprintf("watcher for %s not activated: %v; the group is still registered and will index", repo, lerr))
 				}
 				// Report activation state regardless of non-fatal /run failures.
 				if st, serr := loader.Status(u); serr == nil {
