@@ -8,6 +8,50 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Watcher install is robust to the flaky launchctl err-5 and never aborts the
+  wizard (#5338):** `launchctl bootstrap` intermittently fails the first
+  bootstrap of a freshly written plist with exit code 5 ("Bootstrap failed: 5:
+  Input/output error"). The macOS watcher loader now retries the
+  bootout→bootstrap pair (bounded, with a small backoff) **specifically on err
+  5**, which clears the transient failure. And a watcher that still fails to
+  activate is now a **non-fatal warning** instead of an abort: the group config
+  is already persisted, so the wizard completes and the group indexes
+  ("warning: watcher for X not activated: …; the group is still registered and
+  will index") ([#5338](https://github.com/cajasmota/grafel/issues/5338)).
+- **Deleting a group now cleans up its watcher launchd/systemd/schtasks units
+  (#5338):** group delete (CLI `grafel delete`, dashboard `DELETE
+  /api/v2/groups/{group}`) previously left `com.grafel.watcher.<group>.*` jobs
+  loaded and plists on disk, so recreating the group fought stale state. Delete
+  now Unloads (bootout) and removes the watcher unit + plist for every repo in
+  the group — idempotent, tolerating "not loaded"
+  ([#5338](https://github.com/cajasmota/grafel/issues/5338)).
+
+### Changed
+
+- **`grafel wizard` auto-indexes the new group with live progress (#5338):**
+  after registering a group (or adding repos to an existing one), the wizard now
+  triggers an index by default and renders live CLI phase progress — the same
+  broker event stream the dashboard shows — so it ends register → "Indexing…" →
+  "Done". A `--no-index` flag skips it for scripting, and a down daemon is a
+  warning (the group is registered and indexes later), not a failure
+  ([#5338](https://github.com/cajasmota/grafel/issues/5338)).
+- **Wizard group-name default is the container folder, not a child repo
+  (#5338):** from `ivivo/` holding `backend/` + `frontend/`, the suggested group
+  name is now `ivivo` (the common-parent container folder) instead of an
+  arbitrary selected child repo's slug. A single selected repo still defaults to
+  its own basename ([#5338](https://github.com/cajasmota/grafel/issues/5338)).
+- **Wizard TUI gains navigation hints, more height, and `[ ]`/`[✓]` checkboxes
+  (#5338):** each interactive step now shows a footer hint ("↑/↓ move · space
+  select · enter confirm · / filter · esc back") so users discover that **space**
+  toggles a multiselect item; the select/multiselect lists use more terminal
+  height (and scroll when long) instead of a few cramped rows; and multiselect
+  options now render explicit `[ ]`/`[✓]` brackets (the stock huh `ThemeCharm`
+  glyphs `•`/`✓` were ambiguous — the fix sets the correct
+  `SelectedPrefix`/`UnselectedPrefix` theme fields)
+  ([#5338](https://github.com/cajasmota/grafel/issues/5338)).
+
 ### Changed
 
 - **Index wizard is now action-first with smart cwd detection (#5336):** both the
