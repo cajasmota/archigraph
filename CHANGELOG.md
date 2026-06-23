@@ -8,6 +8,16 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 
 ## [Unreleased]
 
+### Added
+- **C3 new-feature impact analysis (#5417):** per-language triage of language
+  features released during the ~22-month grammar catch-up window (2024-08 →
+  2026-06), classified (a) parse-only / (b) needs-new-extraction / (c)
+  changes-existing-extraction against grafel's actual extractors. Identifies the
+  (b) backfill worklist — C# 14 extension members, Swift actors, Kotlin context
+  parameters, Python t-strings, JS/TS `await using` — and the (c) adaptations,
+  all gated on the B1 grammar-bump / B2 smacker-decouple cutover.
+  (`docs/c3-feature-impact-analysis.md`)
+
 ### Fixed
 - **group-algo overlay now reports god-nodes' real PageRank (was 0):** the
   determinism rounding (`roundForDeterminism`) bucketed every score to a fixed
