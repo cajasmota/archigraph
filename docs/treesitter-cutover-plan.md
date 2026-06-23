@@ -1,9 +1,13 @@
 # tree-sitter cutover plan (B2, #5418, ADR 0023, epic #5359, milestone 0.1.4)
 
-Status: **planned** (this is the cutover spec, not the cutover). Follows
-Phase 0 (`docs/treesitter-binding-migration-plan.md`, landed: façade +
-`ts/official` + Go on the official binding behind `-tags ts_official`) and ADR
-`docs/adrs/0023-*.md`.
+Status: **DONE** — the cutover shipped in **0.1.4** (#5418). The default build
+now links only the official `tree-sitter/go-tree-sitter` v0.24.0 runtime;
+`smacker/go-tree-sitter` is fully removed; all 26 grammars run on the official
+binding; the markdown grammar was dropped (§6). The text below is kept as the
+historical cutover spec (it is written in the future tense of the planning
+phase). Followed Phase 0 (`docs/treesitter-binding-migration-plan.md`, landed:
+façade + `ts/official` + Go on the official binding behind `-tags ts_official`)
+and ADR `docs/adrs/0023-*.md`.
 
 > **This is a one-runtime big-bang.** The smacker bundle and the official
 > `tree-sitter/go-tree-sitter` module each statically vendor the *same*

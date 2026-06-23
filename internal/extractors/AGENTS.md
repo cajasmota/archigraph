@@ -5,7 +5,7 @@ Per-language extractors that lift source into grafel entities + edges. One sibli
 ## Conventions
 
 - **Directory name = canonical language slug.** Use the short, project-wide slug (e.g. `jsts` for TypeScript/JavaScript, `csharp` for C#, `golang` for Go). Do **not** introduce a new spelling — check existing siblings before naming a new one.
-- **Tree-sitter is the parser.** All extractors go through `github.com/smacker/go-tree-sitter` (see `internal/treesitter/`). Avoid hand-rolled regex parsing.
+- **Tree-sitter is the parser.** All extractors traverse the binding-agnostic `internal/treesitter/ts` façade (`ts.Node`/`ts.Tree`), backed by the official `github.com/tree-sitter/go-tree-sitter` v0.24.0 runtime (the legacy `smacker/go-tree-sitter` binding was removed in the 0.1.4 cutover, #5418). Compare nodes with `ts.SameNode(a, b)`, never `==` (the official binding returns a fresh wrapper per accessor). See `internal/treesitter/`. Avoid hand-rolled regex parsing.
 - **Entity kinds come from `internal/types/kinds.go`.** Never invent a kind string at the extractor site — if you need a new one, add it to `kinds.go` first.
 - **Resolver slices** live alongside the extractor (class-hierarchy, import-path aliases, framework edges). Cross-cutting engine passes consume the resolver output; do not synthesise HTTP / ORM edges directly inside the extractor.
 

@@ -8,6 +8,23 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 
 ## [Unreleased]
 
+---
+
+## [0.1.4] — 2026-06-24
+
+**Tree-sitter cutover release.** All 26 grammars are migrated off the
+unmaintained `smacker/go-tree-sitter` binding onto the official
+`tree-sitter/go-tree-sitter` v0.24.0 runtime (ABI 13–14); smacker is fully
+removed and the build-tag split is gone — official is the only build. The
+unused markdown grammar was dropped (markdown stays a supported language via its
+pure-stdlib extractor). Swift `actor`/`distributed actor` are now extracted as
+first-class concurrency components, and the `find_callers` MCP tool got fuzzy
+input resolution plus a cross-repo caller-recovery fix. Also ships the 0.1.4
+grammar-freshness infrastructure (Renovate, monthly freshness/calendar crons,
+per-language parse-error canary), `grafel_index_status`, dead-ref retention-cap
+GC, dashboard cold-stats, progressive graph rendering, and the deferred-from-0.1.3
+group-algo CPU/overlay fixes.
+
 ### Added
 - **Swift `actor` declarations as first-class concurrency components (#5417,
   C3(b)):** `actor` and `distributed actor` types are now extracted as
