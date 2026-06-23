@@ -178,6 +178,20 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
   all gated on the B1 grammar-bump / B2 smacker-decouple cutover.
   (`docs/c3-feature-impact-analysis.md`)
 
+### Changed
+- **B2 cutover, Step A — node-traversing extractors moved onto the
+  binding-agnostic `ts.Node` façade (#5418):** the remaining extractor files
+  that still typed their CST walks against the concrete smacker `*sitter.Node`
+  now traverse `ts.Node` / `ts.Tree` instead, sourcing the tree from the parser
+  factory's always-populated `ParseResult.TSTree`. Migrated: the Spring (Java),
+  Spring (Kotlin) and Django route-composition passes, plus the custom Ktor
+  nested-route extractor; two now-redundant `*sitter`-import compile shims were
+  removed. Purely mechanical — same nodes extracted, no behaviour change (route
+  golden tests unchanged). Runs under the **default** build, so the smacker
+  removal and runtime flip remain a separate later step; the grammar-handle
+  registration files (`*_smacker.go`, per-language `language.go`/`grammar.go`)
+  and the smacker parser factory stay on the concrete binding by design.
+
 ### Fixed
 - **Graph view: streamed nodes now reach the canvas every chunk — no more
   blank-until-done (#5446):** the progressive Graph screen showed a climbing

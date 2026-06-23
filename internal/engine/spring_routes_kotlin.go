@@ -27,10 +27,9 @@ import (
 	"fmt"
 	"strings"
 
-	sitter "github.com/smacker/go-tree-sitter"
-
 	"github.com/cajasmota/grafel/internal/engine/httproutes"
 	"github.com/cajasmota/grafel/internal/treesitter"
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -67,7 +66,7 @@ func applySpringRouteCompositionKotlin(args DetectorPassArgs) DetectorPassResult
 func extractKotlinSpringEndpoints(ctx context.Context, path string, content []byte) ([]types.EntityRecord, []types.RelationshipRecord) {
 	factory := treesitter.NewParserFactory(nil)
 	pr, err := factory.Parse(ctx, content, "kotlin")
-	if err != nil || pr == nil || pr.Tree == nil {
+	if err != nil || pr == nil || pr.TSTree == nil {
 		return nil, nil
 	}
 
@@ -75,7 +74,7 @@ func extractKotlinSpringEndpoints(ctx context.Context, path string, content []by
 	var rels []types.RelationshipRecord
 	seen := map[string]bool{}
 
-	root := pr.Tree.RootNode()
+	root := pr.TSTree.RootNode()
 	walkKotlinClasses(root, content, path, &entities, &rels, seen)
 	return entities, rels
 }
@@ -83,7 +82,7 @@ func extractKotlinSpringEndpoints(ctx context.Context, path string, content []by
 // walkKotlinClasses does a depth-first walk looking for class_declaration nodes
 // and delegating to processKotlinSpringClass for each one.
 func walkKotlinClasses(
-	node *sitter.Node,
+	node ts.Node,
 	src []byte,
 	path string,
 	entities *[]types.EntityRecord,
@@ -107,7 +106,7 @@ func walkKotlinClasses(
 // class-level @RequestMapping, each function_declaration inside the class_body
 // that carries a verb annotation is emitted as an http_endpoint_definition.
 func processKotlinSpringClass(
-	class *sitter.Node,
+	class ts.Node,
 	src []byte,
 	path string,
 	entities *[]types.EntityRecord,
@@ -134,7 +133,7 @@ func processKotlinSpringClass(
 	}
 
 	// Find the class_body child.
-	var body *sitter.Node
+	var body ts.Node
 	for i := 0; i < int(class.ChildCount()); i++ {
 		ch := class.Child(i)
 		if ch.Type() == "class_body" {
@@ -230,11 +229,11 @@ func processKotlinSpringClass(
 
 // kotlinClassModifiers returns the annotation children from the modifiers node
 // of a class_declaration or function_declaration.
-func kotlinClassModifiers(node *sitter.Node) []*sitter.Node {
+func kotlinClassModifiers(node ts.Node) []ts.Node {
 	if node == nil {
 		return nil
 	}
-	var out []*sitter.Node
+	var out []ts.Node
 	for i := 0; i < int(node.ChildCount()); i++ {
 		ch := node.Child(i)
 		if ch.Type() == "modifiers" {
@@ -261,7 +260,7 @@ func kotlinClassModifiers(node *sitter.Node) []*sitter.Node {
 //	  Positional:    value_argument → string_literal
 //	  Named value=:  value_argument → simple_identifier("value") + "=" + string_literal
 //	  Named path=:   value_argument → simple_identifier("path") + "=" + string_literal
-func kotlinAnnotationNameAndPath(anno *sitter.Node, src []byte) (string, string) {
+func kotlinAnnotationNameAndPath(anno ts.Node, src []byte) (string, string) {
 	if anno == nil || anno.Type() != "annotation" {
 		return "", ""
 	}
@@ -300,7 +299,7 @@ func kotlinAnnotationNameAndPath(anno *sitter.Node, src []byte) (string, string)
 
 // kotlinUserTypeName returns the type_identifier text from a user_type node,
 // handling optional package qualification (the last type_identifier segment).
-func kotlinUserTypeName(userType *sitter.Node, src []byte) string {
+func kotlinUserTypeName(userType ts.Node, src []byte) string {
 	if userType == nil {
 		return ""
 	}
@@ -321,7 +320,7 @@ func kotlinUserTypeName(userType *sitter.Node, src []byte) string {
 //   - positional: value_argument → string_literal
 //   - named value=: value_argument → simple_identifier("value") + "=" + string_literal
 //   - named path=: value_argument → simple_identifier("path") + "=" + string_literal
-func kotlinExtractPathFromValueArgs(args *sitter.Node, src []byte) string {
+func kotlinExtractPathFromValueArgs(args ts.Node, src []byte) string {
 	if args == nil {
 		return ""
 	}
@@ -333,7 +332,7 @@ func kotlinExtractPathFromValueArgs(args *sitter.Node, src []byte) string {
 		}
 		// Inspect children of value_argument.
 		key := ""
-		var strLit *sitter.Node
+		var strLit ts.Node
 		for j := 0; j < int(va.ChildCount()); j++ {
 			vc := va.Child(j)
 			switch vc.Type() {
@@ -368,7 +367,7 @@ func kotlinExtractPathFromValueArgs(args *sitter.Node, src []byte) string {
 // kotlinRequestMappingMethod extracts the HTTP verb from a @RequestMapping
 // annotation's `method = [RequestMethod.GET]` (or similar) argument.
 // Returns an empty string when the argument is absent (caller keeps "ANY").
-func kotlinRequestMappingMethod(anno *sitter.Node, src []byte) string {
+func kotlinRequestMappingMethod(anno ts.Node, src []byte) string {
 	if anno == nil {
 		return ""
 	}

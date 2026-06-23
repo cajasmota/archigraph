@@ -63,7 +63,6 @@ import (
 	"github.com/cajasmota/grafel/internal/graph/fbwriter"
 	"github.com/cajasmota/grafel/internal/indexer/diff"
 	"github.com/cajasmota/grafel/internal/types"
-	sitter "github.com/smacker/go-tree-sitter"
 )
 
 // defaultIncrementalFiles is the raised default trigger limit for feature
@@ -648,8 +647,3 @@ func entityPropertiesHash(e graph.Entity) string {
 	}
 	return hex.EncodeToString(h.Sum(nil))[:16]
 }
-
-// parseTree is kept as a compile-time reference so the sitter import is used.
-// The actual tree-sitter parse happens inside each language extractor; we do
-// not re-parse here (the extractor does it if file.Tree is nil).
-var _ = (*sitter.Tree)(nil)

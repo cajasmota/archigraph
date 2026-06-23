@@ -25,10 +25,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	sitter "github.com/smacker/go-tree-sitter"
-	tskotlin "github.com/smacker/go-tree-sitter/kotlin"
-
 	"github.com/cajasmota/grafel/internal/extractor"
+	"github.com/cajasmota/grafel/internal/treesitter"
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -77,13 +76,12 @@ func (e *ktorRoutesExtractor) Extract(_ context.Context, file extractor.FileInpu
 		}
 	}
 
-	parser := sitter.NewParser()
-	parser.SetLanguage(tskotlin.GetLanguage())
-	tree, err := parser.ParseCtx(context.Background(), nil, file.Content)
-	if err != nil || tree == nil {
+	factory := treesitter.NewParserFactory(nil)
+	pr, err := factory.Parse(context.Background(), file.Content, "kotlin")
+	if err != nil || pr == nil || pr.TSTree == nil {
 		return nil, nil //nolint:nilerr // parse failures are non-fatal for custom extractors
 	}
-	defer tree.Close()
+	defer pr.TSTree.Close()
 
 	seen := make(map[string]bool)
 	var entities []types.EntityRecord
@@ -97,7 +95,7 @@ func (e *ktorRoutesExtractor) Extract(_ context.Context, file extractor.FileInpu
 		entities = append(entities, ent)
 	}
 
-	walkRoutes(tree.RootNode(), file, []string{}, add)
+	walkRoutes(pr.TSTree.RootNode(), file, []string{}, add)
 	return entities, nil
 }
 
@@ -105,7 +103,7 @@ func (e *ktorRoutesExtractor) Extract(_ context.Context, file extractor.FileInpu
 // route("…") DSL blocks and emitting endpoint entities when HTTP verb handlers
 // (get/post/put/delete/patch/head/options) are encountered.
 func walkRoutes(
-	node *sitter.Node,
+	node ts.Node,
 	file extractor.FileInput,
 	prefixes []string,
 	add func(types.EntityRecord),
@@ -172,7 +170,7 @@ func walkRoutes(
 //	  call_suffix (annotated_lambda)
 //
 // We handle both shapes.
-func parseKtorCallExpr(node *sitter.Node, src []byte) (callName, path string, lambda *sitter.Node) {
+func parseKtorCallExpr(node ts.Node, src []byte) (callName, path string, lambda ts.Node) {
 	if node.ChildCount() == 0 {
 		return "", "", nil
 	}
@@ -222,7 +220,7 @@ func parseKtorCallExpr(node *sitter.Node, src []byte) (callName, path string, la
 
 // extractStringFromValueArgs returns the first string literal content found
 // inside a call_suffix > value_arguments > value_argument > string_literal.
-func extractStringFromValueArgs(callSuffix *sitter.Node, src []byte) string {
+func extractStringFromValueArgs(callSuffix ts.Node, src []byte) string {
 	if callSuffix == nil {
 		return ""
 	}
@@ -248,7 +246,7 @@ func extractStringFromValueArgs(callSuffix *sitter.Node, src []byte) string {
 
 // firstStringContent finds the first string_content descendant and returns its
 // text, which is the path without surrounding quotes.
-func firstStringContent(node *sitter.Node, src []byte) string {
+func firstStringContent(node ts.Node, src []byte) string {
 	if node == nil {
 		return ""
 	}
@@ -265,7 +263,7 @@ func firstStringContent(node *sitter.Node, src []byte) string {
 
 // extractLambdaNode finds an annotated_lambda > lambda_literal > statements
 // node inside a call_suffix, which represents the DSL block body.
-func extractLambdaNode(callSuffix *sitter.Node) *sitter.Node {
+func extractLambdaNode(callSuffix ts.Node) ts.Node {
 	if callSuffix == nil {
 		return nil
 	}

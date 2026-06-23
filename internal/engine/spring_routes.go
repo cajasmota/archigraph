@@ -21,9 +21,8 @@ import (
 	"fmt"
 	"strings"
 
-	sitter "github.com/smacker/go-tree-sitter"
-
 	"github.com/cajasmota/grafel/internal/treesitter"
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -150,18 +149,18 @@ func extractSpringComposedRoutes(ctx context.Context, path string, content []byt
 
 	factory := treesitter.NewParserFactory(nil)
 	pr, err := factory.Parse(ctx, content, "java")
-	if err != nil || pr == nil || pr.Tree == nil {
+	if err != nil || pr == nil || pr.TSTree == nil {
 		return out, false
 	}
 
-	root := pr.Tree.RootNode()
+	root := pr.TSTree.RootNode()
 	walkSpringClasses(root, content, path, &out)
 	return out, true
 }
 
 // walkSpringClasses traverses the tree, looking for class_declaration nodes
 // that carry both a controller annotation and a class-level @RequestMapping.
-func walkSpringClasses(node *sitter.Node, src []byte, path string, out *composedSpringRoutes) {
+func walkSpringClasses(node ts.Node, src []byte, path string, out *composedSpringRoutes) {
 	if node == nil {
 		return
 	}
@@ -178,7 +177,7 @@ func walkSpringClasses(node *sitter.Node, src []byte, path string, out *composed
 // controller (carries @RestController or @Controller) AND has a class-level
 // @RequestMapping prefix, every method-level mapping inside its body is
 // emitted as a composed Route.
-func processSpringClass(class *sitter.Node, src []byte, path string, out *composedSpringRoutes) {
+func processSpringClass(class ts.Node, src []byte, path string, out *composedSpringRoutes) {
 	annos := classLevelAnnotations(class)
 	isController := false
 	prefix := ""
@@ -263,8 +262,8 @@ func processSpringClass(class *sitter.Node, src []byte, path string, out *compos
 
 // classLevelAnnotations returns the modifier annotations attached to a
 // class_declaration (the modifiers child holds them).
-func classLevelAnnotations(class *sitter.Node) []*sitter.Node {
-	var out []*sitter.Node
+func classLevelAnnotations(class ts.Node) []ts.Node {
+	var out []ts.Node
 	for i := 0; i < int(class.ChildCount()); i++ {
 		ch := class.Child(i)
 		if ch.Type() != "modifiers" {
@@ -282,7 +281,7 @@ func classLevelAnnotations(class *sitter.Node) []*sitter.Node {
 
 // methodLevelAnnotations is the same shape as classLevelAnnotations, applied
 // to a method_declaration.
-func methodLevelAnnotations(method *sitter.Node) []*sitter.Node {
+func methodLevelAnnotations(method ts.Node) []ts.Node {
 	return classLevelAnnotations(method)
 }
 
@@ -290,7 +289,7 @@ func methodLevelAnnotations(method *sitter.Node) []*sitter.Node {
 // and, if present, the first string-literal argument's value (e.g. "/orders").
 // Supports `@Foo("/x")`, `@Foo(value="/x")`, `@Foo(path="/x")`, and bare
 // `@Foo` (returns empty path).
-func annotationNameAndPath(anno *sitter.Node, src []byte) (string, string) {
+func annotationNameAndPath(anno ts.Node, src []byte) (string, string) {
 	if anno == nil {
 		return "", ""
 	}
@@ -388,7 +387,7 @@ func httpMethodForAnnotation(name string) string {
 }
 
 // nodeText returns the source text covered by node.
-func nodeText(n *sitter.Node, src []byte) string {
+func nodeText(n ts.Node, src []byte) string {
 	if n == nil {
 		return ""
 	}
@@ -426,7 +425,7 @@ func extractRoutePathParams(path string) string {
 
 // nodeFieldText returns the text of node.ChildByFieldName(field), or "" if
 // the field is absent.
-func nodeFieldText(n *sitter.Node, field string, src []byte) string {
+func nodeFieldText(n ts.Node, field string, src []byte) string {
 	if n == nil {
 		return ""
 	}

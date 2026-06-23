@@ -34,9 +34,8 @@ import (
 	"strings"
 	"sync"
 
-	sitter "github.com/smacker/go-tree-sitter"
-
 	"github.com/cajasmota/grafel/internal/treesitter"
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -383,11 +382,11 @@ func extractDjangoComposedRoutes(ctx context.Context, path string, content []byt
 
 	factory := treesitter.NewParserFactory(nil)
 	pr, err := factory.Parse(ctx, content, "python")
-	if err != nil || pr == nil || pr.Tree == nil {
+	if err != nil || pr == nil || pr.TSTree == nil {
 		return out, false
 	}
 
-	root := pr.Tree.RootNode()
+	root := pr.TSTree.RootNode()
 
 	// Pass 1: collect all `path("<prefix>", include(<router>.urls))` bindings.
 	// router var name -> prefix string (raw, as written in source, without
@@ -407,7 +406,7 @@ func extractDjangoComposedRoutes(ctx context.Context, path string, content []byt
 // router-variable -> prefix binding. The prefix is also added to
 // claimedIncludePrefixes so the engine can drop the duplicate YAML Route.
 func collectIncludePrefixes(
-	node *sitter.Node,
+	node ts.Node,
 	src []byte,
 	routerPrefixes map[string]string,
 	claimedPrefixes map[string]bool,
@@ -432,14 +431,14 @@ func collectIncludePrefixes(
 // pathIncludeBinding inspects a `path(...)` call node. If its arguments are
 // (string_prefix, include(<router>.urls)) it returns the prefix string,
 // the router variable name, and true.
-func pathIncludeBinding(call *sitter.Node, src []byte) (string, string, bool) {
+func pathIncludeBinding(call ts.Node, src []byte) (string, string, bool) {
 	args := call.ChildByFieldName("arguments")
 	if args == nil {
 		return "", "", false
 	}
 	// Walk the argument list: first positional must be a string literal,
 	// second positional must be `include(<router>.urls)`.
-	var positional []*sitter.Node
+	var positional []ts.Node
 	for i := 0; i < int(args.ChildCount()); i++ {
 		ch := args.Child(i)
 		t := ch.Type()
@@ -468,7 +467,7 @@ func pathIncludeBinding(call *sitter.Node, src []byte) (string, string, bool) {
 
 // includeRouterUrls inspects a node that should be `include(<router>.urls)`
 // and returns the router variable name on success.
-func includeRouterUrls(node *sitter.Node, src []byte) (string, bool) {
+func includeRouterUrls(node ts.Node, src []byte) (string, bool) {
 	if node == nil || node.Type() != "call" {
 		return "", false
 	}
@@ -505,7 +504,7 @@ func includeRouterUrls(node *sitter.Node, src []byte) (string, bool) {
 // `<router>.register("<name>", <ViewSet>)` call whose receiver is in
 // routerPrefixes, and emits composed Route + ROUTES_TO records.
 func collectRegisterCalls(
-	node *sitter.Node,
+	node ts.Node,
 	src []byte,
 	path string,
 	routerPrefixes map[string]string,
@@ -559,12 +558,12 @@ func collectRegisterCalls(
 // returns (name, viewSet, true) on success. `name` is the bare URL
 // fragment (e.g. "users"); `viewSet` is the identifier passed as the second
 // positional argument (e.g. "UserViewSet").
-func registerArgs(call *sitter.Node, src []byte) (string, string, bool) {
+func registerArgs(call ts.Node, src []byte) (string, string, bool) {
 	args := call.ChildByFieldName("arguments")
 	if args == nil {
 		return "", "", false
 	}
-	var positional []*sitter.Node
+	var positional []ts.Node
 	for i := 0; i < int(args.ChildCount()); i++ {
 		ch := args.Child(i)
 		t := ch.Type()
@@ -592,7 +591,7 @@ func registerArgs(call *sitter.Node, src []byte) (string, string, bool) {
 
 // callFunctionName returns the bare function name of a `call` node when the
 // callee is a simple identifier. Returns "" for attribute calls.
-func callFunctionName(call *sitter.Node, src []byte) string {
+func callFunctionName(call ts.Node, src []byte) string {
 	fn := call.ChildByFieldName("function")
 	if fn == nil {
 		return ""
@@ -606,7 +605,7 @@ func callFunctionName(call *sitter.Node, src []byte) string {
 // callReceiverAndMethod returns (receiver, method) when the call is
 // `<receiver>.<method>(...)` with a simple identifier receiver. Otherwise
 // returns ("", "").
-func callReceiverAndMethod(call *sitter.Node, src []byte) (string, string) {
+func callReceiverAndMethod(call ts.Node, src []byte) (string, string) {
 	fn := call.ChildByFieldName("function")
 	if fn == nil || fn.Type() != "attribute" {
 		return "", ""
@@ -626,7 +625,7 @@ func callReceiverAndMethod(call *sitter.Node, src []byte) (string, string) {
 // supporting the raw-string form (`r"..."` / `r'...'`) used by Django URL
 // patterns. It returns the inner text (without the surrounding quotes) and
 // true on success.
-func stringLiteralValue(node *sitter.Node, src []byte) (string, bool) {
+func stringLiteralValue(node ts.Node, src []byte) (string, bool) {
 	if node == nil || node.Type() != "string" {
 		return "", false
 	}
