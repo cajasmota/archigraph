@@ -355,6 +355,54 @@ func TestDeadRef_retentionCapDisabled(t *testing.T) {
 	}
 }
 
+// TestDeadRef_envRetentionCapParse exercises EnvRefRetentionCap's parsing of
+// GRAFEL_REF_RETENTION_CAP: unset → default 8, "4" → 4, "0" → 0, "-1" → -1
+// (cap disabled), garbage → default 8.
+func TestDeadRef_envRetentionCapParse(t *testing.T) {
+	cases := []struct {
+		name string
+		set  bool
+		val  string
+		want int
+	}{
+		{name: "unset", set: false, want: DefaultRefRetentionCap},
+		{name: "empty", set: true, val: "", want: DefaultRefRetentionCap},
+		{name: "whitespace", set: true, val: "   ", want: DefaultRefRetentionCap},
+		{name: "four", set: true, val: "4", want: 4},
+		{name: "padded", set: true, val: " 4 ", want: 4},
+		{name: "zero", set: true, val: "0", want: 0},
+		{name: "negative", set: true, val: "-1", want: -1},
+		{name: "garbage", set: true, val: "garbage", want: DefaultRefRetentionCap},
+		{name: "float", set: true, val: "4.5", want: DefaultRefRetentionCap},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if c.set {
+				t.Setenv(RefRetentionCapEnv, c.val)
+			} else {
+				os.Unsetenv(RefRetentionCapEnv)
+			}
+			if got := EnvRefRetentionCap(); got != c.want {
+				t.Fatalf("EnvRefRetentionCap()=%d want %d (env set=%v val=%q)", got, c.want, c.set, c.val)
+			}
+		})
+	}
+}
+
+// TestDeadRef_envRetentionCapWiredThroughConstructor verifies the env value
+// flows into the sweeper when the caller leaves RetentionCap at its zero value.
+func TestDeadRef_envRetentionCapWiredThroughConstructor(t *testing.T) {
+	t.Setenv(RefRetentionCapEnv, "3")
+	s := NewDeadRefSweeper(DeadRefConfig{
+		TrackedRepos:   func() []string { return nil },
+		LiveRefs:       func(string) (map[string]struct{}, bool) { return map[string]struct{}{}, true },
+		RefsDirForRepo: func(string) string { return "" },
+	})
+	if s.cfg.RetentionCap != 3 {
+		t.Fatalf("constructor RetentionCap=%d want 3 (from env)", s.cfg.RetentionCap)
+	}
+}
+
 // itoa is a tiny strconv.Itoa to avoid an extra import in this table.
 func itoa(i int) string {
 	if i == 0 {

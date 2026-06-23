@@ -39,7 +39,9 @@
 //     RetentionCap bounds the number of dead-in-git refs the grace window may
 //     protect per repo: the N most-recently-indexed are kept, the rest are
 //     reaped immediately. Live/primary/HEAD/worktree refs never count toward
-//     the cap and are never reaped by it.
+//     the cap and are never reaped by it. The cap is env-tunable via
+//     GRAFEL_REF_RETENTION_CAP (default 8; 0 keeps none; negative disables the
+//     backstop) — see EnvRefRetentionCap.
 //   - Fail-closed: if git ref enumeration fails for a repo, that repo is
 //     skipped entirely — nothing is reaped. A flaky/locked git can never cause
 //     a live ref's graph to be nuked.
@@ -52,6 +54,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -109,7 +112,8 @@ type DeadRefConfig struct {
 	// grace-protected, the oldest (by graph.fb mtime) beyond the cap are reaped
 	// immediately — the backstop against high-churn transient-ref creation
 	// (#5440). Live/primary/HEAD/worktree refs never count toward the cap.
-	// Default (zero): DefaultRefRetentionCap. A negative value disables the cap.
+	// Default (zero): resolved from GRAFEL_REF_RETENTION_CAP, falling back to
+	// DefaultRefRetentionCap. A negative value disables the cap.
 	RetentionCap int
 
 	// Now returns the current time; nil → time.Now. Injected in tests.
@@ -143,6 +147,37 @@ type DeadRefResult struct {
 // transient-ref workload cannot pile up ~1GB of dead graphs (#5440).
 const DefaultRefRetentionCap = 8
 
+// RefRetentionCapEnv is the env var an operator may set to override
+// DefaultRefRetentionCap. A lower value (e.g. 4) shrinks the dead-ref footprint
+// on a machine with heavy transient-ref churn; 0 keeps only live/primary/HEAD/
+// worktree refs; a negative value disables the cap backstop entirely (the grace
+// window alone then governs retention). See EnvRefRetentionCap.
+const RefRetentionCapEnv = "GRAFEL_REF_RETENTION_CAP"
+
+// EnvRefRetentionCap resolves the dead-ref retention cap, honouring the
+// GRAFEL_REF_RETENTION_CAP override. Semantics:
+//
+//   - unset / empty            → DefaultRefRetentionCap (8)
+//   - a valid non-negative int → that value (0 = keep no grace-protected dead
+//     refs; only live/primary/HEAD/worktree refs survive)
+//   - a valid negative int     → that value, which DeadRefSweeper treats as
+//     "cap disabled" (the existing RetentionCap < 0 backstop-off semantics)
+//   - unparseable garbage      → DefaultRefRetentionCap (fail-safe)
+//
+// Mirrors the GRAFEL_TIER_*/GRAFEL_EXTRACT_GOMAXPROCS env-reading pattern, but
+// permits 0 and negative values, which those positive-only helpers reject.
+func EnvRefRetentionCap() int {
+	s := strings.TrimSpace(os.Getenv(RefRetentionCapEnv))
+	if s == "" {
+		return DefaultRefRetentionCap
+	}
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return DefaultRefRetentionCap
+	}
+	return n
+}
+
 // DeadRefSweeper reclaims store dirs + resident graphs for refs/worktrees that
 // git no longer knows about, within still-present repos.
 type DeadRefSweeper struct {
@@ -161,7 +196,13 @@ func NewDeadRefSweeper(cfg DeadRefConfig) *DeadRefSweeper {
 		cfg.GraceWindow = 24 * time.Hour
 	}
 	if cfg.RetentionCap == 0 {
-		cfg.RetentionCap = DefaultRefRetentionCap
+		// Zero means "caller did not set it" — resolve from the environment
+		// (GRAFEL_REF_RETENTION_CAP), which itself falls back to
+		// DefaultRefRetentionCap when unset. An operator who explicitly wants a
+		// cap of 0 (keep no grace-protected dead refs) sets the env to "0";
+		// callers that need a literal 0 regardless of env can pass a negative
+		// value, which disables the backstop.
+		cfg.RetentionCap = EnvRefRetentionCap()
 	}
 	if cfg.Now == nil {
 		cfg.Now = time.Now

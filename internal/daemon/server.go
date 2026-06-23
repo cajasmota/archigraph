@@ -528,6 +528,14 @@ func Run(ctx context.Context, cfg Config) error {
 			// #5236: dead-ref / dead-worktree sweep. Reclaims store dirs +
 			// resident graphs for refs git no longer knows about, within
 			// still-present repos. Driven by the reaper on the shared cadence.
+			// Retention cap is env-tunable (GRAFEL_REF_RETENTION_CAP) so an
+			// operator can shrink the dead-ref footprint on a machine with
+			// heavy transient-ref churn (e.g. set it to 4). Resolved here so the
+			// effective value is logged; NewDeadRefSweeper would resolve the same
+			// value from a zero RetentionCap on its own.
+			refRetentionCap := EnvRefRetentionCap()
+			logger.Info("deadref: retention cap configured",
+				"cap", refRetentionCap, "env", RefRetentionCapEnv)
 			deadRefSweeper := NewDeadRefSweeper(DeadRefConfig{
 				TrackedRepos:   trackedRepos,
 				LiveRefs:       LiveGitRefs,
@@ -535,6 +543,7 @@ func Run(ctx context.Context, cfg Config) error {
 				RefsDirForRepo: RefsDirForRepo,
 				DropReader:     cfg.DeadRefDropReader,
 				Tier:           cfg.DeadRefTier,
+				RetentionCap:   refRetentionCap,
 				Logger:         logger,
 			})
 			// #5263: orphan top-level store-root sweep. Reaps whole
