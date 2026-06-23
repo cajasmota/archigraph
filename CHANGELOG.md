@@ -198,6 +198,24 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
   derive-macro scan requires. Default builds stay 100% smacker-backed and
   link-safe; mechanical and behavior-preserving — the ruby+php+csharp+rust
   extractor suites pass unchanged (zero fidelity delta).
+- **Migrated the remaining extractors to the `ts.Node` abstraction — B2 Phase 1
+  is complete; every extractor is now binding-agnostic** (#5418, ADR 0023). The
+  final batch covers `cpp` (C/C++), `css`, `dockerfile`, `elixir`, `groovy`,
+  `hcl`, `html`, `kotlin`, `lua`, `proto`, `scala`, `shell` (bash), `swift`,
+  `yaml`, and the `cross/abibridge` test harness. All now traverse the
+  binding-agnostic `internal/treesitter/ts` façade (`ts.Node`/`ts.Tree`) and read
+  the shared `FileInput.TSTree` instead of the concrete `smacker/go-tree-sitter`
+  `*sitter.Node`/`*sitter.Tree`. Extractors with an inline-parse fallback (`cpp`,
+  `dockerfile`, `hcl`, `html`, `yaml`) gained an untagged smacker grammar provider
+  (their `language.go`/`grammar.go`) that the fallback constructs via the ts
+  adapter; the others early-return on a nil tree. The `ts.Node` façade gains a
+  `FieldNameForChild(i int) string` method (added to the interface and BOTH the
+  smacker and official adapters — the official adapter reconciles the `int`↔`uint32`
+  index width) that the Dockerfile extractor's field lookup requires; it compiles
+  under `-tags ts_official` too. With this batch **no extractor imports the root
+  `github.com/smacker/go-tree-sitter` binding** any longer. Default builds stay
+  100% smacker-backed and link-safe; mechanical and behavior-preserving — every
+  migrated extractor suite passes unchanged (zero fidelity delta).
 
 ## [0.1.3] — 2026-06-23
 

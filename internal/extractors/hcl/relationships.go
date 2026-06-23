@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	sitter "github.com/smacker/go-tree-sitter"
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/types"
@@ -77,11 +77,11 @@ func blockReferenceName(blockType string, labels []string, localKey string) stri
 // SCOPE.Component / file entity carrying CONTAINS edges to every top-level
 // block, plus IMPORTS edges for module sources and provider blocks. Returns
 // nil if the file has no top-level blocks.
-func emitFileLevelRelationships(root *sitter.Node, src []byte, path, lang string) *types.EntityRecord {
+func emitFileLevelRelationships(root ts.Node, src []byte, path, lang string) *types.EntityRecord {
 	if root == nil {
 		return nil
 	}
-	var body *sitter.Node
+	var body ts.Node
 	if root.Type() == "config_file" {
 		body = firstChildByType(root, "body")
 	} else if root.Type() == "body" {
@@ -215,15 +215,15 @@ func emitFileLevelRelationships(root *sitter.Node, src []byte, path, lang string
 // refs (the dominant case inside `examples/<x>/main.tf`) resolve cleanly;
 // cross-file refs in a multi-file module fall back to the dynamic-pattern
 // catalog in internal/resolve/refs.go (hclDynamicPatterns).
-func extractCalls(body *sitter.Node, src []byte, path, lang, fromRef, selfRef string) []types.RelationshipRecord {
+func extractCalls(body ts.Node, src []byte, path, lang, fromRef, selfRef string) []types.RelationshipRecord {
 	if body == nil {
 		return nil
 	}
 	seen := map[string]struct{}{}
 	var rels []types.RelationshipRecord
 
-	var walk func(n *sitter.Node)
-	walk = func(n *sitter.Node) {
+	var walk func(n ts.Node)
+	walk = func(n ts.Node) {
 		if n == nil {
 			return
 		}
@@ -284,7 +284,7 @@ func extractCalls(body *sitter.Node, src []byte, path, lang, fromRef, selfRef st
 //	otherwise         → "<parts[0]>.<parts[1]>" (resource ref)
 //
 // Returns "" if there are fewer than 2 parts.
-func canonicalRefFromExpression(expr *sitter.Node, src []byte) string {
+func canonicalRefFromExpression(expr ts.Node, src []byte) string {
 	if expr == nil {
 		return ""
 	}

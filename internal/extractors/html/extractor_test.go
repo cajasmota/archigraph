@@ -5,11 +5,12 @@ import (
 	"strings"
 	"testing"
 
-	sitter "github.com/smacker/go-tree-sitter"
 	tshtml "github.com/smacker/go-tree-sitter/html"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/html"
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
+	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -17,18 +18,21 @@ import (
 // helpers
 // ---------------------------------------------------------------------------
 
-func parseHTML(t *testing.T, src string) *sitter.Tree {
+func parseHTML(t *testing.T, src string) ts.Tree {
 	t.Helper()
-	parser := sitter.NewParser()
-	parser.SetLanguage(tshtml.GetLanguage())
-	tree, err := parser.ParseCtx(context.Background(), nil, []byte(src))
+	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tshtml.GetLanguage()))
+	if err != nil {
+		t.Fatalf("parser init: %v", err)
+	}
+	defer parser.Close()
+	tree, err := parser.Parse([]byte(src))
 	if err != nil {
 		t.Fatalf("parse failed: %v", err)
 	}
 	return tree
 }
 
-func extractEntities(t *testing.T, path, src string, tree *sitter.Tree) []types.EntityRecord {
+func extractEntities(t *testing.T, path, src string, tree ts.Tree) []types.EntityRecord {
 	t.Helper()
 	ext, ok := extractor.Get("html")
 	if !ok {
@@ -38,7 +42,7 @@ func extractEntities(t *testing.T, path, src string, tree *sitter.Tree) []types.
 		Path:     path,
 		Content:  []byte(src),
 		Language: "html",
-		Tree:     tree,
+		TSTree:   tree,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -110,7 +114,7 @@ func TestHTMLExtractor_NilTree_InlineParse(t *testing.T) {
 		Path:     "index.html",
 		Content:  []byte(src),
 		Language: "html",
-		Tree:     nil, // triggers inline parse
+		TSTree:   nil, // triggers inline parse
 	})
 	if err != nil {
 		t.Fatalf("unexpected error on nil tree + inline parse: %v", err)
@@ -470,7 +474,7 @@ func TestHTMLExtractor_InvokedByPipeline(t *testing.T) {
 		Path:     "pipeline.html",
 		Content:  []byte(src),
 		Language: "html",
-		Tree:     tree,
+		TSTree:   tree,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

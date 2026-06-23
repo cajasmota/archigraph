@@ -54,7 +54,7 @@ import (
 	"strconv"
 	"strings"
 
-	sitter "github.com/smacker/go-tree-sitter"
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -91,12 +91,15 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) (enti
 		return nil, nil
 	}
 
-	tree := file.Tree
+	tree := file.TSTree
 	if tree == nil {
-		parser := sitter.NewParser()
-		parser.SetLanguage(yamlGrammar())
+		parser, perr := yamlAdapter.NewParser(yamlGrammar())
+		if perr != nil {
+			return nil, perr
+		}
+		defer parser.Close()
 		var err error
-		tree, err = parser.ParseCtx(ctx, nil, file.Content)
+		tree, err = parser.Parse(file.Content)
 		if err != nil {
 			return nil, err
 		}
@@ -311,7 +314,7 @@ func containsTopLevelKey(content, key string) bool {
 // Dispatch
 // ---------------------------------------------------------------------------
 
-func extractByFlavor(flavor string, root *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func extractByFlavor(flavor string, root ts.Node, file extractor.FileInput) []types.EntityRecord {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("yaml: extraction panic for flavor %s: %v", flavor, r)
@@ -367,7 +370,7 @@ func extractByFlavor(flavor string, root *sitter.Node, file extractor.FileInput)
 // Document from an Ansible playbook Document.
 //
 // Issue #474 chain-fix.
-func buildYAMLDocument(flavor string, root *sitter.Node, file extractor.FileInput) types.EntityRecord {
+func buildYAMLDocument(flavor string, root ts.Node, file extractor.FileInput) types.EntityRecord {
 	endLine := bytes.Count(file.Content, []byte("\n")) + 1
 	if root != nil {
 		endLine = int(root.EndPoint().Row) + 1
@@ -394,7 +397,7 @@ func buildYAMLDocument(flavor string, root *sitter.Node, file extractor.FileInpu
 // ---------------------------------------------------------------------------
 
 // nodeText returns the text of a node from source bytes.
-func nodeText(node *sitter.Node, src []byte) string {
+func nodeText(node ts.Node, src []byte) string {
 	if node == nil {
 		return ""
 	}
@@ -422,8 +425,8 @@ func entity(kind, name, subtype, qualifiedName, sourcefile, language string, sta
 // topLevelMappings returns the direct block_mapping_pair children of the document root.
 // YAML tree-sitter structure: stream -> document -> block_node -> block_mapping -> block_mapping_pair
 // Only the FIRST document in the stream is returned. For multi-document files use allDocuments.
-func topLevelMappings(root *sitter.Node) []*sitter.Node {
-	var pairs []*sitter.Node
+func topLevelMappings(root ts.Node) []ts.Node {
+	var pairs []ts.Node
 	if root == nil {
 		return pairs
 	}
@@ -436,8 +439,8 @@ func topLevelMappings(root *sitter.Node) []*sitter.Node {
 }
 
 // documentMappings returns block_mapping_pair children from a single document node.
-func documentMappings(doc *sitter.Node) []*sitter.Node {
-	var pairs []*sitter.Node
+func documentMappings(doc ts.Node) []ts.Node {
+	var pairs []ts.Node
 	if doc == nil {
 		return pairs
 	}
@@ -459,8 +462,8 @@ func documentMappings(doc *sitter.Node) []*sitter.Node {
 }
 
 // allDocuments returns all document nodes in the stream (multi-document YAML support).
-func allDocuments(root *sitter.Node) []*sitter.Node {
-	var docs []*sitter.Node
+func allDocuments(root ts.Node) []ts.Node {
+	var docs []ts.Node
 	if root == nil {
 		return docs
 	}
@@ -474,7 +477,7 @@ func allDocuments(root *sitter.Node) []*sitter.Node {
 }
 
 // findFirstChild returns the first direct child of node with the given type.
-func findFirstChild(node *sitter.Node, nodeType string) *sitter.Node {
+func findFirstChild(node ts.Node, nodeType string) ts.Node {
 	if node == nil {
 		return nil
 	}
@@ -490,7 +493,7 @@ func findFirstChild(node *sitter.Node, nodeType string) *sitter.Node {
 // pairValueNode returns the block_node or flow_node value child of a block_mapping_pair.
 // It skips the key node (first flow_node/scalar) and the colon separator, returning
 // the second flow_node or the block_node that holds the value.
-func pairValueNode(pair *sitter.Node) *sitter.Node {
+func pairValueNode(pair ts.Node) ts.Node {
 	if pair == nil {
 		return nil
 	}
@@ -513,7 +516,7 @@ func pairValueNode(pair *sitter.Node) *sitter.Node {
 }
 
 // getBlockMapping returns the block_mapping inside a block_node (or nil).
-func getBlockMapping(node *sitter.Node) *sitter.Node {
+func getBlockMapping(node ts.Node) ts.Node {
 	if node == nil {
 		return nil
 	}
@@ -525,7 +528,7 @@ func getBlockMapping(node *sitter.Node) *sitter.Node {
 
 // getMappingPairsForKey finds the block_mapping_pair with a given key in a list of pairs,
 // then returns child pairs of its value mapping.
-func getMappingPairsForKey(pairs []*sitter.Node, key string, src []byte) []*sitter.Node {
+func getMappingPairsForKey(pairs []ts.Node, key string, src []byte) []ts.Node {
 	for _, p := range pairs {
 		k := pairKeyText(p, src)
 		if k == key {
@@ -534,7 +537,7 @@ func getMappingPairsForKey(pairs []*sitter.Node, key string, src []byte) []*sitt
 			if bm == nil {
 				return nil
 			}
-			var children []*sitter.Node
+			var children []ts.Node
 			for i := range bm.ChildCount() {
 				child := bm.Child(int(i))
 				if child != nil && child.Type() == "block_mapping_pair" {
@@ -549,7 +552,7 @@ func getMappingPairsForKey(pairs []*sitter.Node, key string, src []byte) []*sitt
 
 // pairKeyText extracts clean key text from a block_mapping_pair, handling
 // the different ways tree-sitter YAML represents keys.
-func pairKeyText(pair *sitter.Node, src []byte) string {
+func pairKeyText(pair ts.Node, src []byte) string {
 	if pair == nil {
 		return ""
 	}
@@ -577,7 +580,7 @@ func pairKeyText(pair *sitter.Node, src []byte) string {
 }
 
 // getSequenceItems returns string values from a block_sequence under a block_node.
-func getSequenceItems(valueNode *sitter.Node, src []byte) []string {
+func getSequenceItems(valueNode ts.Node, src []byte) []string {
 	if valueNode == nil {
 		return nil
 	}
@@ -607,7 +610,7 @@ func getSequenceItems(valueNode *sitter.Node, src []byte) []string {
 }
 
 // getSequenceItemMappings returns block_mapping_pair slices for each sequence item.
-func getSequenceItemMappings(valueNode *sitter.Node, src []byte) [][]*sitter.Node {
+func getSequenceItemMappings(valueNode ts.Node, src []byte) [][]ts.Node {
 	if valueNode == nil {
 		return nil
 	}
@@ -615,7 +618,7 @@ func getSequenceItemMappings(valueNode *sitter.Node, src []byte) [][]*sitter.Nod
 	if seq == nil {
 		return nil
 	}
-	var result [][]*sitter.Node
+	var result [][]ts.Node
 	for i := range seq.ChildCount() {
 		item := seq.Child(int(i))
 		if item == nil || item.Type() != "block_sequence_item" {
@@ -628,7 +631,7 @@ func getSequenceItemMappings(valueNode *sitter.Node, src []byte) [][]*sitter.Nod
 			}
 			bm := getBlockMapping(child)
 			if bm != nil {
-				var pairs []*sitter.Node
+				var pairs []ts.Node
 				for k := range bm.ChildCount() {
 					cp := bm.Child(int(k))
 					if cp != nil && cp.Type() == "block_mapping_pair" {
@@ -643,7 +646,7 @@ func getSequenceItemMappings(valueNode *sitter.Node, src []byte) [][]*sitter.Nod
 }
 
 // getPairValueText returns the scalar text value of a block_mapping_pair.
-func getPairValueText(pair *sitter.Node, src []byte) string {
+func getPairValueText(pair ts.Node, src []byte) string {
 	if pair == nil {
 		return ""
 	}
@@ -655,7 +658,7 @@ func getPairValueText(pair *sitter.Node, src []byte) string {
 }
 
 // findPairValueText finds a key in a slice of pairs and returns its value text.
-func findPairValueText(pairs []*sitter.Node, key string, src []byte) string {
+func findPairValueText(pairs []ts.Node, key string, src []byte) string {
 	for _, p := range pairs {
 		if pairKeyText(p, src) == key {
 			return getPairValueText(p, src)
@@ -668,7 +671,7 @@ func findPairValueText(pairs []*sitter.Node, key string, src []byte) string {
 // GitHub Actions extractor
 // ---------------------------------------------------------------------------
 
-func extractGitHubActions(root *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func extractGitHubActions(root ts.Node, file extractor.FileInput) []types.EntityRecord {
 	src := file.Content
 	pairs := topLevelMappings(root)
 	var entities []types.EntityRecord
@@ -741,7 +744,7 @@ func extractGitHubActions(root *sitter.Node, file extractor.FileInput) []types.E
 				if jobMapping == nil {
 					continue
 				}
-				var jobPairList []*sitter.Node
+				var jobPairList []ts.Node
 				for i := range jobMapping.ChildCount() {
 					child := jobMapping.Child(int(i))
 					if child != nil && child.Type() == "block_mapping_pair" {
@@ -811,7 +814,7 @@ func extractGitHubActions(root *sitter.Node, file extractor.FileInput) []types.E
 }
 
 // findValueNodeForKey finds a key in a slice of pairs and returns the value node.
-func findValueNodeForKey(pairs []*sitter.Node, key string, src []byte) *sitter.Node {
+func findValueNodeForKey(pairs []ts.Node, key string, src []byte) ts.Node {
 	for _, p := range pairs {
 		if pairKeyText(p, src) == key {
 			return pairValueNode(p)
@@ -821,7 +824,7 @@ func findValueNodeForKey(pairs []*sitter.Node, key string, src []byte) *sitter.N
 }
 
 // pairsLineRange returns the start/end lines covering a slice of pairs.
-func pairsLineRange(pairs []*sitter.Node) (start, end int) {
+func pairsLineRange(pairs []ts.Node) (start, end int) {
 	if len(pairs) == 0 {
 		return 0, 0
 	}
@@ -841,7 +844,7 @@ var gitlabReservedKeys = map[string]bool{
 	"after_script": true, "cache": true,
 }
 
-func extractGitLabCI(root *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func extractGitLabCI(root ts.Node, file extractor.FileInput) []types.EntityRecord {
 	src := file.Content
 	pairs := topLevelMappings(root)
 	var entities []types.EntityRecord
@@ -884,7 +887,7 @@ func extractGitLabCI(root *sitter.Node, file extractor.FileInput) []types.Entity
 			if jobBM == nil {
 				continue
 			}
-			var jobPairs []*sitter.Node
+			var jobPairs []ts.Node
 			for i := range jobBM.ChildCount() {
 				child := jobBM.Child(int(i))
 				if child != nil && child.Type() == "block_mapping_pair" {
@@ -910,7 +913,7 @@ func extractGitLabCI(root *sitter.Node, file extractor.FileInput) []types.Entity
 // Docker Compose extractor
 // ---------------------------------------------------------------------------
 
-func extractDockerCompose(root *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func extractDockerCompose(root ts.Node, file extractor.FileInput) []types.EntityRecord {
 	src := file.Content
 	pairs := topLevelMappings(root)
 	var entities []types.EntityRecord
@@ -947,7 +950,7 @@ func extractDockerCompose(root *sitter.Node, file extractor.FileInput) []types.E
 					entities = append(entities, svcEnt)
 					continue
 				}
-				var svcPairs []*sitter.Node
+				var svcPairs []ts.Node
 				for i := range svcBM.ChildCount() {
 					child := svcBM.Child(int(i))
 					if child != nil && child.Type() == "block_mapping_pair" {
@@ -1051,7 +1054,7 @@ func extractDockerCompose(root *sitter.Node, file extractor.FileInput) []types.E
 // Kubernetes extractor
 // ---------------------------------------------------------------------------
 
-func extractKubernetes(root *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func extractKubernetes(root ts.Node, file extractor.FileInput) []types.EntityRecord {
 	var entities []types.EntityRecord
 	// Multi-document YAML: iterate all documents in the stream.
 	for _, doc := range allDocuments(root) {
@@ -1075,7 +1078,7 @@ func extractKubernetes(root *sitter.Node, file extractor.FileInput) []types.Enti
 //	Ingress spec.rules[].host:         → SCOPE.ExternalAPI, subtype="ingress_host"
 //	Ingress spec.rules[].http.paths[].path: → SCOPE.Operation, subtype="ingress_path"
 //	Service selector + ports:          → existing extractK8sService logic
-func extractKubernetesDoc(doc *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func extractKubernetesDoc(doc ts.Node, file extractor.FileInput) []types.EntityRecord {
 	src := file.Content
 	pairs := documentMappings(doc)
 	var entities []types.EntityRecord
@@ -1350,7 +1353,7 @@ func extractKubernetesDoc(doc *sitter.Node, file extractor.FileInput) []types.En
 
 // k8sTemplatePairs returns (templatePairs, innerSpecPairs) for Deployment/StatefulSet/DaemonSet.
 // innerSpecPairs is spec.template.spec pairs.
-func k8sTemplatePairs(specPairs []*sitter.Node, src []byte) ([]*sitter.Node, []*sitter.Node) {
+func k8sTemplatePairs(specPairs []ts.Node, src []byte) ([]ts.Node, []ts.Node) {
 	templatePairs := getMappingPairsForKey(specPairs, "template", src)
 	if templatePairs == nil {
 		return nil, nil
@@ -1361,7 +1364,7 @@ func k8sTemplatePairs(specPairs []*sitter.Node, src []byte) ([]*sitter.Node, []*
 
 // extractK8sIngress extracts entities from a Kubernetes Ingress spec.
 // Emits ingress_host (SCOPE.ExternalAPI) and ingress_path (SCOPE.Operation).
-func extractK8sIngress(specPairs []*sitter.Node, ingressName, refPrefix string, file extractor.FileInput, src []byte) []types.EntityRecord {
+func extractK8sIngress(specPairs []ts.Node, ingressName, refPrefix string, file extractor.FileInput, src []byte) []types.EntityRecord {
 	var entities []types.EntityRecord
 
 	rulesMappings := getSequenceItemMappings(findValueNodeForKey(specPairs, "rules", src), src)
@@ -1402,7 +1405,7 @@ func extractK8sIngress(specPairs []*sitter.Node, ingressName, refPrefix string, 
 
 // extractK8sService extracts entities from a Kubernetes Service spec.
 // Emits selector labels as SCOPE.Component and service ports as SCOPE.Component.
-func extractK8sService(specPairs []*sitter.Node, svcName, refPrefix string, file extractor.FileInput, src []byte, startLine, endLine int) []types.EntityRecord {
+func extractK8sService(specPairs []ts.Node, svcName, refPrefix string, file extractor.FileInput, src []byte, startLine, endLine int) []types.EntityRecord {
 	var entities []types.EntityRecord
 
 	// Selector entries.
@@ -1449,7 +1452,7 @@ func extractK8sService(specPairs []*sitter.Node, svcName, refPrefix string, file
 // (kind/plural/singular/listKind) as Properties so downstream tooling can map
 // instances of the custom resource back to their schema (#3551). The CRD's own
 // metadata.name is conventionally "<plural>.<group>".
-func extractK8sCRD(pairs []*sitter.Node, crdName, refPrefix string, file extractor.FileInput, src []byte, startLine, endLine int) []types.EntityRecord {
+func extractK8sCRD(pairs []ts.Node, crdName, refPrefix string, file extractor.FileInput, src []byte, startLine, endLine int) []types.EntityRecord {
 	var entities []types.EntityRecord
 	if crdName == "" {
 		return entities
@@ -1548,7 +1551,7 @@ func k8sNamespacedKind(kindVal string) bool {
 
 // findK8sContainers searches for containers in specPairs, drilling into
 // template.spec if needed (Deployment/StatefulSet pattern).
-func findK8sContainers(specPairs []*sitter.Node, src []byte) [][]*sitter.Node {
+func findK8sContainers(specPairs []ts.Node, src []byte) [][]ts.Node {
 	// Try direct spec.containers first
 	containersNode := findValueNodeForKey(specPairs, "containers", src)
 	if containersNode != nil {
@@ -1574,7 +1577,7 @@ func findK8sContainers(specPairs []*sitter.Node, src []byte) [][]*sitter.Node {
 // Ansible extractor
 // ---------------------------------------------------------------------------
 
-func extractAnsible(root *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func extractAnsible(root ts.Node, file extractor.FileInput) []types.EntityRecord {
 	src := file.Content
 	var entities []types.EntityRecord
 
@@ -1594,7 +1597,7 @@ func extractAnsible(root *sitter.Node, file extractor.FileInput) []types.EntityR
 }
 
 // isDocSequence returns true when a document node has a top-level block_sequence.
-func isDocSequence(doc *sitter.Node) bool {
+func isDocSequence(doc ts.Node) bool {
 	if doc == nil {
 		return false
 	}
@@ -1606,7 +1609,7 @@ func isDocSequence(doc *sitter.Node) bool {
 }
 
 // extractAnsiblePlaybookDoc processes a single document node in playbook format.
-func extractAnsiblePlaybookDoc(doc *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func extractAnsiblePlaybookDoc(doc ts.Node, file extractor.FileInput) []types.EntityRecord {
 	src := file.Content
 	var entities []types.EntityRecord
 
@@ -1638,7 +1641,7 @@ func extractAnsiblePlaybookDoc(doc *sitter.Node, file extractor.FileInput) []typ
 			if bm == nil {
 				continue
 			}
-			var playPairs []*sitter.Node
+			var playPairs []ts.Node
 			for k := range bm.ChildCount() {
 				cp := bm.Child(int(k))
 				if cp != nil && cp.Type() == "block_mapping_pair" {
@@ -1690,7 +1693,7 @@ func extractAnsiblePlaybookDoc(doc *sitter.Node, file extractor.FileInput) []typ
 // parentRef is the canonical ref of the enclosing play (e.g. "ansible/play/X")
 // or "" when there's no enclosing play (flat task file). When non-empty, every
 // emitted child carries a CONTAINS edge from parentRef.
-func extractAnsibleSectionPairs(p *sitter.Node, file extractor.FileInput, src []byte, parentRef string) []types.EntityRecord {
+func extractAnsibleSectionPairs(p ts.Node, file extractor.FileInput, src []byte, parentRef string) []types.EntityRecord {
 	key := pairKeyText(p, src)
 	valNode := pairValueNode(p)
 	var entities []types.EntityRecord
@@ -1804,7 +1807,7 @@ func extractAnsibleSectionPairs(p *sitter.Node, file extractor.FileInput, src []
 // All IMPORTS/PATCHES edges originate from the kustomization entity whose
 // QualifiedName equals file.Path, so they resolve against the per-file
 // SCOPE.Document anchor (issue #474 chain-fix) via byQualifiedName.
-func extractKustomize(root *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func extractKustomize(root ts.Node, file extractor.FileInput) []types.EntityRecord {
 	src := file.Content
 	pairs := topLevelMappings(root)
 	var entities []types.EntityRecord
@@ -1945,7 +1948,7 @@ func kustPatchTargetStub(targetKind, targetName, patchFile string) string {
 //	patchesStrategicMerge: [ file.yaml, ... ]            (scalar file paths)
 //	patches:              [ { path|patch, target:{kind,name} }, ... ]
 //	patchesJson6902:      [ { target:{group,version,kind,name}, path|patch }, ... ]
-func kustExtractPatches(kustEnt *types.EntityRecord, pairs []*sitter.Node, kustRef string, file extractor.FileInput, src []byte) {
+func kustExtractPatches(kustEnt *types.EntityRecord, pairs []ts.Node, kustRef string, file extractor.FileInput, src []byte) {
 	patchesRel := func(toID, style, targetKind, targetName string) {
 		rel := types.RelationshipRecord{
 			FromID: kustRef,
@@ -1989,7 +1992,7 @@ func kustExtractPatches(kustEnt *types.EntityRecord, pairs []*sitter.Node, kustR
 
 // kustEmitPatchMapping resolves a single patch mapping's target (from a nested
 // target: {kind,name}) and file/inline body, then emits one PATCHES edge.
-func kustEmitPatchMapping(pp []*sitter.Node, style string, emit func(toID, style, targetKind, targetName string), src []byte) {
+func kustEmitPatchMapping(pp []ts.Node, style string, emit func(toID, style, targetKind, targetName string), src []byte) {
 	targetPairs := getMappingPairsForKey(pp, "target", src)
 	targetKind := findPairValueText(targetPairs, "kind", src)
 	targetName := findPairValueText(targetPairs, "name", src)
@@ -2005,7 +2008,7 @@ func kustEmitPatchMapping(pp []*sitter.Node, style string, emit func(toID, style
 // configMapGenerator: / secretGenerator:. The entity Name is the generator's
 // name:; the literals/files it pulls are recorded in Properties so the
 // generated config surface is visible without re-parsing.
-func kustExtractGenerators(pairs []*sitter.Node, kustRef string, file extractor.FileInput, src []byte) []types.EntityRecord {
+func kustExtractGenerators(pairs []ts.Node, kustRef string, file extractor.FileInput, src []byte) []types.EntityRecord {
 	var entities []types.EntityRecord
 
 	for _, gen := range []struct{ field, subtype, kind string }{
@@ -2066,7 +2069,7 @@ func kustExtractGenerators(pairs []*sitter.Node, kustRef string, file extractor.
 // Generic extractor
 // ---------------------------------------------------------------------------
 
-func extractGeneric(root *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func extractGeneric(root ts.Node, file extractor.FileInput) []types.EntityRecord {
 	src := file.Content
 	pairs := topLevelMappings(root)
 	var entities []types.EntityRecord

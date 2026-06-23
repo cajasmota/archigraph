@@ -3,7 +3,7 @@ package hcl
 import (
 	"strings"
 
-	sitter "github.com/smacker/go-tree-sitter"
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/types"
@@ -42,7 +42,7 @@ import (
 // reference name of the iteration source if it is an entity reference (e.g.
 // "var.instances", "local.subnets", "module.net"); srcRef is "" for literal
 // counts like `count = 2`.
-func iterationMeta(body *sitter.Node, src []byte) (mode, srcRef string) {
+func iterationMeta(body ts.Node, src []byte) (mode, srcRef string) {
 	if body == nil {
 		return "", ""
 	}
@@ -71,7 +71,7 @@ func iterationMeta(body *sitter.Node, src []byte) (mode, srcRef string) {
 
 // applyIterationMeta records iteration metadata on a block entity and appends
 // a USES edge to the iteration source when it is a resolvable entity ref.
-func applyIterationMeta(rec *types.EntityRecord, body *sitter.Node, src []byte, path, lang, selfRef string) {
+func applyIterationMeta(rec *types.EntityRecord, body ts.Node, src []byte, path, lang, selfRef string) {
 	mode, srcRef := iterationMeta(body, src)
 	if mode == "" {
 		return
@@ -102,7 +102,7 @@ func applyIterationMeta(rec *types.EntityRecord, body *sitter.Node, src []byte, 
 // the dynamic block's name and to draw a CONTAINS edge). The dynamic block's
 // own for_each meta-arg is recognised and its content interpolations become
 // CALLS edges.
-func extractDynamicBlocks(body *sitter.Node, src []byte, path, lang, parentRef string) []types.EntityRecord {
+func extractDynamicBlocks(body ts.Node, src []byte, path, lang, parentRef string) []types.EntityRecord {
 	if body == nil {
 		return nil
 	}
@@ -165,7 +165,7 @@ func extractDynamicBlocks(body *sitter.Node, src []byte, path, lang, parentRef s
 // argument name. This is the headline module-to-module wiring edge: it is
 // distinct from the generic CALLS edge (which only records the reference) by
 // carrying the consuming input arg in its properties.
-func extractModuleDataFlow(body *sitter.Node, src []byte, path, lang, selfRef string) []types.RelationshipRecord {
+func extractModuleDataFlow(body ts.Node, src []byte, path, lang, selfRef string) []types.RelationshipRecord {
 	if body == nil {
 		return nil
 	}
@@ -185,8 +185,8 @@ func extractModuleDataFlow(body *sitter.Node, src []byte, path, lang, selfRef st
 			continue
 		}
 		// Walk the attribute value expression for module.X references.
-		var walk func(n *sitter.Node)
-		walk = func(n *sitter.Node) {
+		var walk func(n ts.Node)
+		walk = func(n ts.Node) {
 			if n == nil {
 				return
 			}
@@ -222,15 +222,15 @@ func extractModuleDataFlow(body *sitter.Node, src []byte, path, lang, selfRef st
 // cross-stack DEPENDS_ON edge to the remote-state data source (one per distinct
 // remote-state name). These are deliberately NOT generic data-source CALLS
 // edges: they wire one Terraform stack to another stack's published outputs.
-func extractRemoteStateDeps(body *sitter.Node, src []byte, path, lang, fromRef string) []types.RelationshipRecord {
+func extractRemoteStateDeps(body ts.Node, src []byte, path, lang, fromRef string) []types.RelationshipRecord {
 	if body == nil {
 		return nil
 	}
 	var rels []types.RelationshipRecord
 	seen := map[string]struct{}{}
 
-	var walk func(n *sitter.Node)
-	walk = func(n *sitter.Node) {
+	var walk func(n ts.Node)
+	walk = func(n ts.Node) {
 		if n == nil {
 			return
 		}
@@ -261,7 +261,7 @@ func extractRemoteStateDeps(body *sitter.Node, src []byte, path, lang, fromRef s
 
 // remoteStateName returns the remote-state name if the expression is a
 // data.terraform_remote_state.<name>.* reference, else "".
-func remoteStateName(expr *sitter.Node, src []byte) string {
+func remoteStateName(expr ts.Node, src []byte) string {
 	parts := referenceParts(expr, src)
 	if len(parts) >= 3 && parts[0] == "data" && parts[1] == "terraform_remote_state" {
 		return parts[2]
@@ -272,7 +272,7 @@ func remoteStateName(expr *sitter.Node, src []byte) string {
 // referenceParts returns the dotted identifier parts of a reference expression
 // (variable_expr + get_attr chain). Shared shape with
 // canonicalRefFromExpression but returns the raw parts.
-func referenceParts(expr *sitter.Node, src []byte) []string {
+func referenceParts(expr ts.Node, src []byte) []string {
 	if expr == nil {
 		return nil
 	}
@@ -305,7 +305,7 @@ func referenceParts(expr *sitter.Node, src []byte) []string {
 // (provider source + version) and backend (type). Returns (record, true) when
 // the block carries at least one provider requirement or a backend; otherwise
 // (zero, false) so empty/version-only terraform blocks stay metadata-only.
-func extractTerraformBlock(n *sitter.Node, src []byte, path, lang string, start, end int) ([]types.EntityRecord, bool) {
+func extractTerraformBlock(n ts.Node, src []byte, path, lang string, start, end int) ([]types.EntityRecord, bool) {
 	body := blockBody(n)
 	if body == nil {
 		return nil, false
@@ -388,7 +388,7 @@ func extractTerraformBlock(n *sitter.Node, src []byte, path, lang string, start,
 // string (empty when absent). It handles the object form:
 //
 //	aws = { source = "hashicorp/aws", version = "~> 5.0" }
-func parseRequiredProviders(block *sitter.Node, src []byte) map[string]string {
+func parseRequiredProviders(block ts.Node, src []byte) map[string]string {
 	body := blockBody(block)
 	if body == nil {
 		return nil
@@ -414,7 +414,7 @@ func parseRequiredProviders(block *sitter.Node, src []byte) map[string]string {
 
 // objectAttrString finds `key = "..."` inside an attribute's object value and
 // returns the string literal, else "". Used for required_providers entries.
-func objectAttrString(attr *sitter.Node, key string, src []byte) string {
+func objectAttrString(attr ts.Node, key string, src []byte) string {
 	obj := findFirstByType(attr, "object")
 	if obj == nil {
 		return ""
@@ -438,7 +438,7 @@ func objectAttrString(attr *sitter.Node, key string, src []byte) string {
 }
 
 // firstIdentText returns the text of the first identifier descendant.
-func firstIdentText(n *sitter.Node, src []byte) string {
+func firstIdentText(n ts.Node, src []byte) string {
 	if n == nil {
 		return ""
 	}
@@ -457,10 +457,10 @@ func firstIdentText(n *sitter.Node, src []byte) string {
 // only after the `=` sign (i.e. the value side). Simpler: scan all
 // template_literal descendants and return the last one, which is the value in
 // an object_elem (key side is an identifier, not a string).
-func firstTemplateLiteral(n *sitter.Node, src []byte) string {
+func firstTemplateLiteral(n ts.Node, src []byte) string {
 	var found string
-	var walk func(x *sitter.Node)
-	walk = func(x *sitter.Node) {
+	var walk func(x ts.Node)
+	walk = func(x ts.Node) {
 		if x == nil {
 			return
 		}
@@ -476,7 +476,7 @@ func firstTemplateLiteral(n *sitter.Node, src []byte) string {
 }
 
 // findFirstByType returns the first descendant (DFS) of n with the given type.
-func findFirstByType(n *sitter.Node, typ string) *sitter.Node {
+func findFirstByType(n ts.Node, typ string) ts.Node {
 	if n == nil {
 		return nil
 	}
@@ -495,7 +495,7 @@ func findFirstByType(n *sitter.Node, typ string) *sitter.Node {
 // nested blocks and returns the list of recognised meta-block names. These are
 // recorded in resource Metadata so downstream consumers can see that a resource
 // declares lifecycle rules without us synthesising spurious entities.
-func hasLifecycleMetaBlocks(body *sitter.Node, src []byte) []string {
+func hasLifecycleMetaBlocks(body ts.Node, src []byte) []string {
 	if body == nil {
 		return nil
 	}

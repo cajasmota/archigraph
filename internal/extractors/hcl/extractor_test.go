@@ -5,11 +5,12 @@ import (
 	"os"
 	"testing"
 
-	sitter "github.com/smacker/go-tree-sitter"
 	tshcl "github.com/smacker/go-tree-sitter/hcl"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/hcl" // trigger init()
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
+	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -17,10 +18,13 @@ import (
 // Helpers
 // ----------------------------------------------------------------
 
-func parseHCL(src []byte) *sitter.Tree {
-	p := sitter.NewParser()
-	p.SetLanguage(tshcl.GetLanguage())
-	tree, err := p.ParseCtx(context.Background(), nil, src)
+func parseHCL(src []byte) ts.Tree {
+	p, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tshcl.GetLanguage()))
+	if err != nil {
+		panic("test helper: hcl parser init failed: " + err.Error())
+	}
+	defer p.Close()
+	tree, err := p.Parse(src)
 	if err != nil {
 		panic("test helper: hcl parse failed: " + err.Error())
 	}
@@ -38,7 +42,7 @@ func extractHCL(src, path string) ([]types.EntityRecord, error) {
 		Path:     path,
 		Content:  content,
 		Language: "hcl",
-		Tree:     tree,
+		TSTree:   tree,
 	})
 }
 
@@ -53,7 +57,7 @@ func extractTerraform(src, path string) ([]types.EntityRecord, error) {
 		Path:     path,
 		Content:  content,
 		Language: "terraform",
-		Tree:     tree,
+		TSTree:   tree,
 	})
 }
 

@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	sitter "github.com/smacker/go-tree-sitter"
 	tsc "github.com/smacker/go-tree-sitter/c"
 
 	"github.com/cajasmota/grafel/internal/extractor"
@@ -15,6 +14,8 @@ import (
 	_ "github.com/cajasmota/grafel/internal/extractors/cross/abibridge"
 	"github.com/cajasmota/grafel/internal/graph"
 	"github.com/cajasmota/grafel/internal/resolve"
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
+	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -36,17 +37,20 @@ func loadFixture(t *testing.T, name string) []byte {
 // Pass 3), returning the merged entity slice.
 func extractAll(t *testing.T, path string, content []byte, lang string) []types.EntityRecord {
 	t.Helper()
-	var tree *sitter.Tree
+	var tree ts.Tree
 	if lang == "c" {
-		p := sitter.NewParser()
-		p.SetLanguage(tsc.GetLanguage())
-		tr, err := p.ParseCtx(context.Background(), nil, content)
+		p, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tsc.GetLanguage()))
+		if err != nil {
+			t.Fatalf("parser init %s: %v", path, err)
+		}
+		defer p.Close()
+		tr, err := p.Parse(content)
 		if err != nil {
 			t.Fatalf("parse %s: %v", path, err)
 		}
 		tree = tr
 	}
-	in := extractor.FileInput{Path: path, Content: content, Language: lang, Tree: tree}
+	in := extractor.FileInput{Path: path, Content: content, Language: lang, TSTree: tree}
 
 	var out []types.EntityRecord
 	// Pass 1: the language extractor.

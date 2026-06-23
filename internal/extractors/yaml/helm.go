@@ -41,13 +41,12 @@ package yaml
 
 import (
 	"bytes"
-	"context"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
-	sitter "github.com/smacker/go-tree-sitter"
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/types"
@@ -379,7 +378,7 @@ const helmPlaceholder = "__helm__"
 // extractHelm dispatches to the appropriate Helm sub-extractor. Unlike the
 // other flavors it may re-parse the file content (templates need the stripped
 // text), so it takes the original root only as a fallback.
-func extractHelm(flavor string, root *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func extractHelm(flavor string, root ts.Node, file extractor.FileInput) []types.EntityRecord {
 	switch flavor {
 	case flavorHelmChart:
 		return extractHelmChart(root, file)
@@ -396,7 +395,7 @@ func extractHelm(flavor string, root *sitter.Node, file extractor.FileInput) []t
 // extractHelmChart processes a Chart.yaml: emits a chart entity and one IMPORTS
 // edge per dependency (chart → subchart). The dependency's repository + version
 // are recorded on the edge Properties for provenance.
-func extractHelmChart(root *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func extractHelmChart(root ts.Node, file extractor.FileInput) []types.EntityRecord {
 	src := file.Content
 	pairs := topLevelMappings(root)
 	var entities []types.EntityRecord
@@ -477,7 +476,7 @@ func extractHelmChart(root *sitter.Node, file extractor.FileInput) []types.Entit
 // "values_key" entity per LEAF path in the value tree, with the dotted path as
 // the QualifiedName so template `.Values.<path>` binding edges resolve against
 // it.
-func extractHelmValues(root *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func extractHelmValues(root ts.Node, file extractor.FileInput) []types.EntityRecord {
 	src := file.Content
 	topPairs := topLevelMappings(root)
 	var entities []types.EntityRecord
@@ -490,8 +489,8 @@ func extractHelmValues(root *sitter.Node, file extractor.FileInput) []types.Enti
 	// a content-side channel the test wires through.
 	subcharts := helmSiblingSubcharts(file)
 
-	var walk func(pairs []*sitter.Node, prefix string, subchart string)
-	walk = func(pairs []*sitter.Node, prefix string, subchart string) {
+	var walk func(pairs []ts.Node, prefix string, subchart string)
+	walk = func(pairs []ts.Node, prefix string, subchart string) {
 		for _, p := range pairs {
 			key := pairKeyText(p, src)
 			if key == "" {
@@ -539,7 +538,7 @@ func extractHelmValues(root *sitter.Node, file extractor.FileInput) []types.Enti
 				// Nested map → recurse; emit the intermediate node too so a
 				// `.Values.parent` reference (whole sub-tree) can still bind.
 				entities = append(entities, ent)
-				var childPairs []*sitter.Node
+				var childPairs []ts.Node
 				for i := range childBM.ChildCount() {
 					c := childBM.Child(int(i))
 					if c != nil && c.Type() == "block_mapping_pair" {
@@ -677,13 +676,14 @@ func extractHelmTemplate(file extractor.FileInput) []types.EntityRecord {
 		Content:  res.stripped,
 		Language: "yaml",
 	}
-	parser := sitter.NewParser()
-	parser.SetLanguage(yamlGrammar())
-	tree, err := parser.ParseCtx(context.Background(), nil, res.stripped)
-	if err == nil && tree != nil {
-		root := tree.RootNode()
-		if root != nil {
-			entities = append(entities, extractKubernetes(root, cleaned)...)
+	if parser, perr := yamlAdapter.NewParser(yamlGrammar()); perr == nil {
+		defer parser.Close()
+		tree, err := parser.Parse(res.stripped)
+		if err == nil && tree != nil {
+			root := tree.RootNode()
+			if root != nil {
+				entities = append(entities, extractKubernetes(root, cleaned)...)
+			}
 		}
 	}
 

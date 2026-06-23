@@ -31,7 +31,7 @@ import (
 	"context"
 	"strings"
 
-	sitter "github.com/smacker/go-tree-sitter"
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -79,12 +79,15 @@ func (e *HCLExtractor) Extract(ctx context.Context, file extractor.FileInput) ([
 		return nil, nil
 	}
 
-	tree := file.Tree
+	tree := file.TSTree
 	if tree == nil {
-		parser := sitter.NewParser()
-		parser.SetLanguage(hclGrammar())
+		parser, perr := hclAdapter.NewParser(hclGrammar())
+		if perr != nil {
+			return nil, perr
+		}
+		defer parser.Close()
 		var err error
-		tree, err = parser.ParseCtx(ctx, nil, file.Content)
+		tree, err = parser.Parse(file.Content)
 		if err != nil {
 			return nil, err
 		}
@@ -125,12 +128,12 @@ func (e *HCLExtractor) Extract(ctx context.Context, file extractor.FileInput) ([
 // walkBody walks a config_file or body node, dispatching top-level blocks.
 // Only top-level blocks are dispatched; nested blocks (e.g., statement inside
 // data) are not emitted as separate entities.
-func walkBody(root *sitter.Node, src []byte, path, lang string, out *[]types.EntityRecord) {
+func walkBody(root ts.Node, src []byte, path, lang string, out *[]types.EntityRecord) {
 	if root == nil {
 		return
 	}
 	// root may be config_file → body, or body directly.
-	var body *sitter.Node
+	var body ts.Node
 	if root.Type() == "config_file" {
 		body = firstChildByType(root, "body")
 	} else if root.Type() == "body" {
@@ -154,7 +157,7 @@ func walkBody(root *sitter.Node, src []byte, path, lang string, out *[]types.Ent
 
 // extractBlock handles a single HCL block node and returns 0–N EntityRecords.
 // Returns multiple records for locals blocks (one per attribute).
-func extractBlock(n *sitter.Node, src []byte, path, lang string) ([]types.EntityRecord, bool) {
+func extractBlock(n ts.Node, src []byte, path, lang string) ([]types.EntityRecord, bool) {
 	// Block structure: identifier [string_lit ...] block_start body block_end
 	blockType := blockTypeIdent(n, src)
 	if blockType == "" {
@@ -187,7 +190,7 @@ func extractBlock(n *sitter.Node, src []byte, path, lang string) ([]types.Entity
 }
 
 // extractResourceBlock: resource "type" "name" → SCOPE.Component / resource
-func extractResourceBlock(n *sitter.Node, src []byte, path, lang string, start, end int) ([]types.EntityRecord, bool) {
+func extractResourceBlock(n ts.Node, src []byte, path, lang string, start, end int) ([]types.EntityRecord, bool) {
 	labels := blockLabels(n, src)
 	if len(labels) < 2 {
 		return nil, false
@@ -264,7 +267,7 @@ func extractResourceBlock(n *sitter.Node, src []byte, path, lang string, start, 
 }
 
 // extractDataBlock: data "type" "name" → SCOPE.Component / data_source
-func extractDataBlock(n *sitter.Node, src []byte, path, lang string, start, end int) ([]types.EntityRecord, bool) {
+func extractDataBlock(n ts.Node, src []byte, path, lang string, start, end int) ([]types.EntityRecord, bool) {
 	labels := blockLabels(n, src)
 	if len(labels) < 2 {
 		return nil, false
@@ -309,7 +312,7 @@ func extractDataBlock(n *sitter.Node, src []byte, path, lang string, start, end 
 }
 
 // extractModuleBlock: module "name" → SCOPE.Component / module
-func extractModuleBlock(n *sitter.Node, src []byte, path, lang string, start, end int) ([]types.EntityRecord, bool) {
+func extractModuleBlock(n ts.Node, src []byte, path, lang string, start, end int) ([]types.EntityRecord, bool) {
 	labels := blockLabels(n, src)
 	if len(labels) < 1 {
 		return nil, false
@@ -365,7 +368,7 @@ func extractModuleBlock(n *sitter.Node, src []byte, path, lang string, start, en
 }
 
 // extractVariableBlock: variable "name" → SCOPE.Schema / variable
-func extractVariableBlock(n *sitter.Node, src []byte, path, lang string, start, end int) ([]types.EntityRecord, bool) {
+func extractVariableBlock(n ts.Node, src []byte, path, lang string, start, end int) ([]types.EntityRecord, bool) {
 	labels := blockLabels(n, src)
 	if len(labels) < 1 {
 		return nil, false
@@ -390,7 +393,7 @@ func extractVariableBlock(n *sitter.Node, src []byte, path, lang string, start, 
 }
 
 // extractOutputBlock: output "name" → SCOPE.Schema / output
-func extractOutputBlock(n *sitter.Node, src []byte, path, lang string, start, end int) ([]types.EntityRecord, bool) {
+func extractOutputBlock(n ts.Node, src []byte, path, lang string, start, end int) ([]types.EntityRecord, bool) {
 	labels := blockLabels(n, src)
 	if len(labels) < 1 {
 		return nil, false
@@ -415,7 +418,7 @@ func extractOutputBlock(n *sitter.Node, src []byte, path, lang string, start, en
 }
 
 // extractProviderBlock: provider "name" → SCOPE.Component / provider
-func extractProviderBlock(n *sitter.Node, src []byte, path, lang string, start, end int) ([]types.EntityRecord, bool) {
+func extractProviderBlock(n ts.Node, src []byte, path, lang string, start, end int) ([]types.EntityRecord, bool) {
 	labels := blockLabels(n, src)
 	if len(labels) < 1 {
 		return nil, false
@@ -440,7 +443,7 @@ func extractProviderBlock(n *sitter.Node, src []byte, path, lang string, start, 
 }
 
 // extractLocalsBlock: locals { key = val ... } → one SCOPE.Schema / local per key
-func extractLocalsBlock(n *sitter.Node, src []byte, path, lang string) ([]types.EntityRecord, bool) {
+func extractLocalsBlock(n ts.Node, src []byte, path, lang string) ([]types.EntityRecord, bool) {
 	body := blockBody(n)
 	if body == nil {
 		return nil, false
@@ -490,7 +493,7 @@ func extractLocalsBlock(n *sitter.Node, src []byte, path, lang string) ([]types.
 //
 // depends_on = [resource.type.name, module.name]
 // The AST: attribute → identifier("depends_on") / expression → collection_value → tuple → expression → ...
-func extractDependsOn(body *sitter.Node, src []byte, fromPath, lang string) []types.RelationshipRecord {
+func extractDependsOn(body ts.Node, src []byte, fromPath, lang string) []types.RelationshipRecord {
 	if body == nil {
 		return nil
 	}
@@ -516,7 +519,7 @@ func extractDependsOn(body *sitter.Node, src []byte, fromPath, lang string) []ty
 // The AST path is: attribute → expression → collection_value → tuple →
 // expression* (one per element). Each element expression contains variable_expr
 // and get_attr siblings that form the dotted reference.
-func parseDependsOnTuple(attr *sitter.Node, src []byte, fromPath, lang string) []types.RelationshipRecord {
+func parseDependsOnTuple(attr ts.Node, src []byte, fromPath, lang string) []types.RelationshipRecord {
 	if attr == nil {
 		return nil
 	}
@@ -526,8 +529,8 @@ func parseDependsOnTuple(attr *sitter.Node, src []byte, fromPath, lang string) [
 	// Find all "expression" nodes that are direct children of a "tuple" node.
 	// We walk the full subtree but only emit references for expressions whose
 	// parent is a tuple (list element), not the top-level attribute expression.
-	var collectTupleExprs func(n *sitter.Node)
-	collectTupleExprs = func(n *sitter.Node) {
+	var collectTupleExprs func(n ts.Node)
+	collectTupleExprs = func(n ts.Node) {
 		if n == nil {
 			return
 		}
@@ -563,7 +566,7 @@ func parseDependsOnTuple(attr *sitter.Node, src []byte, fromPath, lang string) [
 
 // resolveReference builds a dotted reference string from an expression node.
 // Handles: variable_expr followed by get_attr children (e.g., aws_iam_role.lambda_role).
-func resolveReference(expr *sitter.Node, src []byte) string {
+func resolveReference(expr ts.Node, src []byte) string {
 	if expr == nil {
 		return ""
 	}
@@ -598,7 +601,7 @@ func resolveReference(expr *sitter.Node, src []byte) string {
 // ----------------------------------------------------------------
 
 // blockTypeIdent returns the block type identifier (first identifier child).
-func blockTypeIdent(block *sitter.Node, src []byte) string {
+func blockTypeIdent(block ts.Node, src []byte) string {
 	if block == nil {
 		return ""
 	}
@@ -614,7 +617,7 @@ func blockTypeIdent(block *sitter.Node, src []byte) string {
 
 // blockLabels returns all string_lit label values for a block (after the type identifier).
 // For `resource "aws_lambda_function" "grafel"` returns ["aws_lambda_function", "grafel"].
-func blockLabels(block *sitter.Node, src []byte) []string {
+func blockLabels(block ts.Node, src []byte) []string {
 	if block == nil {
 		return nil
 	}
@@ -641,7 +644,7 @@ func blockLabels(block *sitter.Node, src []byte) []string {
 }
 
 // stringLitValue extracts the text content of a string_lit node (the template_literal child).
-func stringLitValue(n *sitter.Node, src []byte) string {
+func stringLitValue(n ts.Node, src []byte) string {
 	if n == nil {
 		return ""
 	}
@@ -658,13 +661,13 @@ func stringLitValue(n *sitter.Node, src []byte) string {
 }
 
 // blockBody returns the body child of a block node.
-func blockBody(block *sitter.Node) *sitter.Node {
+func blockBody(block ts.Node) ts.Node {
 	return firstChildByType(block, "body")
 }
 
 // attributeStringValue finds an attribute by key name inside a body node
 // and returns its string value (template_literal).
-func attributeStringValue(body *sitter.Node, key string, src []byte) string {
+func attributeStringValue(body ts.Node, key string, src []byte) string {
 	if body == nil {
 		return ""
 	}
@@ -686,12 +689,12 @@ func attributeStringValue(body *sitter.Node, key string, src []byte) string {
 
 // extractStringFromAttr extracts the first template_literal string value
 // from an attribute node's expression subtree.
-func extractStringFromAttr(attr *sitter.Node, src []byte) string {
+func extractStringFromAttr(attr ts.Node, src []byte) string {
 	if attr == nil {
 		return ""
 	}
 	// Walk the expression subtree for template_literal.
-	stack := []*sitter.Node{attr}
+	stack := []ts.Node{attr}
 	for len(stack) > 0 {
 		n := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
@@ -712,7 +715,7 @@ func extractStringFromAttr(attr *sitter.Node, src []byte) string {
 // ----------------------------------------------------------------
 
 // firstChildByType returns the first child of n with the given type.
-func firstChildByType(n *sitter.Node, typ string) *sitter.Node {
+func firstChildByType(n ts.Node, typ string) ts.Node {
 	if n == nil {
 		return nil
 	}
@@ -727,7 +730,7 @@ func firstChildByType(n *sitter.Node, typ string) *sitter.Node {
 }
 
 // nodeText returns the source text for a node.
-func nodeText(n *sitter.Node, src []byte) string {
+func nodeText(n ts.Node, src []byte) string {
 	if n == nil {
 		return ""
 	}
@@ -740,6 +743,6 @@ func nodeText(n *sitter.Node, src []byte) string {
 }
 
 // nodeLines returns (startLine, endLine) 1-indexed for a node.
-func nodeLines(n *sitter.Node) (int, int) {
+func nodeLines(n ts.Node) (int, int) {
 	return int(n.StartPoint().Row) + 1, int(n.EndPoint().Row) + 1
 }

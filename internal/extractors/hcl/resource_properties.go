@@ -3,7 +3,7 @@ package hcl
 import (
 	"strings"
 
-	sitter "github.com/smacker/go-tree-sitter"
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
 )
 
 // resource_properties.go — epic #4194 (iac_resource_property_extraction).
@@ -68,7 +68,7 @@ var curatedResourceScalarKeys = map[string]struct{}{
 // stampResourceScalarProperties scans a resource block body for the curated
 // scalar attributes and stamps them onto rec.Properties. No-op when the body
 // has no matching scalar attributes (Properties stays nil to avoid empty maps).
-func stampResourceScalarProperties(rec *EntityProps, body *sitter.Node, src []byte) {
+func stampResourceScalarProperties(rec *EntityProps, body ts.Node, src []byte) {
 	if body == nil || rec == nil {
 		return
 	}
@@ -113,7 +113,7 @@ type EntityProps struct {
 // quotes are stripped (the template_literal text is returned). For any
 // non-literal value (references, interpolated templates, collections, function
 // calls) it returns ("", false).
-func scalarLiteralValue(attr *sitter.Node, src []byte) (string, bool) {
+func scalarLiteralValue(attr ts.Node, src []byte) (string, bool) {
 	expr := firstChildByType(attr, "expression")
 	if expr == nil {
 		return "", false
@@ -149,7 +149,7 @@ func scalarLiteralValue(attr *sitter.Node, src []byte) (string, bool) {
 // expressions). A string containing ${...} interpolation is a reference-bearing
 // template and is NOT a scalar — those are mined as CALLS edges, so we return
 // ("", false) for them.
-func scalarStringLit(n *sitter.Node, src []byte) (string, bool) {
+func scalarStringLit(n ts.Node, src []byte) (string, bool) {
 	if n == nil {
 		return "", false
 	}

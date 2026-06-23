@@ -7,11 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	sitter "github.com/smacker/go-tree-sitter"
 	tsyaml "github.com/smacker/go-tree-sitter/yaml"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/yaml" // trigger init()
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
+	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -19,10 +20,13 @@ import (
 // Helpers
 // ---------------------------------------------------------------------------
 
-func parseYAML(src []byte) *sitter.Tree {
-	p := sitter.NewParser()
-	p.SetLanguage(tsyaml.GetLanguage())
-	tree, err := p.ParseCtx(context.Background(), nil, src)
+func parseYAML(src []byte) ts.Tree {
+	p, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tsyaml.GetLanguage()))
+	if err != nil {
+		panic("test helper: yaml parser init failed: " + err.Error())
+	}
+	defer p.Close()
+	tree, err := p.Parse(src)
 	if err != nil {
 		panic("test helper: yaml parse failed: " + err.Error())
 	}
@@ -39,7 +43,7 @@ func extractYAML(src []byte, path string) ([]types.EntityRecord, error) {
 		Path:     path,
 		Content:  src,
 		Language: "yaml",
-		Tree:     tree,
+		TSTree:   tree,
 	})
 }
 
@@ -52,7 +56,7 @@ func extractYAMLNoTree(src []byte, path string) ([]types.EntityRecord, error) {
 		Path:     path,
 		Content:  src,
 		Language: "yaml",
-		Tree:     nil,
+		TSTree:   nil,
 	})
 }
 
@@ -2297,7 +2301,7 @@ func extractYAMLWithRoot(src []byte, path, repoRoot string) ([]types.EntityRecor
 		Path:     path,
 		Content:  src,
 		Language: "yaml",
-		Tree:     tree,
+		TSTree:   tree,
 		RepoRoot: repoRoot,
 	})
 }

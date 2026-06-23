@@ -29,7 +29,7 @@ import (
 	"regexp"
 	"strings"
 
-	sitter "github.com/smacker/go-tree-sitter"
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -159,12 +159,15 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 	}
 
 	// Reuse pre-parsed tree or parse inline.
-	tree := file.Tree
+	tree := file.TSTree
 	if tree == nil {
-		parser := sitter.NewParser()
-		parser.SetLanguage(htmlGrammar())
+		parser, perr := htmlAdapter.NewParser(htmlGrammar())
+		if perr != nil {
+			return nil, perr
+		}
+		defer parser.Close()
 		var err error
-		tree, err = parser.ParseCtx(ctx, nil, file.Content)
+		tree, err = parser.Parse(file.Content)
 		if err != nil {
 			return nil, err
 		}
@@ -188,13 +191,13 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 }
 
 // walkDocument traverses the full document tree, collecting entities from all nodes.
-func walkDocument(root *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func walkDocument(root ts.Node, file extractor.FileInput) []types.EntityRecord {
 	if root == nil {
 		return nil
 	}
 
 	var entities []types.EntityRecord
-	stack := []*sitter.Node{root}
+	stack := []ts.Node{root}
 
 	for len(stack) > 0 {
 		node := stack[len(stack)-1]
@@ -245,7 +248,7 @@ func walkDocument(root *sitter.Node, file extractor.FileInput) []types.EntityRec
 // isFormElement reports whether node is an <element> whose start tag is <form>.
 // Used by walkDocument to avoid re-pushing form children onto the stack after
 // visitElement has already descended into them.
-func isFormElement(node *sitter.Node, file extractor.FileInput) bool {
+func isFormElement(node ts.Node, file extractor.FileInput) bool {
 	startTag := childByType(node, "start_tag")
 	if startTag == nil {
 		return false
@@ -260,7 +263,7 @@ func isFormElement(node *sitter.Node, file extractor.FileInput) bool {
 // visitElement handles <form>, <link rel="stylesheet">, and custom elements.
 // For <form> elements it also descends into children to extract form fields.
 // Also checks attributes for Vue/Angular directives.
-func visitElement(node *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func visitElement(node ts.Node, file extractor.FileInput) []types.EntityRecord {
 	var recs []types.EntityRecord
 
 	startTag := childByType(node, "start_tag")
@@ -371,12 +374,12 @@ func visitElement(node *sitter.Node, file extractor.FileInput) []types.EntityRec
 // visitFormFields walks the immediate and nested children of a <form> element
 // and emits SCOPE.UIComponent entities for <input>, <select>, <textarea>,
 // and <button> tags.
-func visitFormFields(formNode *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func visitFormFields(formNode ts.Node, file extractor.FileInput) []types.EntityRecord {
 	var recs []types.EntityRecord
 
 	// BFS over all descendants of the form node (not just direct children,
 	// to handle divs/fieldsets wrapping the fields).
-	queue := []*sitter.Node{}
+	queue := []ts.Node{}
 	for i := range formNode.ChildCount() {
 		if ch := formNode.Child(int(i)); ch != nil {
 			queue = append(queue, ch)
@@ -430,7 +433,7 @@ func visitFormFields(formNode *sitter.Node, file extractor.FileInput) []types.En
 // buildFormFieldEntity constructs a SCOPE.UIComponent entity record for a
 // form field element. It prefers the "name" attribute for the entity name,
 // falls back to "id", then to the tag name itself.
-func buildFormFieldEntity(node *sitter.Node, attrSource *sitter.Node, tagName string, file extractor.FileInput) types.EntityRecord {
+func buildFormFieldEntity(node ts.Node, attrSource ts.Node, tagName string, file extractor.FileInput) types.EntityRecord {
 	name := attrValue(attrSource, "name", file.Content)
 	if name == "" {
 		name = attrValue(attrSource, "id", file.Content)
@@ -517,7 +520,7 @@ func extractJinja2Directives(file extractor.FileInput) []types.EntityRecord {
 }
 
 // visitScriptElement handles <script src="..."> includes.
-func visitScriptElement(node *sitter.Node, file extractor.FileInput) (types.EntityRecord, bool) {
+func visitScriptElement(node ts.Node, file extractor.FileInput) (types.EntityRecord, bool) {
 	startTag := childByType(node, "start_tag")
 	if startTag == nil {
 		return types.EntityRecord{}, false
@@ -554,7 +557,7 @@ func visitScriptElement(node *sitter.Node, file extractor.FileInput) (types.Enti
 // The HTML grammar parses these as self_closing_tag nodes rather than as
 // element/script_element wrappers, so we cover them separately here to
 // keep IMPORTS coverage symmetric with the start_tag form.
-func visitSelfClosingTag(node *sitter.Node, file extractor.FileInput) (types.EntityRecord, bool) {
+func visitSelfClosingTag(node ts.Node, file extractor.FileInput) (types.EntityRecord, bool) {
 	tagNameNode := childByType(node, "tag_name")
 	if tagNameNode == nil {
 		return types.EntityRecord{}, false
@@ -678,7 +681,7 @@ func assetBasename(ref string) string {
 // visitTextNode scans text content for {{ }} mustache template expressions.
 // Emits only expressions that contain a dot or pipe (filter) character to
 // reduce noise from simple variable references.
-func visitTextNode(node *sitter.Node, file extractor.FileInput) []types.EntityRecord {
+func visitTextNode(node ts.Node, file extractor.FileInput) []types.EntityRecord {
 	text := nodeText(node, file.Content)
 	if text == "" {
 		return nil
@@ -719,7 +722,7 @@ func visitTextNode(node *sitter.Node, file extractor.FileInput) []types.EntityRe
 
 // visitAttributes walks attribute nodes in a start_tag and emits Vue/Angular
 // directive entities.
-func visitAttributes(startTag *sitter.Node, file extractor.FileInput, tagName string, startLine, endLine int) []types.EntityRecord {
+func visitAttributes(startTag ts.Node, file extractor.FileInput, tagName string, startLine, endLine int) []types.EntityRecord {
 	var recs []types.EntityRecord
 
 	for i := range startTag.ChildCount() {
@@ -771,7 +774,7 @@ func visitAttributes(startTag *sitter.Node, file extractor.FileInput, tagName st
 }
 
 // nodeText returns the UTF-8 text span of a node in the source.
-func nodeText(node *sitter.Node, src []byte) string {
+func nodeText(node ts.Node, src []byte) string {
 	if node == nil {
 		return ""
 	}
@@ -784,7 +787,7 @@ func nodeText(node *sitter.Node, src []byte) string {
 }
 
 // childByType returns the first child with the given node type.
-func childByType(node *sitter.Node, t string) *sitter.Node {
+func childByType(node ts.Node, t string) ts.Node {
 	for i := range node.ChildCount() {
 		ch := node.Child(int(i))
 		if ch != nil && ch.Type() == t {
@@ -796,7 +799,7 @@ func childByType(node *sitter.Node, t string) *sitter.Node {
 
 // attrValue looks up the value of a named attribute in a start_tag node.
 // Returns empty string if the attribute is absent or has no value.
-func attrValue(startTag *sitter.Node, name string, src []byte) string {
+func attrValue(startTag ts.Node, name string, src []byte) string {
 	for i := range startTag.ChildCount() {
 		ch := startTag.Child(int(i))
 		if ch == nil || ch.Type() != "attribute" {

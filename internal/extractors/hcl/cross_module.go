@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	sitter "github.com/smacker/go-tree-sitter"
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/types"
@@ -60,7 +60,7 @@ import (
 // name, the consuming attribute, and a derived semantic label. selfRef is the
 // canonical ref of the consuming block (used as the edge FromID and to derive
 // semantics from the consuming resource type).
-func extractCrossModuleRefs(body *sitter.Node, src []byte, path, lang, selfRef string) []types.RelationshipRecord {
+func extractCrossModuleRefs(body ts.Node, src []byte, path, lang, selfRef string) []types.RelationshipRecord {
 	if body == nil {
 		return nil
 	}
@@ -70,8 +70,8 @@ func extractCrossModuleRefs(body *sitter.Node, src []byte, path, lang, selfRef s
 
 	// walk descends an attribute value tree carrying the enclosing attribute
 	// key (argName) so the semantic derivation can use the consuming attribute.
-	var walk func(n *sitter.Node, argName string)
-	walk = func(n *sitter.Node, argName string) {
+	var walk func(n ts.Node, argName string)
+	walk = func(n ts.Node, argName string) {
 		if n == nil {
 			return
 		}
@@ -106,8 +106,8 @@ func extractCrossModuleRefs(body *sitter.Node, src []byte, path, lang, selfRef s
 
 	// Walk top-level attributes and nested blocks, tracking the attribute key
 	// that encloses each reference so semantics can use it.
-	var descend func(n *sitter.Node)
-	descend = func(n *sitter.Node) {
+	var descend func(n ts.Node)
+	descend = func(n ts.Node) {
 		if n == nil {
 			return
 		}
@@ -145,7 +145,7 @@ func extractCrossModuleRefs(body *sitter.Node, src []byte, path, lang, selfRef s
 // `module.<name>.<output>` reference (optionally with deeper attribute access,
 // in which case outputName is the first attribute after the module name). It
 // returns ("","") for non-module refs or bare `module.<name>` (no output).
-func moduleOutputRef(expr *sitter.Node, src []byte) (string, string) {
+func moduleOutputRef(expr ts.Node, src []byte) (string, string) {
 	parts := referenceParts(expr, src)
 	if len(parts) >= 3 && parts[0] == "module" {
 		return parts[1], parts[2]
