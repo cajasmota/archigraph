@@ -19,13 +19,16 @@ import (
 // overlay's real reader (the MCP apply path) opens, reads, and closes the
 // file in a single brief operation, so the destination is held only for a few
 // microseconds at a time; a short bounded backoff rides out that window and
-// lets the swap land. ~10 tries × a few ms ≈ tens of ms worst case, which is
-// imperceptible for the overlay write yet survives the no-torn-read stress
-// test's four tight reader loops. Variables (not consts) so a future test can
-// shrink the delay.
+// lets the swap land. ~40 tries × 5ms ≈ 200ms worst case, which is
+// imperceptible for the overlay write yet comfortably survives the
+// no-torn-read stress test's four concurrent reader loops (which yield between
+// reads, opening a gap the retry can land in). The budget is deliberately
+// bounded: if a reader genuinely held the destination for >200ms the swap
+// surfaces the real error rather than hanging production. Variables (not
+// consts) so a future test can shrink the delay.
 var (
-	atomicRenameRetries    = 10
-	atomicRenameRetryDelay = 3 * time.Millisecond
+	atomicRenameRetries    = 40
+	atomicRenameRetryDelay = 5 * time.Millisecond
 )
 
 // atomicRename performs the temp→dest swap that finalizes an overlay write,
