@@ -8,6 +8,18 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 
 ## [Unreleased]
 
+### Fixed
+- **Daemon no longer exits on transient `Accept()` errors (#5424):**
+  `acceptLoop` previously returned the serve loop on **any** `Accept()` error
+  other than `net.ErrClosed`, which made `Run` unlink the unix socket and drop
+  every MCP client. A transient failure under load — `EMFILE` (fd exhaustion),
+  `ENOMEM`/`ENOBUFS` (memory pressure), `ECONNABORTED`, or any `net.Error` whose
+  `Timeout()` is true — was therefore treated as fatal and caused an MCP outage.
+  The loop now mirrors `net/http.Server.Serve`: it logs a WARN, backs off with an
+  exponential delay (5ms → double → cap 1s, reset on a successful Accept), and
+  keeps serving. The socket survives and only clean shutdown (`net.ErrClosed`) or
+  a genuinely unrecoverable error exits.
+
 ### Added
 - **New-language-feature triage process (#5415, #5359 C1):**
   `docs/new-language-feature-triage.md` — the decision procedure that turns a new
