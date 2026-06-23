@@ -49,6 +49,7 @@ import {
 } from "@/lib/graph-colors";
 import { saveLayout, loadLayout, isDegenerateLayout, isLayoutHealthy } from "@/lib/graph-layout-cache";
 import { isRenderableGraph } from "@/lib/graph-render-guard";
+import { shouldFitReplayStep } from "@/lib/replay-glow-visibility";
 import {
   autoBasePx,
   type ColorMode,
@@ -70,6 +71,15 @@ const EMPTY_HIGHLIGHT: ReadonlySet<string> = new Set();
 // frame (the base buffers are written once, off the hot path). The same bounded
 // set drives the dim-focus selection so both stay non-blocking.
 const GLOW_CAP = 200;
+
+// #5458 — duration (ms) of the EASED final settle fit. Long enough to read as a
+// glide (not a snap), short enough not to feel sluggish.
+const FINAL_FIT_MS = 320;
+
+// #5457 — duration (ms) of the eased camera pan to an off-screen MCP-replay step.
+// Short enough to keep pace with the ~650ms/step replay cadence so the camera has
+// arrived (and the glow is visible) well before the next step fires.
+const REPLAY_GLOW_FIT_MS = 280;
 
 const SPACE_SIZE = 32768;
 // Fix #1532-3 / #1548-2: a small padding makes the settled graph FILL the
@@ -867,6 +877,10 @@ function GraphCanvasInner(
   // verify-then-retry controller checks it so it only ever auto-corrects the
   // INITIAL collapsed render — once the user takes control we never re-fire.
   const userInteractedRef = useRef(false);
+  // #5458 — live mirror of the isFocusView prop so the mount-stable settle-fit
+  // tracker can gate on it without re-running on every focus toggle.
+  const isFocusViewRef = useRef(isFocusView);
+  isFocusViewRef.current = isFocusView;
   const rafRef = useRef<number | null>(null);
   const motionLoop = useCallback(() => {
     if (!interactingRef.current) {
@@ -948,6 +962,139 @@ function GraphCanvasInner(
   const fitNowRef = useRef(fitNow);
   fitNowRef.current = fitNow;
 
+  // #5458 — EASED fit. cosmos.gl `fitView`/`fitViewByPointIndices` take a
+  // duration (ms) and animate the camera center+zoom over it (d3-zoom transition).
+  // Unlike `fitNow` (duration 0, used at the final pinned settle) this is for the
+  // LIVE, still-running settle where the loop is already painting — so we just ask
+  // the engine to glide the camera; no pause/re-pin dance is needed (the sim owns
+  // the geometry). Sanitize first so a transiently non-finite frame can't size an
+  // Infinity bounds buffer and crash (same guard as fitNow). A no-op if the engine
+  // is paused (cosmos only applies a fit while the render loop runs) — callers gate
+  // on isSimulationRunning so the loop is live when this is used.
+  const fitAnimated = useCallback((durationMs: number) => {
+    const g = graphRef.current;
+    if (!g) return;
+    try {
+      const raw = g.getPointPositions();
+      const { array: clean, repaired } = sanitizePositions(raw);
+      if (repaired) g.setPointPositions(clean, true);
+      g.fitView(durationMs, FIT_PADDING);
+    } catch (err) {
+      console.error("[graph-canvas] fitAnimated failed (ignored)", err);
+    }
+  }, []);
+  const fitAnimatedRef = useRef(fitAnimated);
+  fitAnimatedRef.current = fitAnimated;
+
+  // #5458 — EASED fit to a SPECIFIC node-index set, working whether the engine is
+  // live OR settled (paused). A paused engine ignores any fit (the render loop is
+  // stopped), so we briefly unpause, kick the eased `fitViewByPointIndices`
+  // transition, and re-pin + re-pause once it has run. Used by the MCP-replay glow
+  // (#5457): each replayed step's nodes are usually OFF-SCREEN on the static
+  // settled camera, so the glow resolved to an off-screen sample and only the step
+  // whose nodes happened to be in view ever visibly pulsed. Panning the camera to
+  // each step's nodes (eased, matching the comet/sweep overlay) guarantees every
+  // replayed event glows in view. A larger padding than FIT_PADDING keeps the
+  // (often small) step cluster from filling the whole viewport.
+  const REPLAY_FIT_PADDING = 0.35;
+  // #5457 — monotonic token so a stale re-pin (from a previous step's fit) can't
+  // pause the engine mid-way through the NEXT step's camera transition during a
+  // fast replay-all.
+  const replayFitTokenRef = useRef(0);
+  const fitToIndicesAnimated = useCallback((indices: number[], durationMs: number) => {
+    const g = graphRef.current;
+    if (!g || indices.length === 0) return;
+    const wasSettled = hasSettledRef.current;
+    const token = ++replayFitTokenRef.current;
+    try {
+      const { array: clean, repaired } = sanitizePositions(g.getPointPositions());
+      if (repaired) g.setPointPositions(clean, true);
+      g.unpause();
+      g.fitViewByPointIndices(indices, durationMs, REPLAY_FIT_PADDING);
+      if (wasSettled) {
+        // Re-pin the settled geometry + pause once the camera transition has run,
+        // so the physics can't drift while the glow plays. The eased glide is what
+        // the user sees; the pin underneath holds the layout steady. Skip if a
+        // newer fit has superseded this one (token mismatch).
+        const frozen = clean;
+        setTimeout(() => {
+          if (replayFitTokenRef.current !== token) return; // superseded — leave live
+          const gg = graphRef.current;
+          if (!gg) return;
+          try {
+            gg.setPointPositions(frozen, true);
+            gg.pause();
+            applyZoomSizingRef.current(true);
+            applyZoomLinkWidthsRef.current(true);
+            refreshLabelsRef.current();
+          } catch {
+            /* engine torn down mid-transition — ignore */
+          }
+        }, durationMs + 40);
+      }
+    } catch (err) {
+      console.error("[graph-canvas] fitToIndicesAnimated failed (ignored)", err);
+    }
+  }, []);
+  const fitToIndicesAnimatedRef = useRef(fitToIndicesAnimated);
+  fitToIndicesAnimatedRef.current = fitToIndicesAnimated;
+
+  // #5458 — CONTINUOUS fit-DURING-settle. Historically the camera was static while
+  // the force sim spread the nodes, so the graph appeared to shrink + drift toward
+  // a corner for the whole settle and then SNAPPED to center on the single final
+  // fitView in doSettle. Here we track the camera to the spreading layout: a
+  // THROTTLED eased fit (~every FIT_TRACK_MS) while the simulation is running, so
+  // the graph stays centered + framed the whole time and the end "snap" is just the
+  // last small glide. Self-terminating: stops when the sim stops, on settle, on
+  // user interaction, or on focus/ego (where restoreCamera / the ego fit own the
+  // view). Only ONE tracker runs at a time (settleFitRafRef).
+  const settleFitRafRef = useRef<number | null>(null);
+  const FIT_TRACK_MS = 350; // throttle between tracking fits
+  const stopSettleFitTracking = useCallback(() => {
+    if (settleFitRafRef.current !== null) {
+      cancelAnimationFrame(settleFitRafRef.current);
+      settleFitRafRef.current = null;
+    }
+  }, []);
+  const stopSettleFitTrackingRef = useRef(stopSettleFitTracking);
+  stopSettleFitTrackingRef.current = stopSettleFitTracking;
+  const startSettleFitTracking = useCallback(() => {
+    const g = graphRef.current;
+    if (!g) return;
+    // Don't track during focus/ego (the ego re-fit / camera restore owns the view)
+    // or when a fit is being suppressed for a camera restore.
+    if (isFocusViewRef.current || suppressFitRef.current) return;
+    if (userInteractedRef.current) return; // never fight a manual pan/zoom
+    stopSettleFitTrackingRef.current();
+    let last = 0;
+    const tick = (now: number) => {
+      const gg = graphRef.current;
+      // Stop the moment any owner takes over or the settle finishes.
+      if (
+        !gg ||
+        hasSettledRef.current ||
+        userInteractedRef.current ||
+        isFocusViewRef.current ||
+        suppressFitRef.current ||
+        !gg.isSimulationRunning
+      ) {
+        settleFitRafRef.current = null;
+        return;
+      }
+      if (now - last >= FIT_TRACK_MS) {
+        last = now;
+        // Glide the camera to the current bounds over slightly less than the
+        // throttle interval so each track completes before the next begins —
+        // the graph stays centered + framed instead of drifting then snapping.
+        fitAnimatedRef.current(Math.round(FIT_TRACK_MS * 0.8));
+      }
+      settleFitRafRef.current = requestAnimationFrame(tick);
+    };
+    settleFitRafRef.current = requestAnimationFrame(tick);
+  }, []);
+  const startSettleFitTrackingRef = useRef(startSettleFitTracking);
+  startSettleFitTrackingRef.current = startSettleFitTracking;
+
   // Fix #1548-3: when EXITING focus we restore the snapshotted camera, so the
   // settle handler must NOT auto-fit (which would clobber the restore).
   const suppressFitRef = useRef(false);
@@ -985,39 +1132,48 @@ function GraphCanvasInner(
       saveLayout(group, nodeIds, positions);
     }
 
-    // Fix #1548-2: cosmos.gl `fitView` is a no-op while the render loop is
-    // paused — that was why the settled graph floated off-center and didn't
-    // FILL the viewport. We freeze the geometry (re-pin the settled positions)
-    // and pause the physics FIRST, then use the fitNow helper which briefly
-    // resumes the render loop to apply an INSTANT fit and pauses again — so the
-    // fit lands deterministically on the final geometry with no drift.
-    g.setPointPositions(positions, true);
-    g.pause();
+    // #5458 — stop the during-settle camera tracker; doSettle now owns the
+    // final framing.
+    stopSettleFitTrackingRef.current();
 
     if (suppressFitRef.current) {
-      // Exiting focus: skip the fit (restoreCamera owns the view).
+      // Exiting focus: skip the fit (restoreCamera owns the view). Pin + pause the
+      // geometry as before — restoreCamera reasserts the snapshotted view.
+      g.setPointPositions(positions, true);
+      g.pause();
       suppressFitRef.current = false;
       scheduleLabels();
       onSettledRef.current();
       return;
     }
 
-    fitNowRef.current();
-    // Fix #1607: the fit sets the fitted zoom level → recompute the zoom-driven
-    // point size so the very first painted (fitted) frame already has perceptible,
-    // non-overlapping nodes with no manual tuning.
+    // #5458 — EASED final fit, then pin. With the during-settle tracker the camera
+    // was already kept framed, so the final fit is a small correction rather than
+    // the old corner→center SNAP. We glide it (eased fitView) while the render loop
+    // is STILL LIVE (a fit is a no-op once paused), let the transition finish, then
+    // re-pin the settled positions + pause so the physics can't drift and the
+    // deterministic instant fitNow lands the exact framing. The eased glide is what
+    // the user sees; the instant pin underneath is imperceptible.
+    fitAnimatedRef.current(FINAL_FIT_MS);
     applyZoomSizingRef.current(true);
-    // Fix #2110: also apply zoom-compensated link widths at initial settle so the
-    // very first paint already reflects the fitted zoom level.
     applyZoomLinkWidthsRef.current(true);
     scheduleLabels();
-    // One more fit on the next frames in case the canvas size settled late.
     setTimeout(() => {
+      const gg = graphRef.current;
+      if (!gg) return;
+      // Fix #1548-2 / #1562: pin the (sanitized) settled geometry and pause, then
+      // INSTANT-fit on the pinned frame so the camera lands deterministically.
+      const { array: pinned } = sanitizePositions(gg.getPointPositions());
+      const finalPos = pinned.length > 0 ? pinned : positions;
+      gg.setPointPositions(finalPos, true);
+      gg.pause();
       fitNowRef.current();
+      // Fix #1607 / #2110: recompute zoom-driven point size + link widths so the
+      // first pinned frame already reflects the fitted zoom level.
       applyZoomSizingRef.current(true);
       applyZoomLinkWidthsRef.current(true);
       scheduleLabels();
-    }, 200);
+    }, FINAL_FIT_MS + 40);
     onSettledRef.current();
   }, [group, nodeIds, scheduleLabels]);
   const doSettleRef = useRef(doSettle);
@@ -1154,6 +1310,9 @@ function GraphCanvasInner(
     g.render();
     g.create();
     g.start(1);
+    // #5458 — track the camera to the spreading layout for the whole settle so the
+    // graph stays centered + framed instead of drifting to a corner then snapping.
+    startSettleFitTrackingRef.current();
     // #5455 — a fresh settle re-seeds the FULL buffer, so every current node now
     // has a position; the streaming data-push only seeds nodes beyond this count.
     placedCountRef.current = p.positions.length / 2;
@@ -1362,6 +1521,8 @@ function GraphCanvasInner(
       if (reheatTimerRef.current) clearTimeout(reheatTimerRef.current);
       if (labelTimerRef.current !== null) clearTimeout(labelTimerRef.current);
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      // #5458 — tear down the during-settle camera tracker on unmount.
+      if (settleFitRafRef.current !== null) cancelAnimationFrame(settleFitRafRef.current);
       interactingRef.current = false;
       g.destroy();
       graphRef.current = null;
@@ -1594,6 +1755,8 @@ function GraphCanvasInner(
     reheatedRef.current = true; // skip the early-cool-down guard — this IS the final settle
     g.unpause();
     g.start(STREAM_REHEAT_ALPHA);
+    // #5458 — keep the camera framed during the final stream cool-down too.
+    startSettleFitTrackingRef.current();
     capTimerRef.current = setTimeout(() => {
       if (!hasSettledRef.current) doSettleRef.current();
     }, 900);
@@ -1980,6 +2143,29 @@ function GraphCanvasInner(
       onGlowCapRef.current?.(nodeIdxs.length, matchedTotal);
     } else {
       onGlowCapRef.current?.(nodeIdxs.length, nodeIdxs.length);
+    }
+
+    // #5457 — BUG: an MCP-replay step (replay-all OR a single clicked entry) lands
+    // on the SAME static settled camera, so each step's nodes are almost always
+    // OFF-SCREEN. The cap logic above then falls back to an off-screen `overflow`
+    // sample, which DOES pulse — but invisibly, off in a far cluster — so the user
+    // only ever sees the one step whose nodes happen to sit in the viewport. Fix:
+    // when nothing the step matched is currently in view, PAN/FIT the camera to the
+    // step's nodes (eased, matching the comet/sweep overlay's per-step motion) so
+    // every replayed event visibly glows. We do this only when the step is fully
+    // off-screen (inView empty) and not in a focus/ego view (where the ego fit /
+    // camera restore own the view). When at least one node is already in view we
+    // leave the camera alone so we don't yank a view the user is already reading.
+    if (
+      shouldFitReplayStep({
+        inViewCount: inView.length,
+        resolvedCount: nodeIdxs.length,
+        haveViewport,
+        isFocusView: isFocusViewRef.current,
+        suppressFit: suppressFitRef.current,
+      })
+    ) {
+      fitToIndicesAnimatedRef.current(nodeIdxs, REPLAY_GLOW_FIT_MS);
     }
 
     // Resolve the affected EDGE (link) indices: an edge glows when both its

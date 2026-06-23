@@ -84,6 +84,31 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
   (`docs/c3-feature-impact-analysis.md`)
 
 ### Fixed
+- **Graph MCP-activity replay now glows EVERY event, not just the last (#5457):**
+  in the graph view's MCP-activity panel, "Replay all" and clicking an individual
+  event entry are meant to make each step's nodes **glow** in sequence. Only the
+  *last* step actually pulsed on screen. Both replay paths feed the same canvas
+  glow, which **caps** the pulse to nodes currently in the viewport (a perf cap)
+  and falls back to an off-screen sample when none are in view — and since the
+  replay camera is **static**, each step's nodes are almost always off-screen, so
+  the pulse fired **invisibly** in a far cluster. The canvas now **pans/fits the
+  camera to a step's nodes** (eased, matching the comet/sweep overlay's per-step
+  motion) whenever the step is fully off-screen, so every replayed event glows in
+  view — replay-all *and* individual clicks. Gated so it never fires in a
+  focus/ego view or during a camera restore, and never when a node is already in
+  view (so a view the user is reading isn't yanked).
+- **Graph force-layout stays centered during the settle instead of drifting to a
+  corner then snapping (#5458):** when the graph "exploded"/settled (initial load,
+  Reset, and streaming) it appeared to shrink toward the upper-right corner each
+  second — sometimes leaving the viewport — then **snapped** to center on a single
+  final `fitView`. The camera was static while the simulation spread the nodes.
+  The canvas now **continuously tracks the camera to the spreading layout**: a
+  throttled, eased fit (~every 350ms while the simulation is running) keeps the
+  graph centered + framed the whole time, and the **final fit is eased/animated**
+  (cosmos.gl `fitView(duration)`) so even an intentional re-fit glides rather than
+  jumps. Auto-fit runs only during the initial settle / explode / stream
+  cool-down — it does **not** fight the user's manual pan/zoom once they've
+  interacted, and does not fit during focus/ego views.
 - **Streamed graph now renders and grows LIVE from the first chunk (#5455,
   epic #5446):** the progressive Graph screen showed a climbing
   "building graph… N / total" counter while the WebGL canvas stayed **blank**,
