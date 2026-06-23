@@ -1175,6 +1175,13 @@ func (s *Server) handleGetNode(ctx context.Context, req mcpapi.CallToolRequest) 
 	// (conditional/condition/in_loop). Off by default so the inspect payload is
 	// byte-identical (#2828 token-reduction respected).
 	includeCallContexts := includeWants(req, "call_contexts")
+	// #5396 (validation flaw 3): surface the group-algo overlay values
+	// (community_id/pagerank/centrality) when explicitly requested via
+	// include=community,pagerank,centrality — previously inspect only emitted
+	// pagerank/community_id under verbose, and never centrality. Verbose already
+	// projects these (a superset), so only the non-verbose include path needs it.
+	includeAlgo := !verbose && (includeWants(req, "community") ||
+		includeWants(req, "pagerank") || includeWants(req, "centrality"))
 	allFindings := loadFindings(findingsMemDir(g, lg))
 	// Cross-repo prefixed ID? Resolve repo first for unambiguous lookup.
 	if rprefix, local := splitPrefixed(key); rprefix != "" {
@@ -1182,6 +1189,9 @@ func (s *Server) handleGetNode(ctx context.Context, req mcpapi.CallToolRequest) 
 			if e, ok := r.LabelIndex.ByID[local]; ok {
 				scopeIsOne := len(repos) == 1
 				out := serializeEntity(r.Repo, e, scopeIsOne, verbose)
+				if includeAlgo {
+					addAlgoFields(out, e)
+				}
 				// #2290: omit findings key entirely when no findings exist.
 				if fs := findingsForEntity(allFindings, e.ID, prefixedID(r.Repo, e.ID)); len(fs) > 0 {
 					out["findings"] = findingsToJSON(fs, 0)
@@ -1259,6 +1269,9 @@ func (s *Server) handleGetNode(ctx context.Context, req mcpapi.CallToolRequest) 
 	m := matches[0]
 	scopeIsOne := len(repos) == 1
 	out := serializeEntity(m.repo.Repo, m.ent, scopeIsOne, verbose)
+	if includeAlgo {
+		addAlgoFields(out, m.ent)
+	}
 	// #2290: omit findings key entirely when no findings exist.
 	if fs := findingsForEntity(allFindings, m.ent.ID, prefixedID(m.repo.Repo, m.ent.ID)); len(fs) > 0 {
 		out["findings"] = findingsToJSON(fs, 0)
@@ -1896,17 +1909,39 @@ func serializeEntity(repo string, e *graph.Entity, scopeIsOne bool, verbose ...b
 		out["end_line"] = e.EndLine
 		out["language"] = e.Language
 		out["repo"] = repo
-		if e.PageRank != nil {
-			out["pagerank"] = *e.PageRank
-		}
-		if e.CommunityID != nil {
-			out["community_id"] = *e.CommunityID
-		}
+		// Verbose has always surfaced pagerank/community_id; centrality and the
+		// god-node/articulation flags are added here so a verbose inspect is a
+		// superset of include= (#5396).
+		addAlgoFields(out, e)
 		if len(e.Properties) > 0 {
 			out["properties"] = e.Properties
 		}
 	}
 	return out
+}
+
+// addAlgoFields projects the group-algo overlay values (stamped onto every
+// entity by applyGroupAlgoOverlay, #5354) onto an inspect payload. Pointers are
+// absence-tolerant: with no overlay (and no per-repo algo pass) the fields are
+// simply omitted. Called for verbose inspects and for
+// include=community,pagerank,centrality requests (#5396, validation flaw 3 —
+// inspect previously gated these on verbose only and never surfaced centrality).
+func addAlgoFields(out map[string]any, e *graph.Entity) {
+	if e.PageRank != nil {
+		out["pagerank"] = *e.PageRank
+	}
+	if e.CommunityID != nil {
+		out["community_id"] = *e.CommunityID
+	}
+	if e.Centrality != nil {
+		out["centrality"] = *e.Centrality
+	}
+	if e.IsGodNode {
+		out["is_god_node"] = true
+	}
+	if e.IsArticulationPt {
+		out["is_articulation_point"] = true
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -2211,12 +2246,26 @@ func (s *Server) handleListCommunities(ctx context.Context, req mcpapi.CallToolR
 	if errRes != nil {
 		return errRes, nil
 	}
-	repos := reposToConsider(lg, argStringSlice(req, "repo_filter"))
+	repoFilter := argStringSlice(req, "repo_filter")
+	repos := reposToConsider(lg, repoFilter)
 	// Defaults sized to keep an overview response cheap; both are overridable
 	// via the same arg map the rest of the tool surface uses (issue #2289).
 	// Pass top_entities_limit=-1 / min_size=0 to disable either cap.
 	topLimit := argInt(req, "top_entities_limit", 3)
 	minSize := argInt(req, "min_size", 20)
+
+	// #5396: when the group-algo overlay is applied (lg.Communities populated),
+	// serve the GROUP communities — these were computed by a single Louvain run
+	// across all repos in the group, so a community can span >1 repo. The
+	// per-entity CommunityID was already stamped onto every entity by
+	// applyGroupAlgoOverlay (#5354), so we recover each community's membership
+	// (and its repo span, #5397 — incl. core-mobile) by scanning the loaded
+	// entities. Absence-tolerant: an empty overlay falls back to the per-repo
+	// path below unchanged.
+	if len(lg.Communities) > 0 {
+		return jsonResult(groupCommunities(lg, repoFilter, minSize, topLimit)), nil
+	}
+
 	out := []map[string]any{}
 	for _, r := range repos {
 		if r.Doc == nil {
@@ -2245,6 +2294,99 @@ func (s *Server) handleListCommunities(ctx context.Context, req mcpapi.CallToolR
 		}
 	}
 	return jsonResult(out), nil
+}
+
+// groupCommunities renders the group-algo overlay communities (#5396). Each
+// overlay community was computed across the whole group, so its members can
+// live in more than one repo. Membership and repo span are reconstructed from
+// the overlay-stamped per-entity CommunityID (set by applyGroupAlgoOverlay).
+//
+// A community is NOT force-tagged to a single repo: it reports the full set of
+// repos its members occupy via the "repos" field, plus a cross-repo flag. When
+// repo_filter is set, a community surfaces if ANY of its members is in a
+// filtered repo (so a cross-repo community is not dropped just because the
+// filter names only one of its repos).
+func groupCommunities(lg *LoadedGroup, repoFilter []string, minSize, topLimit int) []map[string]any {
+	// repos a member of community id occupies (deduped, sorted on emit).
+	reposByCommunity := map[int]map[string]struct{}{}
+	for _, r := range lg.Repos {
+		if r == nil || r.Doc == nil {
+			continue
+		}
+		for i := range r.Doc.Entities {
+			cid := r.Doc.Entities[i].CommunityID
+			if cid == nil {
+				continue
+			}
+			m := reposByCommunity[*cid]
+			if m == nil {
+				m = map[string]struct{}{}
+				reposByCommunity[*cid] = m
+			}
+			m[r.Repo] = struct{}{}
+		}
+	}
+
+	// repo_filter membership: a community surfaces if any of its repos is named.
+	wantRepo := map[string]struct{}{}
+	allRepos := len(repoFilter) == 0 || (len(repoFilter) == 1 && repoFilter[0] == "*")
+	if !allRepos {
+		for _, n := range repoFilter {
+			wantRepo[n] = struct{}{}
+		}
+	}
+
+	comms := make([]graph.CommunityResult, len(lg.Communities))
+	copy(comms, lg.Communities)
+	sort.SliceStable(comms, func(i, j int) bool { return comms[i].Size > comms[j].Size })
+
+	out := []map[string]any{}
+	for _, c := range comms {
+		if c.Size < minSize {
+			continue
+		}
+		repoSet := reposByCommunity[c.ID]
+		repoList := make([]string, 0, len(repoSet))
+		for rn := range repoSet {
+			repoList = append(repoList, rn)
+		}
+		sort.Strings(repoList)
+
+		if !allRepos {
+			match := false
+			for _, rn := range repoList {
+				if _, ok := wantRepo[rn]; ok {
+					match = true
+					break
+				}
+			}
+			if !match {
+				continue
+			}
+		}
+
+		top := c.TopEntities
+		if topLimit >= 0 && len(top) > topLimit {
+			top = top[:topLimit]
+		}
+		name := c.AgentName
+		if name == "" {
+			name = c.AutoName
+		}
+		row := map[string]any{
+			"id":           c.ID,
+			"size":         c.Size,
+			"modularity":   c.Modularity,
+			"top_entities": top,
+			"repos":        repoList,
+			"cross_repo":   len(repoList) > 1,
+		}
+		if name != "" {
+			row["name"] = name
+		}
+		out = append(out, row)
+	}
+	return out
 }
 
 // ---------------------------------------------------------------------------
