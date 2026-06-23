@@ -26,6 +26,7 @@ import (
 	"github.com/cajasmota/grafel/internal/graph/fbwriter"
 	"github.com/cajasmota/grafel/internal/graph/groupalgo"
 	"github.com/cajasmota/grafel/internal/registry"
+	"github.com/cajasmota/grafel/internal/testsupport"
 	mcpapi "github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -37,6 +38,12 @@ import (
 func setupThreeRepoApplyGroup(t *testing.T) (st *State, overlayPath string, cur map[string]int64,
 	beID, feID, mobID, mobileStateDir string, mobileDoc *graph.Document) {
 	t.Helper()
+	// #5443: isolate HOME / XDG_CONFIG_HOME / GRAFEL_HOME into a per-test
+	// TempDir BEFORE resolving any config path. Without this the fleet config
+	// (registry.ConfigPathFor → registry.ConfigDir) falls back to the REAL
+	// ~/.config/grafel/<group>.fleet.json and SaveGroupConfig below clobbers the
+	// developer's live config, repointing the group at a deleted t.TempDir.
+	testsupport.IsolateHome(t)
 	root := t.TempDir()
 	home := filepath.Join(root, "home")
 	t.Setenv("GRAFEL_HOME", home)

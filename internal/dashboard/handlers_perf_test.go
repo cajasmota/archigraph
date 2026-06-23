@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/cajasmota/grafel/internal/perf"
+	"github.com/cajasmota/grafel/internal/testsupport"
 )
 
 // newPerfTestServer creates a minimal *Server for perf handler tests,
@@ -18,6 +19,10 @@ import (
 // tests have no disk/network dependencies.
 func newPerfTestServer(t *testing.T) *Server {
 	t.Helper()
+	// #5443: the perf handlers resolve registry.HomeDir() (perf-history.jsonl)
+	// and loadSettings() unconditionally. Isolate HOME/XDG/GRAFEL_HOME so these
+	// reads land in a TempDir, never the developer's real ~/.grafel / ~/.config.
+	testsupport.IsolateHome(t)
 	cfg := Config{
 		PortRange: PortRange{Min: 47270, Max: 47280},
 		Bind:      "127.0.0.1",
