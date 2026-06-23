@@ -9,6 +9,14 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 ## [Unreleased]
 
 ### Added
+- **Env-tunable dead-ref retention cap (`GRAFEL_REF_RETENTION_CAP`, #5447):** the
+  ceiling on grace-protected dead-in-git ref graphs the daemon keeps per repo
+  (default 8) can now be overridden via the environment, letting an operator
+  shrink the dead-ref footprint on a machine with heavy transient-ref churn
+  (e.g. set it to 4). Unset → default 8; a non-negative int sets the cap
+  (0 keeps no grace-protected dead refs); a negative int disables the cap
+  backstop; unparseable values fall back to the default. Mirrors the existing
+  `GRAFEL_TIER_*`/`GRAFEL_EXTRACT_GOMAXPROCS` env pattern.
 - **Official tree-sitter grammar providers for the high-value languages
   (#5418, B2 cutover Part A):** ABI-14-pinned official-runtime grammar packages
   for **python, java, csharp, typescript (+tsx), javascript, rust** under
