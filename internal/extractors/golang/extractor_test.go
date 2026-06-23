@@ -6,23 +6,23 @@ import (
 	"strings"
 	"testing"
 
-	tsgo "github.com/smacker/go-tree-sitter/golang"
+	tsgo "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/golang"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/golang" // trigger init()
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
 // ---- helpers ----------------------------------------------------------------
 
-// parseGo parses Go source into the binding-agnostic ts.Tree via the smacker
+// parseGo parses Go source into the binding-agnostic ts.Tree via the official
 // adapter. Tests stamp the result on FileInput.TSTree (which the Go extractor
-// consumes). Using the smacker adapter keeps these tests linkable in the default
+// consumes). Using the official adapter keeps these tests linkable in the default
 // build (no official runtime co-linked) while still exercising the ts façade.
 func parseGo(src []byte) ts.Tree {
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tsgo.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tsgo.Language())
 	if err != nil {
 		panic("test helper: parser init failed: " + err.Error())
 	}

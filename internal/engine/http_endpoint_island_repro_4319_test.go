@@ -2,11 +2,10 @@ package engine
 
 import (
 	"context"
+	tstypescript "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/typescript"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 	"os"
 	"testing"
-
-	sitter "github.com/smacker/go-tree-sitter"
-	tstypescript "github.com/smacker/go-tree-sitter/typescript/typescript"
 
 	extreg "github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/extractors/javascript"
@@ -59,14 +58,17 @@ func liveProducers(t *testing.T, src []byte) ([]types.EntityRecord, []types.Rela
 	t.Helper()
 
 	// Producer 1 — tree-sitter JS/TS extractor → handler Operation(s).
-	p := sitter.NewParser()
-	p.SetLanguage(tstypescript.GetLanguage())
-	tree, err := p.ParseCtx(context.Background(), nil, src)
+	parser, err := tsofficial.New().NewParser(tstypescript.Language())
+	if err != nil {
+		t.Fatalf("NewParser: %v", err)
+	}
+	defer parser.Close()
+	tree, err := parser.Parse(src)
 	if err != nil {
 		t.Fatalf("parseTS: %v", err)
 	}
 	jsEnts, err := javascript.New().Extract(context.Background(), extreg.FileInput{
-		Path: reproControllerFile, Content: src, Language: "typescript", Tree: tree,
+		Path: reproControllerFile, Content: src, Language: "typescript", TSTree: tree,
 	})
 	if err != nil {
 		t.Fatalf("js extract: %v", err)

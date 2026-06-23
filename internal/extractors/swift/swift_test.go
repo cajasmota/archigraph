@@ -6,18 +6,18 @@ import (
 	"strings"
 	"testing"
 
-	tsswift "github.com/smacker/go-tree-sitter/swift"
+	tsswift "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/swift"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/swift"
 	"github.com/cajasmota/grafel/internal/treesitter"
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 )
 
 func parseForTest(t *testing.T, src string) ts.Tree {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tsswift.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tsswift.Language())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}
@@ -194,6 +194,103 @@ protocol Drawable {
 	}
 	if !found {
 		t.Error("expected a protocol SCOPE.Component entity")
+	}
+}
+
+// TestSwiftExtractor_ActorEntity covers issue #5417 (C3(b)): `actor`
+// declarations are first-class concurrency components emitted as
+// SCOPE.Component subtype="actor" (mirroring class/struct/enum), with their
+// members extracted exactly like a class — a CONTAINS edge to each method and
+// a SCOPE.Schema field per stored property.
+func TestSwiftExtractor_ActorEntity(t *testing.T) {
+	src := `
+actor BankAccount {
+    var balance: Int = 0
+    func deposit(_ amount: Int) {
+        balance += amount
+    }
+}
+`
+	tree := parseForTest(t, src)
+	ext, _ := extractor.Get("swift")
+
+	got, err := ext.Extract(context.Background(), extractor.FileInput{
+		Path:     "bank.swift",
+		Content:  []byte(src),
+		Language: "swift",
+		TSTree:   tree,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var actor *struct {
+		hasContains bool
+	}
+	var deposit, balanceField bool
+	for i := range got {
+		e := got[i]
+		switch {
+		case e.Kind == "SCOPE.Component" && e.Subtype == "actor" && e.Name == "BankAccount":
+			a := struct{ hasContains bool }{}
+			for _, r := range e.Relationships {
+				if r.Kind == "CONTAINS" {
+					a.hasContains = true
+				}
+			}
+			actor = &a
+		case e.Kind == "SCOPE.Operation" && e.Name == "deposit":
+			deposit = true
+		case e.Kind == "SCOPE.Schema" && e.Subtype == "field" && e.Name == "BankAccount.balance":
+			balanceField = true
+		}
+	}
+
+	if actor == nil {
+		t.Fatal("expected entity BankAccount with Kind=SCOPE.Component Subtype=actor")
+	}
+	if !actor.hasContains {
+		t.Error("expected the actor to carry CONTAINS edges to its members")
+	}
+	if !deposit {
+		t.Error("expected the actor's deposit() method as a SCOPE.Operation")
+	}
+	if !balanceField {
+		t.Error("expected the actor's balance stored property as a SCOPE.Schema field")
+	}
+}
+
+// TestSwiftExtractor_DistributedActorEntity covers the `distributed actor`
+// shape (#5417): the `distributed` modifier lives in a leading `modifiers`
+// node, but the `actor` keyword still classifies the declaration as subtype=
+// "actor".
+func TestSwiftExtractor_DistributedActorEntity(t *testing.T) {
+	src := `
+distributed actor Worker {
+    func run() {}
+}
+`
+	tree := parseForTest(t, src)
+	ext, _ := extractor.Get("swift")
+
+	got, err := ext.Extract(context.Background(), extractor.FileInput{
+		Path:     "worker.swift",
+		Content:  []byte(src),
+		Language: "swift",
+		TSTree:   tree,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var found bool
+	for _, e := range got {
+		if e.Kind == "SCOPE.Component" && e.Subtype == "actor" && e.Name == "Worker" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected entity Worker with Kind=SCOPE.Component Subtype=actor")
 	}
 }
 

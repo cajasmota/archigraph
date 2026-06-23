@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
-	tstsx "github.com/smacker/go-tree-sitter/typescript/tsx"
+	tstsx "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/typescript"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	extreg "github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/types"
@@ -17,7 +17,7 @@ import (
 // parseTSX parses source with the TypeScript TSX grammar (JSX-enabled).
 func parseTSX(t *testing.T, src []byte) ts.Tree {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tstsx.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tstsx.LanguageTSX())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

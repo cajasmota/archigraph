@@ -15,9 +15,9 @@ import (
 	"testing"
 
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
-	tsjavascript "github.com/smacker/go-tree-sitter/javascript"
-	tstypescript "github.com/smacker/go-tree-sitter/typescript/typescript"
+	tsjavascript "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/javascript"
+	tstypescript "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/typescript"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	extreg "github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/extractors/javascript"
@@ -101,11 +101,11 @@ func TestClassArrow_Measurement(t *testing.T) {
 				}
 				var grammar ts.Language
 				if lang == "typescript" {
-					grammar = tssmacker.WrapLanguage(tstypescript.GetLanguage())
+					grammar = tstypescript.Language()
 				} else {
-					grammar = tssmacker.WrapLanguage(tsjavascript.GetLanguage())
+					grammar = tsjavascript.Language()
 				}
-				parser, parserErr := tssmacker.New().NewParser(grammar)
+				parser, parserErr := tsofficial.New().NewParser(grammar)
 				if parserErr != nil {
 					return nil
 				}

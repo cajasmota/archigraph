@@ -19,11 +19,10 @@ package javascript_test
 
 import (
 	"context"
+	tstsx "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/typescript"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 	"sort"
 	"testing"
-
-	sitter "github.com/smacker/go-tree-sitter"
-	tstsx "github.com/smacker/go-tree-sitter/typescript/tsx"
 
 	extreg "github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/extractors"
@@ -69,13 +68,16 @@ const routes: Routes = [{ path: 'home', component: AppComponent }];
 // MergeWithCustom), so this is the set the downstream ID-keyed store dedups.
 func extractAngularPipeline(t *testing.T, path string, src []byte) []types.EntityRecord {
 	t.Helper()
-	p := sitter.NewParser()
-	p.SetLanguage(tstsx.GetLanguage())
-	tree, err := p.ParseCtx(context.Background(), nil, src)
+	parser, err := tsofficial.New().NewParser(tstsx.LanguageTSX())
+	if err != nil {
+		t.Fatalf("NewParser: %v", err)
+	}
+	defer parser.Close()
+	tree, err := parser.Parse(src)
 	if err != nil {
 		t.Fatalf("parse: %v", err)
 	}
-	file := extreg.FileInput{Path: path, Content: src, Language: "typescript", Tree: tree}
+	file := extreg.FileInput{Path: path, Content: src, Language: "typescript", TSTree: tree}
 
 	base, ok := extreg.Get("typescript")
 	if !ok {

@@ -6,7 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	tsc "github.com/smacker/go-tree-sitter/c"
+	tsc "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/c"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/assembly" // register "assembly"
@@ -15,7 +16,6 @@ import (
 	"github.com/cajasmota/grafel/internal/graph"
 	"github.com/cajasmota/grafel/internal/resolve"
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -39,7 +39,7 @@ func extractAll(t *testing.T, path string, content []byte, lang string) []types.
 	t.Helper()
 	var tree ts.Tree
 	if lang == "c" {
-		p, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tsc.GetLanguage()))
+		p, err := tsofficial.New().NewParser(tsc.Language())
 		if err != nil {
 			t.Fatalf("parser init %s: %v", path, err)
 		}

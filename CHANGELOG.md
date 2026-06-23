@@ -9,6 +9,20 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 ## [Unreleased]
 
 ### Added
+- **Swift `actor` declarations as first-class concurrency components (#5417,
+  C3(b)):** `actor` and `distributed actor` types are now extracted as
+  `SCOPE.Component` with `subtype=actor`, mirroring how `class`/`struct`/`enum`
+  are modeled (one shared `class_declaration` grammar rule, classified by the
+  leading keyword). An actor's members extract identically to a class — each
+  method gets a `CONTAINS` edge and each stored property a `SCOPE.Schema`/field
+  — so concurrency components stop collapsing into the generic `class` bucket.
+  The other four C3(b) candidates from the impact analysis were verified against
+  the pinned ABI-14 grammars and **deferred as grammar-too-old**: C# extension
+  members (`tree-sitter-c-sharp` v0.23.1 has no `extension` node), Kotlin context
+  parameters, Python t-strings (PEP 750), and JS/TS `await using` — all
+  post-date their pinned grammar tags and currently parse to `ERROR`/misshaped
+  nodes, so no extractor code was added for them.
+  ([`internal/extractors/swift/swift.go`](internal/extractors/swift/swift.go))
 - **Official tree-sitter grammar providers — batch B2, batch 4a (vendored C)
   (#5418, B2 cutover Part B):** directly-vendorable grammar packages for
   **proto, dockerfile, kotlin** under `internal/treesitter/ts/grammars/`, behind
@@ -178,7 +192,102 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
   all gated on the B1 grammar-bump / B2 smacker-decouple cutover.
   (`docs/c3-feature-impact-analysis.md`)
 
+### Fixed
+- **Test-isolation: `grafel install` fresh-install test escaped the #5443
+  sandbox guard on Linux/Windows CI (#5418):**
+  `TestIssue2683_FreshInstall_WritesAllSixFiles` (and its sibling rules-file
+  tests in `cmd/grafel`) redirected `HOME`/`GRAFEL_HOME` into a `t.TempDir()`
+  but not `XDG_CONFIG_HOME`. `registry.ConfigDir()` honors `XDG_CONFIG_HOME`
+  first, which on the Linux/Windows GitHub runners points at the real
+  `~/.config`, so `install.Apply` → `SaveGroupConfig` resolved the fleet config
+  under the real home and tripped the write-path guard — a panic that surfaced
+  on Linux/Windows but not on macOS (where `XDG_CONFIG_HOME` is unset and the
+  path fell back to the redirected `HOME`). Switched the shared `applyWithStubs`
+  helper to `testsupport.IsolateHome(t)`, which redirects all of
+  `HOME`/`XDG_CONFIG_HOME`/`GRAFEL_HOME` into the sandbox. Audited every test
+  calling a guarded writer (`SaveGroupConfig`/`AddGroup`/`install.Apply`/
+  `ConfigPathFor`); this was the only un-isolated one.
+  ([`cmd/grafel/issue2683_rules_files_test.go`](cmd/grafel/issue2683_rules_files_test.go))
+- **B2 cutover, C3 (c) — extractors adapted to the official grammars' changed
+  node shapes (#5418):** the big-bang flip (Step B) swapped all grammars to
+  fresher official versions whose CST node shapes differ from the 2024-08
+  smacker snapshot, breaking ~27 extractor tests across 8 packages. Fixed
+  without weakening any test (the goldens stay the contract):
+  - **Systemic node-identity bug (root cause of most failures).** Many
+    extractors compared two `ts.Node` handles with `==` to ask "is this child
+    the call callee / module name / declaration name?" The official binding
+    returns a fresh wrapper struct per accessor call, so `==` is never true and
+    those guards silently mis-fired — leaking phantom CALLS/REFERENCES edges,
+    mis-attributing exception edges, and dropping relative-import names. Added
+    `ts.SameNode(a, b)` (identity by type + byte span) and routed every such
+    comparison through it across **python, golang, javascript, ruby, elixir**
+    (and preventively **java, kotlin**, whose grammars didn't shift shape but
+    carried the same latent `==`). Groovy's constructor-skip set, keyed by node,
+    was rekeyed by byte span for the same reason.
+  - **python:** relative-import dotted-name layout (`from .x import y`) and the
+    `from .x import y as z` alias, plus a duplicate nested-constructor REFERENCES
+    edge — all the `== modNode` / `isPyCallCallee` identity guards.
+  - **lua:** rewired for the current tree-sitter-lua shapes — `function_call`
+    `name` field with `dot_index_expression` / `method_index_expression` callees,
+    `arguments` (was `function_arguments`), `require(...)` and `local x =
+    require(...)` nested under `assignment_statement(variable_list/expression_list)`,
+    and `table_constructor`.
+  - **groovy:** the regenerated grammar has no enum rule and a flaky Gradle-DSL
+    parse — adapted enum detection to the bare `identifier(enum)`/`identifier(Name)`
+    + `closure` header and recovered valued constants from the contorted
+    `juxt_function_call` / `parenthesized_expression` token stream via an ordered
+    name↔value pairing; handled both `task name { }` (juxt) and `task name(...)`
+    (function_call) sibling shapes.
+  - **cpp:** pure-virtual `= 0` now parses as a bare `= number_literal(0)` inside
+    a method `field_declaration` (no `pure_virtual_clause` node) — abstract-class
+    detection accepts both.
+  - **elixir / ruby:** exception-flow `def` body scoping and `ENV['KEY']`
+    element-reference index were the `== body` / `== obj` identity guards above.
+- **B2 cutover — full `go test ./...` suite greened after the flip (#5418):** the
+  3-OS build and the per-package extractor passes were green, but the **whole**
+  suite was not — the per-package runs missed cross-package failures. Fixed
+  without weakening any test:
+  - **Un-isolated tests caught by the #5443 registry sandbox guard.** Tests that
+    only set `GRAFEL_HOME` (not the full home/XDG set) still resolved the fleet
+    config path off the real config dir, so the guard correctly panicked to stop
+    them clobbering the developer's live `~/.config/grafel`. Added
+    `testsupport.IsolateHome(t)` to **8** tests across 3 packages:
+    `TestGroupsForRepoPath` (cmd/grafel, via `writeTestGroup`),
+    `TestDiffGroup_CrossRepoRankNonDecreasing` + `TestDiffGroup_Empty`,
+    `TestAssembleGroupGraph_OnDisk`, `TestRunGroupAlgorithms_EmptyGroup`,
+    `TestCurrentSourceMtimes_OnDisk`, the `registerTwoRepoGroup` helper (3
+    recompute tests), and `TestApplyOverlay_GroupValuesAppliedAtLoad`
+    (internal/mcp, via `setupApplyGroup`). The guard is unchanged.
+  - **Dropped-markdown grammar counts.** `TestSupportedLanguages_ReturnsExpectedCount`
+    (29 → 28) and `TestLoadLock_RealManifest` (28 → 27 grammars) updated to match
+    the parser registry and `grammars.lock` after markdown was dropped in the flip.
+  - **MCP tool-inventory tests** (pre-existing, surfaced by the full run): the
+    `grafel_index_status` tool (#5435) was registered but absent from the test
+    inventories — added it to `minimalArgs`, `wantPresent`, and `wantToolParams`
+    and bumped the registered-tool counts 68 → 69
+    (`TestElapsedMSCoverageAllTools`, `TestToolNameSurface`,
+    `TestToolParamNamesPreserved`).
+
 ### Changed
+- **B2 cutover, Step B — flipped to the official binding as the sole build;
+  removed smacker entirely (#5418):** every language now resolves to its
+  `internal/treesitter/ts/grammars/<lang>` provider on the official
+  `tree-sitter/go-tree-sitter` runtime, with **no build tag** — the
+  `ts_official` / `!ts_official` split is gone and official is the only build.
+  The build-tagged adapter pair (`adapters_default.go` / `adapters_official.go`)
+  was collapsed into a single un-tagged `adapters.go`, and the per-extractor
+  `language_smacker.go` / smacker grammar-handle files were dropped. The legacy
+  `github.com/smacker/go-tree-sitter` dependency is removed from `go.mod`/`go.sum`
+  and its adapter package (`internal/treesitter/ts/smacker/`) deleted; the
+  concrete smacker tree fields `ParseResult.Tree` and `FileInput.Tree` are
+  retired — only the binding-agnostic façade `ParseResult.TSTree` / `TSTree`
+  remains. The full tree now compiles and links all 26 grammars on the official
+  runtime in one binary (the co-link blocker is gone once the second runtime is
+  no longer linked). The **markdown** grammar was dropped from the parser
+  registry and `grammars.lock` (its extractor is pure-stdlib; no functional
+  impact). Per-language C3 (c) extractor adaptations for the newer grammars'
+  changed node shapes, and the full B1 fidelity re-bench, remain gated follow-ups
+  before tag (cutover plan §7).
 - **B2 cutover, Step A — node-traversing extractors moved onto the
   binding-agnostic `ts.Node` façade (#5418):** the remaining extractor files
   that still typed their CST walks against the concrete smacker `*sitter.Node`

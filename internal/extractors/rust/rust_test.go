@@ -5,22 +5,22 @@ import (
 	"strings"
 	"testing"
 
-	tsrust "github.com/smacker/go-tree-sitter/rust"
+	tsrust "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/rust"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/rust"
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
-// parseForTest parses Rust source into a ts.Tree via the smacker adapter. Tests
+// parseForTest parses Rust source into a ts.Tree via the official adapter. Tests
 // stamp the result on FileInput.TSTree (which the migrated Rust extractor
-// consumes); the smacker adapter keeps these tests linkable in the default build
+// consumes); the official adapter keeps these tests linkable in the default build
 // while exercising the ts façade (B2 #5418).
 func parseForTest(t *testing.T, src string) ts.Tree {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tsrust.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tsrust.Language())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

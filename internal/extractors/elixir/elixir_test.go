@@ -5,18 +5,18 @@ import (
 	"errors"
 	"testing"
 
-	tselixir "github.com/smacker/go-tree-sitter/elixir"
+	tselixir "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/elixir"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/elixir"
 	"github.com/cajasmota/grafel/internal/treesitter"
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 )
 
 func parseForTest(t *testing.T, src string) ts.Tree {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tselixir.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tselixir.Language())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

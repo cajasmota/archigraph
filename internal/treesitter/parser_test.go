@@ -40,7 +40,7 @@ func main() {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if res.Tree == nil {
+	if res.TSTree == nil {
 		t.Fatal("expected non-nil tree")
 	}
 	if res.ErrorRatio != 0.0 {
@@ -128,7 +128,7 @@ func TestParse_EmptyFile_ZeroNodesNoError(t *testing.T) {
 	if res.ErrorRatio != 0.0 {
 		t.Errorf("expected error_ratio=0.0 for empty file, got %.4f", res.ErrorRatio)
 	}
-	if res.Tree != nil {
+	if res.TSTree != nil {
 		t.Error("expected nil tree for empty file")
 	}
 }
@@ -236,9 +236,9 @@ func TestParse_OTelSpan_EmittedOnUnsupportedLanguage(t *testing.T) {
 
 func TestSupportedLanguages_ReturnsExpectedCount(t *testing.T) {
 	langs := treesitter.SupportedLanguages()
-	// 29 entries: 28 unique grammars + "terraform" alias for "hcl".
-	// Added: groovy, proto.
-	const expected = 29
+	// 28 entries: 27 unique grammars + "terraform" alias for "hcl".
+	// Added: groovy, proto. Dropped: markdown (official-grammar flip, #5418).
+	const expected = 28
 	if len(langs) != expected {
 		t.Errorf("expected %d languages, got %d: %v", expected, len(langs), langs)
 	}
@@ -255,7 +255,7 @@ func TestSupportedLanguages_ContainsRequiredEntries(t *testing.T) {
 		"go", "python", "javascript", "typescript", "java", "kotlin",
 		"ruby", "php", "rust", "c", "cpp", "csharp", "swift", "scala",
 		"elixir", "bash", "lua", "ocaml", "toml", "yaml", "sql",
-		"html", "css", "markdown", "dockerfile", "hcl", "terraform",
+		"html", "css", "dockerfile", "hcl", "terraform",
 		"groovy", "proto",
 	}
 	for _, lang := range required {
@@ -285,7 +285,6 @@ func TestSupportedLanguages_EachLanguageParsesSnippet(t *testing.T) {
 		"javascript": `const x = 1;`,
 		"kotlin":     `fun main() {}`,
 		"lua":        `print("hi")`,
-		"markdown":   `# heading`,
 		"ocaml":      `let x = 1`,
 		"php":        `<?php echo "hi"; ?>`,
 		"proto":      `syntax = "proto3"; message Foo { string id = 1; }`,
@@ -313,7 +312,7 @@ func TestSupportedLanguages_EachLanguageParsesSnippet(t *testing.T) {
 			if err != nil && !errors.Is(err, treesitter.ErrHighSyntaxErrorRate) {
 				t.Fatalf("Parse(%s) returned unexpected error: %v", lang, err)
 			}
-			if err == nil && res.Tree == nil {
+			if err == nil && res.TSTree == nil {
 				t.Errorf("Parse(%s) returned nil tree", lang)
 			}
 		})

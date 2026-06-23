@@ -2,12 +2,11 @@ package javascript_test
 
 import (
 	"context"
+	tstypescript "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/typescript"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 	"os"
 	"path/filepath"
 	"testing"
-
-	sitter "github.com/smacker/go-tree-sitter"
-	tstypescript "github.com/smacker/go-tree-sitter/typescript/typescript"
 
 	extreg "github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/resolve"
@@ -63,9 +62,12 @@ func tsExtract4464(t *testing.T, base, repoPath string) []types.EntityRecord {
 	if err != nil {
 		t.Fatalf("read %s: %v", base, err)
 	}
-	p := sitter.NewParser()
-	p.SetLanguage(tstypescript.GetLanguage())
-	tree, err := p.ParseCtx(context.Background(), nil, b)
+	parser, err := tsofficial.New().NewParser(tstypescript.Language())
+	if err != nil {
+		t.Fatalf("NewParser: %v", err)
+	}
+	defer parser.Close()
+	tree, err := parser.Parse(b)
 	if err != nil {
 		t.Fatalf("parse %s: %v", base, err)
 	}
@@ -74,7 +76,7 @@ func tsExtract4464(t *testing.T, base, repoPath string) []types.EntityRecord {
 		t.Fatal("typescript extractor not registered")
 	}
 	ents, err := e.Extract(context.Background(),
-		extreg.FileInput{Path: repoPath, Language: "typescript", Content: b, Tree: tree})
+		extreg.FileInput{Path: repoPath, Language: "typescript", Content: b, TSTree: tree})
 	if err != nil {
 		t.Fatalf("ts extract %s: %v", base, err)
 	}

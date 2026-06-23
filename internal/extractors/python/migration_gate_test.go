@@ -15,15 +15,15 @@ import (
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
+	tspython "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/python"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 	"github.com/cajasmota/grafel/internal/types"
-	tspython "github.com/smacker/go-tree-sitter/python"
 )
 
-// parsePython parses Python source into a ts.Tree via the smacker adapter (B2 #5418).
+// parsePython parses Python source into a ts.Tree via the official adapter (B2 #5418).
 func parsePython(t *testing.T, src []byte) ts.Tree {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tspython.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tspython.Language())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

@@ -5,13 +5,13 @@ import (
 	"os"
 	"testing"
 
-	tsc "github.com/smacker/go-tree-sitter/c"
-	tscpp "github.com/smacker/go-tree-sitter/cpp"
+	tsc "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/c"
+	tscpp "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/cpp"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/cpp" // trigger init()
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -20,7 +20,7 @@ import (
 // ----------------------------------------------------------------
 
 func parseCPP(src []byte) ts.Tree {
-	p, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tscpp.GetLanguage()))
+	p, err := tsofficial.New().NewParser(tscpp.Language())
 	if err != nil {
 		panic("test helper: cpp parser init failed: " + err.Error())
 	}
@@ -33,7 +33,7 @@ func parseCPP(src []byte) ts.Tree {
 }
 
 func parseC(src []byte) ts.Tree {
-	p, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tsc.GetLanguage()))
+	p, err := tsofficial.New().NewParser(tsc.Language())
 	if err != nil {
 		panic("test helper: c parser init failed: " + err.Error())
 	}

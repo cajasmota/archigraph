@@ -315,7 +315,6 @@ func Run(ctx context.Context, opts SubprocessOptions) error {
 			}
 		}
 		if pr, perr := parser.Parse(ctx, content, parseLang); perr == nil && pr != nil {
-			file.Tree = pr.Tree
 			file.TSTree = pr.TSTree
 			// A4 canary: fold this parse's ERROR-node ratio into the
 			// per-language accumulator (keyed by the classifier language,
@@ -446,16 +445,9 @@ func Run(ctx context.Context, opts SubprocessOptions) error {
 
 		// Release the parse tree before moving to the next file —
 		// tree-sitter trees are CGo-allocated and runtime.GC cannot
-		// reclaim them. This is what keeps batch RSS bounded.
-		switch {
-		case file.Tree != nil:
-			// Smacker path: file.Tree and file.TSTree wrap the SAME C tree;
-			// close exactly once via the concrete handle.
-			file.Tree.Close()
-			file.Tree = nil
-			file.TSTree = nil
-		case file.TSTree != nil:
-			// Migrated (official-binding) path: the tree lives only in TSTree.
+		// reclaim them. This is what keeps batch RSS bounded. The tree lives
+		// only in TSTree on the official binding (ADR 0023, #5418).
+		if file.TSTree != nil {
 			file.TSTree.Close()
 			file.TSTree = nil
 		}

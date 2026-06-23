@@ -356,7 +356,7 @@ func TryIncremental(ctx context.Context, repoPath, stateDir string, logger *log.
 			Path:     rel,
 			Content:  content,
 			Language: cr.Language,
-			Tree:     nil, // re-parse inline
+			TSTree:   nil, // re-parse inline
 			RepoRoot: absRepo,
 		})
 		if extErr != nil {

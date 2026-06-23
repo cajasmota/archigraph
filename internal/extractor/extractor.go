@@ -13,8 +13,6 @@ import (
 	"strconv"
 	"sync"
 
-	sitter "github.com/smacker/go-tree-sitter"
-
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
 
 	"github.com/cajasmota/grafel/internal/types"
@@ -181,14 +179,9 @@ type FileInput struct {
 	Content []byte
 	// Language is the canonical language name (e.g., "python", "go", "typescript").
 	Language string
-	// Tree is the smacker tree-sitter parse tree. Populated for languages still
-	// on the smacker binding; nil for B2-migrated languages (e.g. go) and when
-	// parsing was skipped. Extractors not yet migrated read this field.
-	Tree *sitter.Tree
-	// TSTree is the binding-agnostic parse tree (ADR 0023, #5418). Populated for
-	// ALL parsed languages (smacker-wrapped or official). Migrated extractors
-	// (Go) consume this via the ts façade instead of Tree. May be nil if parsing
-	// was skipped.
+	// TSTree is the binding-agnostic parse tree (ADR 0023, #5418), populated for
+	// every parsed language via the official binding. Extractors consume it via
+	// the ts façade. May be nil if parsing was skipped.
 	TSTree ts.Tree
 	// RepoRoot is the absolute filesystem path of the repository root.
 	// Optional — extractors that need to read project-level configuration

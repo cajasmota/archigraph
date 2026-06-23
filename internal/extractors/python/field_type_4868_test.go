@@ -7,11 +7,11 @@ import (
 	"context"
 	"testing"
 
-	tspython "github.com/smacker/go-tree-sitter/python"
+	tspython "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/python"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/python"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 )
 
 func TestExtract_AnnotatedFieldSignature_4868(t *testing.T) {
@@ -23,7 +23,7 @@ class CreateAddressBody:
     building: int
     group: int | None
 `)
-	p, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tspython.GetLanguage()))
+	p, err := tsofficial.New().NewParser(tspython.Language())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

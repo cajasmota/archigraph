@@ -12,10 +12,9 @@ package engine
 
 import (
 	"context"
+	tshcl "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/hcl"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 	"testing"
-
-	sitter "github.com/smacker/go-tree-sitter"
-	tshcl "github.com/smacker/go-tree-sitter/hcl"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/hcl" // register hcl/terraform
@@ -66,9 +65,12 @@ resource "aws_sqs_queue" "main" {
 func extractHCLEntities(t *testing.T, src, path string) []types.EntityRecord {
 	t.Helper()
 	content := []byte(src)
-	p := sitter.NewParser()
-	p.SetLanguage(tshcl.GetLanguage())
-	tree, err := p.ParseCtx(context.Background(), nil, content)
+	parser, err := tsofficial.New().NewParser(tshcl.Language())
+	if err != nil {
+		t.Fatalf("NewParser: %v", err)
+	}
+	defer parser.Close()
+	tree, err := parser.Parse(content)
 	if err != nil {
 		t.Fatalf("hcl parse failed: %v", err)
 	}
@@ -77,7 +79,7 @@ func extractHCLEntities(t *testing.T, src, path string) []types.EntityRecord {
 		t.Fatalf("hcl extractor not registered")
 	}
 	recs, err := ext.Extract(context.Background(), extractor.FileInput{
-		Path: path, Content: content, Language: "hcl", Tree: tree,
+		Path: path, Content: content, Language: "hcl", TSTree: tree,
 	})
 	if err != nil {
 		t.Fatalf("hcl extract failed: %v", err)

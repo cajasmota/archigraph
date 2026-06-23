@@ -5,12 +5,12 @@ import (
 	"os"
 	"testing"
 
-	tshcl "github.com/smacker/go-tree-sitter/hcl"
+	tshcl "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/hcl"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/hcl" // trigger init()
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -19,7 +19,7 @@ import (
 // ----------------------------------------------------------------
 
 func parseHCL(src []byte) ts.Tree {
-	p, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tshcl.GetLanguage()))
+	p, err := tsofficial.New().NewParser(tshcl.Language())
 	if err != nil {
 		panic("test helper: hcl parser init failed: " + err.Error())
 	}

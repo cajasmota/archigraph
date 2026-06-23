@@ -4,17 +4,17 @@ import (
 	"context"
 	"testing"
 
-	tsbash "github.com/smacker/go-tree-sitter/bash"
+	tsbash "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/bash"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/shell"
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 )
 
 func parseForTest(t *testing.T, src string) ts.Tree {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tsbash.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tsbash.Language())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

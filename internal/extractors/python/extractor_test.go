@@ -8,23 +8,23 @@ import (
 	"testing"
 	"time"
 
-	tspython "github.com/smacker/go-tree-sitter/python"
+	tspython "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/python"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 	"github.com/cajasmota/grafel/internal/types"
 	// Blank import to trigger init() registration.
 	_ "github.com/cajasmota/grafel/internal/extractors/python"
 )
 
-// parse parses Python source into a binding-agnostic ts.Tree via the smacker
+// parse parses Python source into a binding-agnostic ts.Tree via the official
 // adapter. Tests stamp the result on FileInput.TSTree (which the migrated Python
-// extractor consumes). Using the smacker adapter keeps these tests linkable in
+// extractor consumes). Using the official adapter keeps these tests linkable in
 // the default build while exercising the ts façade (B2 #5418).
 func parse(t *testing.T, src []byte) ts.Tree {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tspython.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tspython.Language())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

@@ -2,14 +2,12 @@
 // abstraction (internal/treesitter/ts). It supports the bundled grammars and
 // enforces a 10% syntax error ratio gate before returning a ParseResult.
 //
-// Binding routing (B2, ADR 0023, #5418). Each language is routed to an adapter:
-// the smacker adapter (default for every grammar) or the official
-// tree-sitter/go-tree-sitter adapter (migrated languages — Go, under the
-// ts_official build tag). The set of migrated languages and the resolver are
-// supplied by build-tagged files (adapters_default.go / adapters_official.go);
-// ParseResult.TSTree is the binding-agnostic tree consumed by migrated
-// extractors, while ParseResult.Tree keeps exposing the concrete smacker tree
-// for grammars not yet migrated.
+// Binding (B2 cutover, ADR 0023, #5418). Every language is parsed through the
+// official tree-sitter/go-tree-sitter binding via its per-language grammar
+// provider (internal/treesitter/ts/grammars/<lang>). The legacy smacker binding
+// has been removed entirely; the migrated set and the resolver live in
+// adapters.go. ParseResult.TSTree is the binding-agnostic tree every extractor
+// consumes.
 package treesitter
 
 import (
@@ -18,40 +16,7 @@ import (
 	"fmt"
 	"sync"
 
-	sitter "github.com/smacker/go-tree-sitter"
-
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
-
-	"github.com/smacker/go-tree-sitter/bash"
-	"github.com/smacker/go-tree-sitter/c"
-	"github.com/smacker/go-tree-sitter/cpp"
-	"github.com/smacker/go-tree-sitter/csharp"
-	"github.com/smacker/go-tree-sitter/css"
-	"github.com/smacker/go-tree-sitter/dockerfile"
-	"github.com/smacker/go-tree-sitter/elixir"
-	"github.com/smacker/go-tree-sitter/golang"
-	"github.com/smacker/go-tree-sitter/groovy"
-	"github.com/smacker/go-tree-sitter/hcl"
-	"github.com/smacker/go-tree-sitter/html"
-	"github.com/smacker/go-tree-sitter/java"
-	"github.com/smacker/go-tree-sitter/javascript"
-	"github.com/smacker/go-tree-sitter/kotlin"
-	"github.com/smacker/go-tree-sitter/lua"
-	tsmarkdown "github.com/smacker/go-tree-sitter/markdown/tree-sitter-markdown"
-	"github.com/smacker/go-tree-sitter/ocaml"
-	"github.com/smacker/go-tree-sitter/php"
-	"github.com/smacker/go-tree-sitter/protobuf"
-	"github.com/smacker/go-tree-sitter/python"
-	"github.com/smacker/go-tree-sitter/ruby"
-	"github.com/smacker/go-tree-sitter/rust"
-	"github.com/smacker/go-tree-sitter/scala"
-	"github.com/smacker/go-tree-sitter/sql"
-	"github.com/smacker/go-tree-sitter/swift"
-	"github.com/smacker/go-tree-sitter/toml"
-	"github.com/smacker/go-tree-sitter/typescript/tsx"
-	"github.com/smacker/go-tree-sitter/typescript/typescript"
-	"github.com/smacker/go-tree-sitter/yaml"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -71,68 +36,6 @@ var (
 // maxErrorRatio is the fault-tolerance threshold from [DECISION] A6.
 // Files with error_ratio > maxErrorRatio are rejected as too malformed.
 const maxErrorRatio = 0.10
-
-// languageRegistry maps lowercase language names (as used by the Python
-// indexer language registry and go-enry) to their tree-sitter grammars.
-// "terraform" is an alias for "hcl". Languages not bundled in this version
-// of smacker/go-tree-sitter (dart, haskell, clojure, r, julia, zig, json)
-// are absent — callers receive ErrUnsupportedLanguage for those names.
-var languageRegistry map[string]*sitter.Language
-
-func init() {
-	languageRegistry = map[string]*sitter.Language{
-		"bash":       bash.GetLanguage(),
-		"shell":      bash.GetLanguage(), // shell files use the bash grammar
-		"c":          c.GetLanguage(),
-		"cpp":        cpp.GetLanguage(),
-		"css":        css.GetLanguage(),
-		"csharp":     csharp.GetLanguage(),
-		"dockerfile": dockerfile.GetLanguage(),
-		"elixir":     elixir.GetLanguage(),
-		"go":         golang.GetLanguage(),
-		"groovy":     groovy.GetLanguage(),
-		"hcl":        hcl.GetLanguage(),
-		"html":       html.GetLanguage(),
-		"java":       java.GetLanguage(),
-		"javascript": javascript.GetLanguage(),
-		"kotlin":     kotlin.GetLanguage(),
-		"lua":        lua.GetLanguage(),
-		"markdown":   tsmarkdown.GetLanguage(),
-		"ocaml":      ocaml.GetLanguage(),
-		"php":        php.GetLanguage(),
-		"proto":      protobuf.GetLanguage(),
-		"python":     python.GetLanguage(),
-		"ruby":       ruby.GetLanguage(),
-		"rust":       rust.GetLanguage(),
-		"scala":      scala.GetLanguage(),
-		"sql":        sql.GetLanguage(),
-		"swift":      swift.GetLanguage(),
-		"terraform":  hcl.GetLanguage(), // alias: terraform files use HCL grammar
-		"toml":       toml.GetLanguage(),
-		"typescript": typescript.GetLanguage(),
-		// tsx grammar handles .tsx and .jsx files (JSX-enabled superset of
-		// typescript). Routed via path extension by callers; entity Language
-		// tag remains "typescript"/"javascript" so downstream language gates
-		// don't fragment. PLT #537 — without this, .tsx files parsed under
-		// the plain typescript grammar produce 90%+ ERROR-node trees, the
-		// extractor never reaches function_declaration nodes, and React-
-		// component default-exported entities (BrandLogo, LoadingEllipsis,
-		// etc.) never make it into the graph — landing every importing
-		// IMPORTS edge in bug-extractor.
-		"tsx":  tsx.GetLanguage(),
-		"yaml": yaml.GetLanguage(),
-	}
-}
-
-// migratedLanguages, tsLanguageFor and abiGuard are provided by build-tagged
-// files (adapters_default.go / adapters_official.go). In the default build
-// migratedLanguages is empty, so every language parses through the smacker
-// adapter and the binary links only the smacker runtime. Under -tags ts_official
-// the migrated set includes Go (official binding). See adapters_default.go for
-// the co-link rationale.
-
-// smackerAdapter is the always-present smacker binding adapter.
-var smackerAdapter = tssmacker.New()
 
 // SupportedLanguages returns the sorted list of language names accepted by
 // the factory. The slice is a copy — callers may not modify it.
@@ -157,7 +60,6 @@ func SupportedLanguages() []string {
 		"javascript",
 		"kotlin",
 		"lua",
-		"markdown",
 		"ocaml",
 		"php",
 		"proto",
@@ -176,15 +78,8 @@ func SupportedLanguages() []string {
 
 // ParseResult holds the output of a single Parse call.
 type ParseResult struct {
-	// Tree is the concrete syntax tree returned by the smacker binding. It is
-	// populated ONLY for languages still on the smacker adapter (every language
-	// except the B2-migrated ones). It is nil for migrated languages (e.g. go),
-	// whose tree lives in TSTree. Non-migrated extractors read this field as
-	// before; the field stays until all languages migrate (ADR 0023, #5418).
-	Tree *sitter.Tree
-	// TSTree is the binding-agnostic parse tree, ALWAYS populated (for both
-	// smacker and official languages). Migrated extractors (Go) consume this via
-	// the ts façade; as more extractors migrate they switch from Tree to TSTree.
+	// TSTree is the binding-agnostic parse tree, always populated. Extractors
+	// consume it via the ts façade (ADR 0023, #5418).
 	TSTree ts.Tree
 	// Language is the normalised language name used for the parse.
 	Language string
@@ -198,15 +93,10 @@ type ParseResult struct {
 // ParserFactory creates tree-sitter parsers for supported languages.
 //
 // Issue #481 — empirically, concurrent Parse() calls produced
-// non-deterministic output even though every goroutine uses its own
-// *sitter.Parser and *sitter.Tree (per-file ents counts on the SAME source
-// jumped between 0, 4, 5, etc. across runs on kickstart.nvim). The likely
-// culprit is shared state inside the bundled smacker/go-tree-sitter
-// grammar objects (the *sitter.Language pointers in languageRegistry are
-// shared across all parsers). Until that race is fixed upstream we
-// serialise the parse + node-walk via parseMu; correctness wins over the
-// per-file parallelism we lose, and the impact on real-world repos
-// dominated by I/O+extractor work is marginal.
+// non-deterministic output. Until that is re-validated against the official
+// binding (ADR 0023 §5) we serialise the parse + node-walk via parseMu;
+// correctness wins over the per-file parallelism we lose, and the impact on
+// real-world repos dominated by I/O+extractor work is marginal.
 type ParserFactory struct {
 	tracer trace.Tracer
 }
@@ -233,17 +123,15 @@ func NewParserFactory(tracer trace.Tracer) *ParserFactory {
 //   - The OTel span "treesitter.parse" is always emitted with attributes:
 //     language, file_size_bytes, error_ratio, node_count.
 func (f *ParserFactory) Parse(ctx context.Context, source []byte, language string) (*ParseResult, error) {
-	ctx, span := f.tracer.Start(ctx, "treesitter.parse")
+	_, span := f.tracer.Start(ctx, "treesitter.parse")
 	defer span.End()
 
-	if _, present := languageRegistry[language]; !present {
-		if _, migrated := migratedLanguages[language]; !migrated {
-			span.SetAttributes(
-				attribute.String("language", language),
-				attribute.Int("file_size_bytes", len(source)),
-			)
-			return nil, fmt.Errorf("%w: %s", ErrUnsupportedLanguage, language)
-		}
+	if _, ok := migratedLanguages[language]; !ok {
+		span.SetAttributes(
+			attribute.String("language", language),
+			attribute.Int("file_size_bytes", len(source)),
+		)
+		return nil, fmt.Errorf("%w: %s", ErrUnsupportedLanguage, language)
 	}
 
 	// Fast-path: empty source.
@@ -255,63 +143,21 @@ func (f *ParserFactory) Parse(ctx context.Context, source []byte, language strin
 			attribute.Int("node_count", 0),
 		)
 		return &ParseResult{
-			Tree:       nil,
 			Language:   language,
 			ErrorRatio: 0.0,
 			NodeCount:  0,
 		}, nil
 	}
 
-	if _, migrated := migratedLanguages[language]; migrated {
-		return f.parseOfficial(span, source, language)
-	}
-	return f.parseSmacker(ctx, span, source, language)
+	return f.parseOfficial(span, source, language)
 }
 
-// parseSmacker is the unchanged-behaviour path for languages still on the
-// smacker binding. It produces the concrete *sitter.Tree (for the legacy Tree
-// field) and wraps it for TSTree.
-func (f *ParserFactory) parseSmacker(ctx context.Context, span trace.Span, source []byte, language string) (*ParseResult, error) {
-	lang := languageRegistry[language]
-
-	// Issue #481 — serialise parse calls across goroutines (see
-	// ParserFactory godoc for the rationale).
-	parseMu.Lock()
-	p := sitter.NewParser()
-	p.SetLanguage(lang)
-
-	tree, err := p.ParseCtx(ctx, nil, source)
-	parseMu.Unlock()
-	if err != nil {
-		return nil, fmt.Errorf("treesitter: parse failed for language %s: %w", language, err)
-	}
-
-	root := tree.RootNode()
-	total, errNodes := countNodes(root)
-
-	errorRatio := ratio(total, errNodes)
-	setParseSpan(span, language, len(source), errorRatio, total)
-
-	result := &ParseResult{
-		Tree:       tree,
-		TSTree:     tssmacker.WrapTree(tree),
-		Language:   language,
-		ErrorRatio: errorRatio,
-		NodeCount:  total,
-	}
-
-	if errorRatio > maxErrorRatio {
-		return result, fmt.Errorf("%w: language=%s error_ratio=%.4f", ErrHighSyntaxErrorRate, language, errorRatio)
-	}
-	return result, nil
-}
-
-// abiGuardOnce ensures the ABI guard runs at most once per migrated language.
+// abiGuardOnce ensures the ABI guard runs at most once per language.
 var abiGuardOnce sync.Map // language -> *sync.Once
 
-// parseOfficial is the migrated path (official binding) for B2 languages.
-// It runs the ABI guard once per language before the first real parse, so an
-// ABI-incompatible grammar fails loudly here instead of SIGSEGV'ing on RootNode.
+// parseOfficial parses source on the official binding. It runs the ABI guard
+// once per language before the first real parse, so an ABI-incompatible grammar
+// fails loudly here instead of SIGSEGV'ing on RootNode.
 func (f *ParserFactory) parseOfficial(span trace.Span, source []byte, language string) (*ParseResult, error) {
 	onceI, _ := abiGuardOnce.LoadOrStore(language, &sync.Once{})
 	var guardErr error
@@ -322,8 +168,8 @@ func (f *ParserFactory) parseOfficial(span trace.Span, source []byte, language s
 
 	lang, adapter, _ := tsLanguageFor(language)
 
-	// Issue #481 — keep parse serialisation. Re-test whether the official
-	// binding still needs it (ADR 0023 §5); conservatively retained for now.
+	// Issue #481 — serialise parse calls across goroutines (see ParserFactory
+	// godoc for the rationale).
 	parseMu.Lock()
 	p, err := adapter.NewParser(lang)
 	if err != nil {
@@ -345,7 +191,6 @@ func (f *ParserFactory) parseOfficial(span trace.Span, source []byte, language s
 	setParseSpan(span, language, len(source), errorRatio, total)
 
 	result := &ParseResult{
-		Tree:       nil, // official path: tree lives in TSTree only
 		TSTree:     tree,
 		Language:   language,
 		ErrorRatio: errorRatio,
@@ -373,8 +218,9 @@ func setParseSpan(span trace.Span, language string, size int, errorRatio float64
 	)
 }
 
-// countNodesTS is the binding-agnostic counterpart of countNodes, traversing the
-// ts façade. Iterative to avoid stack overflow on deeply nested trees.
+// countNodesTS traverses the ts façade and returns the total node count and the
+// number of ERROR nodes. Iterative to avoid stack overflow on deeply nested
+// trees (e.g. large minified files).
 func countNodesTS(root ts.Node) (total, errNodes int) {
 	if root == nil {
 		return 0, 0
@@ -392,30 +238,6 @@ func countNodesTS(root ts.Node) (total, errNodes int) {
 			if c := n.Child(i); c != nil {
 				stack = append(stack, c)
 			}
-		}
-	}
-	return total, errNodes
-}
-
-// countNodes performs a depth-first traversal of the tree and returns the
-// total node count and the number of ERROR nodes. Iterative to avoid stack
-// overflow on deeply nested trees (e.g. large minified files).
-func countNodes(root *sitter.Node) (total, errNodes int) {
-	if root == nil {
-		return 0, 0
-	}
-
-	stack := []*sitter.Node{root}
-	for len(stack) > 0 {
-		n := stack[len(stack)-1]
-		stack = stack[:len(stack)-1]
-		total++
-		if n.IsError() {
-			errNodes++
-		}
-		childCount := int(n.ChildCount())
-		for i := 0; i < childCount; i++ {
-			stack = append(stack, n.Child(i))
 		}
 	}
 	return total, errNodes
