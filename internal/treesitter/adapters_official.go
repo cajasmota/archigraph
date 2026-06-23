@@ -14,6 +14,8 @@ import (
 	tsdockerfile "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/dockerfile"
 	tselixir "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/elixir"
 	tsgolang "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/golang"
+	tsgroovy "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/groovy"
+	tshcl "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/hcl"
 	tshtml "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/html"
 	tsjava "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/java"
 	tsjavascript "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/javascript"
@@ -26,6 +28,7 @@ import (
 	tsruby "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/ruby"
 	tsrust "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/rust"
 	tsscala "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/scala"
+	tssql "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/sql"
 	tsswift "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/swift"
 	tstoml "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/toml"
 	tstypescript "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/typescript"
@@ -89,10 +92,19 @@ var migratedLanguages = map[string]ts.Language{
 	// binding anywhere and is ABI 13; dockerfile and kotlin commit an ABI-14
 	// parser.c + an external scanner.c, but their module go.mod / module boundary
 	// blocks the go-get-a-binding pattern. See cutover plan §3/§4. (sql/hcl/groovy
-	// stay deferred to batch 4b — they need ABI-14 regeneration first.)
+	// are handled in batch 4b below — they needed ABI-14 regeneration first.)
 	"proto":      tsproto.Language(),
 	"dockerfile": tsdockerfile.Language(),
 	"kotlin":     tskotlin.Language(),
+	// B2 cutover batch 4b (#5418): regeneration-required vendored C grammars.
+	// Their committed parser.c is ABI 15 (hcl/groovy) or .gitignore'd (sql), so
+	// none is directly vendorable — each parser.c was regenerated from grammar.js
+	// with tree-sitter-cli v0.23.2 (emits ABI 14) then vendored + compiled
+	// against the official runtime. sql and hcl carry an external scanner.c;
+	// groovy has none. See cutover plan §3/§4/§5.
+	"sql":    tssql.Language(),
+	"hcl":    tshcl.Language(),
+	"groovy": tsgroovy.Language(),
 }
 
 // abiProbeSource is trivial, valid source per migrated language for the ABI guard.
@@ -122,6 +134,9 @@ var abiProbeSource = map[string][]byte{
 	"proto":      []byte("syntax = \"proto3\";\nmessage M { int32 id = 1; }\n"),
 	"dockerfile": []byte("FROM alpine:3\nRUN echo hi\n"),
 	"kotlin":     []byte("fun f(): Int { return 1 }\n"),
+	"sql":        []byte("SELECT id FROM t WHERE id = 1;\n"),
+	"hcl":        []byte("resource \"x\" \"y\" {\n  name = \"v\"\n}\n"),
+	"groovy":     []byte("def f() { return 1 }\n"),
 }
 
 // tsLanguageFor resolves a language to the official adapter (if migrated) or the

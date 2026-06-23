@@ -27,6 +27,27 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
   gate, a smoke-test ABI guard (top kind `source_file`), and is wired into
   `adapters_official.go`'s `migratedLanguages` + `abiProbeSource`. (sql, hcl, and
   groovy stay deferred to batch 4b — they need ABI-14 regeneration first.)
+- **Official tree-sitter grammar providers — batch B2, batch 4b (regenerated +
+  vendored C) (#5418, B2 cutover Part B):** vendored grammar packages for
+  **sql, hcl, groovy** under `internal/treesitter/ts/grammars/`, behind the
+  `ts_official` build tag. Unlike batch 4a, none of these has a usable committed
+  ABI-≤14 `parser.c`: hcl (`tree-sitter-grammars/tree-sitter-hcl` v1.1.1) and
+  groovy (`murtaza64/tree-sitter-groovy` HEAD) commit an **ABI-15** `parser.c`
+  (which SIGSEGVs against the v0.24.0 runtime), and sql
+  (`DerekStride/tree-sitter-sql` v0.3.9) `.gitignore`s its generated `parser.c`
+  entirely. For each, the `parser.c` was **regenerated from the grammar's
+  `grammar.js`** with **tree-sitter-cli v0.23.2** (the v0.23 line emits
+  `LANGUAGE_VERSION 14`; a v0.24+ CLI would emit ABI 15), then vendored alongside
+  any external `scanner.c` and the `tree_sitter/` headers, with a hand-written
+  official-style cgo binding that calls the exported `tree_sitter_<name>()`
+  symbol and wraps it via `official.WrapLanguage` — compiled against the
+  **official** runtime, no new Go module. sql (MIT, external scanner, top kind
+  `program`) and hcl (Apache-2.0, external scanner, top kind `config_file`) carry
+  a vendored `scanner.c`; groovy (MIT, no external scanner, top kind
+  `source_file`) does not. Each package carries a SPDX/source/ref +
+  `regenerated-with tree-sitter-cli v0.23.2` attribution note for the
+  license-audit gate, a smoke-test ABI guard, and is wired into
+  `adapters_official.go`'s `migratedLanguages` + `abiProbeSource`.
 - **Progressive graph rendering in the dashboard (#5446, increment 2):** the
   Graph screen now consumes the streaming endpoint (`GET /api/v2/graph/{group}/stream`)
   and feeds the GPU canvas (cosmos.gl) incrementally, so a large graph **builds
