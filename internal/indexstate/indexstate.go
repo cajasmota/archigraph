@@ -15,6 +15,8 @@
 package indexstate
 
 import (
+	"sort"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -31,6 +33,74 @@ var (
 	// group-algo pass without conflating it with a reactive reindex count.
 	groupAlgoInFlight atomic.Int64
 )
+
+// Per-repo index freshness (#5433). The scheduler is the single writer; it
+// publishes a defensive copy of its per-repo state under its own lock via
+// SetRepoStates. The in-daemon MCP server (grafel_index_status) is the reader
+// and calls RepoStates lock-free-for-the-caller — a single mutex guards the
+// stored slice so a reader never observes a torn write. This is the same
+// import-cycle-avoiding bridge pattern as the global is_indexing flag above:
+// scheduler (sched) and MCP both import this leaf package, neither imports the
+// other.
+const (
+	// StateCurrent — the repo is fully indexed and idle (no queued/in-flight
+	// work and no coalesced dirty marker). An agent gating on its own repo
+	// should treat current (ideally with indexed_ref == head_ref) as "ready".
+	StateCurrent = "current"
+	// StateQueued — an index for this repo is enqueued but not yet running.
+	StateQueued = "queued"
+	// StateIndexing — an index for this repo is running right now.
+	StateIndexing = "indexing"
+	// StateDirty — a reindex is in flight AND further changes arrived during
+	// it, so a follow-up reindex is already pending (#5138 coalescing).
+	StateDirty = "dirty"
+)
+
+// RepoState is one repo's index-freshness slice, mirrored from the scheduler.
+type RepoState struct {
+	// Path is the repo's on-disk path (the scheduler's map key).
+	Path string
+	// State is one of the State* constants.
+	State string
+	// IndexedRef is the git ref the last completed index ran against, or empty
+	// if the repo has never been indexed in this daemon's lifetime.
+	IndexedRef string
+	// HeadRef is the ref captured at the latest enqueue (the ref the pending /
+	// in-flight work targets), or empty when nothing is pending.
+	HeadRef string
+	// Dirty is true when a coalesced follow-up reindex is pending (#5138).
+	Dirty bool
+}
+
+var (
+	repoStatesMu sync.RWMutex
+	repoStates   []RepoState
+)
+
+// SetRepoStates replaces the published per-repo index-state snapshot. The
+// scheduler calls this under its own lock immediately after publishing the
+// global in-flight count; it passes a freshly built slice (not an alias of any
+// internal map) so the stored value is safe to hand to readers. Idempotent and
+// safe to call from any goroutine.
+func SetRepoStates(states []RepoState) {
+	cp := make([]RepoState, len(states))
+	copy(cp, states)
+	repoStatesMu.Lock()
+	repoStates = cp
+	repoStatesMu.Unlock()
+}
+
+// RepoStates returns a copy of the current per-repo index-state snapshot,
+// sorted by Path for determinism. Lock-free for the caller's downstream use
+// (it gets its own slice). Safe to call from an MCP request handler.
+func RepoStates() []RepoState {
+	repoStatesMu.RLock()
+	out := make([]RepoState, len(repoStates))
+	copy(out, repoStates)
+	repoStatesMu.RUnlock()
+	sort.Slice(out, func(i, j int) bool { return out[i].Path < out[j].Path })
+	return out
+}
 
 // GroupAlgoBegin records the start of a group-algorithm pass. Safe to call from
 // any goroutine; balanced by GroupAlgoEnd (deferred at the call site).

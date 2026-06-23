@@ -24,7 +24,21 @@ Corpus-level metrics.
 
 Key parameters: `group`/`cwd`, `repo_filter[]`, `breakdown` (`"unresolved_imports"` adds edge taxonomy).
 
-Output: entity counts per kind, relationship counts, unresolved import breakdown when requested.
+Output: entity counts per kind, relationship counts, unresolved import breakdown when requested. Also includes a `repo_index_states` array (per-repo freshness) when available — but prefer `grafel_index_status` for a cheap poll.
+
+---
+
+## `grafel_index_status`
+
+Per-repo index freshness. **Lightweight** — reads only the scheduler snapshot; does NOT load or assemble the group graph, so it is cheap to poll.
+
+Each repo reports `state` ∈ `current` | `queued` | `indexing` | `dirty`, plus `indexed_ref` (ref the last completed index ran against) and `head_ref` (ref the pending/in-flight work targets).
+
+Key parameters: `repo` (case-insensitive substring or exact path match), `group`.
+
+Output: `{repos: [{repo, group, state, indexed_ref, head_ref, dirty}], any_indexing}`.
+
+**Gating rule:** an agent should gate on **its own** repo's `state == "current"` (and `indexed_ref == head_ref` where both are known) — **not** on the global `grafel_stats.is_indexing` flag, which is process-wide and blocks on *any* repo's indexing (head-of-line blocking across unrelated repos / worktrees).
 
 ---
 

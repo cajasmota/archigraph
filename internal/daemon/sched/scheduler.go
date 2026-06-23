@@ -371,6 +371,12 @@ type repoStats struct {
 	LastErr     string
 	LastPeakMB  int64 // observed peak (history) — 0 if predictor-only
 	PredictedMB int64 // last predicted MB charged for this repo
+	// LastIndexedRef is the git ref the most recent COMPLETED index ran
+	// against (#5433). Used by grafel_index_status to let an agent compare its
+	// repo's indexed_ref against head_ref and gate on real freshness rather
+	// than the process-global is_indexing flag. Empty until a first index
+	// completes in this daemon's lifetime.
+	LastIndexedRef string
 }
 
 // LogEntry is a single structured event captured for /status. Kept in
@@ -569,6 +575,7 @@ func (s *Scheduler) dedupLoop() {
 				if req.ref != "" {
 					s.pendingRefs[p] = req.ref
 				}
+				s.publishRepoStatesLocked() // #5433: repo just went dirty.
 				s.mu.Unlock()
 				continue
 			}
@@ -589,6 +596,7 @@ func (s *Scheduler) dedupLoop() {
 			if len(s.inflight) == 0 && s.deadManAt.IsZero() {
 				s.deadManAt = time.Now()
 			}
+			s.publishRepoStatesLocked() // #5433: repo just entered the queue.
 			s.mu.Unlock()
 			s.poke()
 		}
@@ -740,6 +748,67 @@ func (s *Scheduler) memReleaseLoop() {
 // called with s.mu held, immediately after any mutation of s.inflight.
 func (s *Scheduler) publishIndexStateLocked() {
 	indexstate.Set(len(s.inflight))
+	s.publishRepoStatesLocked()
+}
+
+// publishRepoStatesLocked mirrors the scheduler's per-repo index state to the
+// process-global indexstate record so the in-daemon MCP server can answer
+// grafel_index_status WITHOUT a scheduler reference or a group-graph load
+// (#5433). The derivation matches the doc:
+//
+//	inflight[repo]>0      → indexing  (and if also dirty → dirty, the strongest
+//	                        signal: indexing now AND a follow-up already pending)
+//	pendingIndex[repo]    → queued    (enqueued, not yet running)
+//	otherwise             → current
+//
+// A repo is included if the scheduler knows about it at all: it is currently
+// inflight/queued/dirty, OR it has a completed-index record in indexedRepos.
+// Must be called with s.mu held.
+func (s *Scheduler) publishRepoStatesLocked() {
+	// Union of every repo the scheduler has any state for.
+	seen := make(map[string]struct{})
+	add := func(p string) { seen[p] = struct{}{} }
+	for p := range s.inflight {
+		add(p)
+	}
+	for p, v := range s.pendingIndex {
+		if v {
+			add(p)
+		}
+	}
+	for p, v := range s.dirty {
+		if v {
+			add(p)
+		}
+	}
+	for p := range s.indexedRepos {
+		add(p)
+	}
+
+	out := make([]indexstate.RepoState, 0, len(seen))
+	for p := range seen {
+		rs := indexstate.RepoState{Path: p, HeadRef: s.pendingRefs[p]}
+		if st, ok := s.indexedRepos[p]; ok {
+			rs.IndexedRef = st.LastIndexedRef
+		}
+		dirty := s.dirty[p]
+		rs.Dirty = dirty
+		switch {
+		case s.inflight[p] > 0 && dirty:
+			// Indexing now, but changes arrived mid-run → a follow-up is
+			// already pending. Surface the stronger "dirty" signal so an agent
+			// knows the current run will not be the last word.
+			rs.State = indexstate.StateDirty
+		case s.inflight[p] > 0:
+			rs.State = indexstate.StateIndexing
+		case s.pendingIndex[p]:
+			rs.State = indexstate.StateQueued
+		default:
+			rs.State = indexstate.StateCurrent
+		}
+		out = append(out, rs)
+	}
+	indexstate.SetRepoStates(out)
 }
 
 // busyLocked reports whether any indexing-related work is in flight or
@@ -1058,6 +1127,9 @@ func (s *Scheduler) runIndex(tok jobToken) {
 	stats.LastIndex = time.Now()
 	stats.IndexCount++
 	stats.PredictedMB = tok.predictedMB
+	// #5433: record the ref this completed index ran against so
+	// grafel_index_status can report indexed_ref per repo.
+	stats.LastIndexedRef = tok.ref
 	if observedPeakMB > 0 {
 		stats.LastPeakMB = observedPeakMB
 	}

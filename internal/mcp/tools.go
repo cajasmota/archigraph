@@ -3022,6 +3022,25 @@ func (s *Server) handleGraphStats(ctx context.Context, req mcpapi.CallToolReques
 		}
 	}
 
+	// #5433: surface per-repo index freshness cheaply (the snapshot is already
+	// in process memory — no group-graph load). Agents should prefer the
+	// dedicated lightweight grafel_index_status tool to avoid paying for the
+	// rest of grafel_stats, but expose it here too for one-shot inspection.
+	if rs := indexstate.RepoStates(); len(rs) > 0 {
+		perRepo := make([]map[string]any, 0, len(rs))
+		for _, st := range rs {
+			row := map[string]any{"repo": st.Path, "state": st.State, "dirty": st.Dirty}
+			if st.IndexedRef != "" {
+				row["indexed_ref"] = st.IndexedRef
+			}
+			if st.HeadRef != "" {
+				row["head_ref"] = st.HeadRef
+			}
+			perRepo = append(perRepo, row)
+		}
+		totals["repo_index_states"] = perRepo
+	}
+
 	return jsonResult(totals), nil
 }
 

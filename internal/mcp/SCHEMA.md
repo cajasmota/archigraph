@@ -113,6 +113,7 @@ Agents using these names will receive a "tool not found" error — update to the
 | [`grafel_traces`](#grafel_traces) | Process-flow traces (action: list\|get\|follow). |
 | [`grafel_clusters`](#grafel_clusters) | List Louvain communities; group-scoped (can span repos via `repos[]`/`cross_repo`) when the group-algo overlay is applied. |
 | [`grafel_stats`](#grafel_stats) | Corpus-level metrics for the resolved group. |
+| [`grafel_index_status`](#grafel_index_status) | Per-repo index freshness; gate on YOUR repo's state, not global is_indexing. |
 | [`grafel_enrichments`](#grafel_enrichments) | Manage enrichment candidates (action: list\|submit\|reject). |
 | [`grafel_cross_links`](#grafel_cross_links) | Manage cross-repo link candidates (action: list\|accept\|reject). |
 | [`grafel_repairs`](#grafel_repairs) | Manage residual-edge repair queue (action: list\|submit). |
@@ -628,6 +629,58 @@ both mean "every loaded repo".
   "unavailable": ["legacy-tools: open .grafel/graph.json: no such file"]
 }
 ```
+
+`grafel_stats` also includes a `repo_index_states` array (same per-repo shape as
+`grafel_index_status`) when the daemon has per-repo state. For a cheap freshness
+poll that does NOT assemble the group graph, prefer `grafel_index_status`.
+
+---
+
+### `grafel_index_status`
+
+Per-repo index freshness (#5433). **Lightweight**: reads only the scheduler's
+in-memory snapshot — it does NOT load or assemble the group graph, so it is
+cheap to poll on a tight loop.
+
+The global `is_indexing` flag (in `grafel_stats`) is a single process-wide bool:
+an agent that polls it to decide "is my repo ready?" is blocked by **any** repo's
+indexing, including unrelated ones — head-of-line blocking across independent
+repos in multi-agent / multi-worktree setups. This tool exposes **per-repo**
+state so an agent gates on its own repo.
+
+**Gating rule** — an agent should treat its repo as ready when
+`state == "current"` **and** (when both refs are known) `indexed_ref == head_ref`.
+Do **not** gate on the global `is_indexing`.
+
+**Inputs**
+
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `repo` | string | no | — | Filter to repos whose path matches (case-insensitive substring or exact). |
+| `group` | string | no | — | Only return repos in this group. |
+
+**Output** — `state` ∈ `current` \| `queued` \| `indexing` \| `dirty`.
+
+```json
+{
+  "repos": [
+    {
+      "repo": "/Users/me/Projects/upvate_core",
+      "group": "upvate",
+      "state": "current",
+      "indexed_ref": "a1b2c3d",
+      "head_ref": "a1b2c3d",
+      "dirty": false
+    }
+  ],
+  "any_indexing": false
+}
+```
+
+State derivation (from the scheduler maps): `inflight>0` → `indexing` (and if a
+mid-run change also arrived, `dirty`); `pendingIndex`/queued → `queued`;
+otherwise `current`. `head_ref` is the ref captured at the latest enqueue;
+`indexed_ref` is the ref the last completed index ran against.
 
 ---
 

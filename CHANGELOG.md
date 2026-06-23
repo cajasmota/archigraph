@@ -47,6 +47,22 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
   a genuinely unrecoverable error exits.
 
 ### Added
+- **`grafel_index_status` — per-repo index freshness (#5433):** a new
+  **lightweight** MCP tool that reports each registered repo's index state
+  (`current` \| `queued` \| `indexing` \| `dirty`) plus `indexed_ref` / `head_ref`,
+  with optional `repo` (substring/exact) and `group` filters. It reads ONLY the
+  scheduler's in-memory snapshot — it does **not** load or assemble the group
+  graph — so agents can poll it cheaply. Fixes a head-of-line blocking footgun:
+  the global `grafel_stats.is_indexing` flag is a single process-wide bool, so an
+  agent that polled it to gate "is my repo ready?" was blocked by **any** repo's
+  indexing, including unrelated ones (multi-agent / multi-worktree setups
+  deadlock-waited). Agents should now gate on **their** repo's
+  `state == "current"` (and `indexed_ref == head_ref` where both are known)
+  instead of the global flag. The same `repo_index_states` array is also surfaced
+  in `grafel_stats` for one-shot inspection. The data already existed in the
+  scheduler (`inflight`/`pendingIndex`/`dirty`/`pendingRefs`); it is published via
+  the existing `indexstate` leaf-package bridge (no new lock path, no import
+  cycle). Closes #5433.
 - **Binding-agnostic tree-sitter abstraction + Go on the official binding
   (#5418, B2 Phase 0, ADR 0023):** new `internal/treesitter/ts` façade (a minimal
   `Node`/`Tree`/`Parser`/`Language`/`Adapter` interface modelled on grafel's

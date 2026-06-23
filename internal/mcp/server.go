@@ -813,6 +813,15 @@ func (s *Server) registerTools() {
 		mcpapi.WithAny("ref"), // PH1c: optional git ref
 	), s.wrap("grafel_stats", s.handleGraphStats))
 
+	// grafel_index_status — per-repo index freshness (#5433). LIGHTWEIGHT: reads
+	// only the scheduler snapshot (no group-graph load) so agents can poll it to
+	// gate on THEIR repo (state==current) instead of the global is_indexing flag.
+	s.addTool(mcpapi.NewTool("grafel_index_status",
+		mcpapi.WithDescription("Per-repo index freshness; gate on YOUR repo state==current, not is_indexing."),
+		mcpapi.WithString("repo", mcpapi.Description("Filter to repos whose path matches (case-insensitive substring or exact).")),
+		mcpapi.WithAny("group"),
+	), s.wrap("grafel_index_status", s.handleIndexStatus))
+
 	// grafel_enrichments — action: list|submit|reject.
 	s.addTool(mcpapi.NewTool("grafel_enrichments",
 		mcpapi.WithDescription("Enrichment candidates: list=pending, submit=resolve, reject=discard."),

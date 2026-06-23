@@ -1,0 +1,115 @@
+// grafel_index_status — per-repo index freshness (#5433).
+//
+// The global is_indexing flag (grafel_stats) is a single process-wide bool: an
+// agent that polls it to decide "is my repo ready?" is blocked by ANY repo's
+// indexing, including unrelated ones — head-of-line blocking across independent
+// repos in multi-agent / multi-worktree setups.
+//
+// This tool exposes PER-REPO index state so an agent gates on its own repo. It
+// is deliberately LIGHTWEIGHT: it reads ONLY the scheduler's published snapshot
+// (via the indexstate leaf bridge) and the in-memory registry. It does NOT load
+// or assemble the group graph, so it is cheap to poll on a tight loop.
+package mcp
+
+import (
+	"context"
+	"strings"
+
+	mcpapi "github.com/mark3labs/mcp-go/mcp"
+
+	"github.com/cajasmota/grafel/internal/indexstate"
+)
+
+// indexStatusRepo is one repo's wire-shape row in grafel_index_status.
+type indexStatusRepo struct {
+	Repo       string `json:"repo"`
+	Group      string `json:"group,omitempty"`
+	State      string `json:"state"`
+	IndexedRef string `json:"indexed_ref,omitempty"`
+	HeadRef    string `json:"head_ref,omitempty"`
+	Dirty      bool   `json:"dirty"`
+}
+
+// indexStatusReply is the grafel_index_status response envelope.
+type indexStatusReply struct {
+	Repos []indexStatusRepo `json:"repos"`
+	// AnyIndexing is true if at least one of the RETURNED repos is currently
+	// indexing or dirty (after filters apply). An agent gating on its own repo
+	// should NOT use this — it should check its repo's state==current — but it
+	// is a convenient summary when no filter is set.
+	AnyIndexing bool `json:"any_indexing"`
+}
+
+// handleIndexStatus answers grafel_index_status. Optional args:
+//
+//	repo  — substring OR exact match against the repo path (case-insensitive).
+//	group — exact group name; only repos in that group are returned.
+//
+// Each row reports state ∈ {current, queued, indexing, dirty}, plus indexed_ref
+// (last completed index's ref) and head_ref (ref the pending/in-flight work
+// targets). An agent gates on its repo with: state=="current" && indexed_ref
+// (when both refs are known) == head_ref.
+func (s *Server) handleIndexStatus(ctx context.Context, req mcpapi.CallToolRequest) (*mcpapi.CallToolResult, error) {
+	repoFilter := strings.TrimSpace(argString(req, "repo", ""))
+	groupFilter := strings.TrimSpace(argString(req, "group", ""))
+
+	// Build a repo-path → group index from the registry so each row can be
+	// attributed to its group. The scheduler keys on the same on-disk path the
+	// registry stores, so an exact-path match attaches the group.
+	pathToGroup := s.repoPathToGroup()
+
+	states := indexstate.RepoStates()
+	out := indexStatusReply{Repos: make([]indexStatusRepo, 0, len(states))}
+	for _, st := range states {
+		group := pathToGroup[st.Path]
+
+		if groupFilter != "" && group != groupFilter {
+			continue
+		}
+		if repoFilter != "" && !repoMatches(st.Path, repoFilter) {
+			continue
+		}
+
+		row := indexStatusRepo{
+			Repo:       st.Path,
+			Group:      group,
+			State:      st.State,
+			IndexedRef: st.IndexedRef,
+			HeadRef:    st.HeadRef,
+			Dirty:      st.Dirty,
+		}
+		out.Repos = append(out.Repos, row)
+		if st.State == indexstate.StateIndexing || st.State == indexstate.StateDirty {
+			out.AnyIndexing = true
+		}
+	}
+	return jsonResult(out), nil
+}
+
+// repoPathToGroup builds a path→group lookup from the registry. A repo path may
+// appear in only one group in practice; if it appears in several, the last one
+// scanned wins (group attribution is best-effort metadata, not a gate).
+func (s *Server) repoPathToGroup() map[string]string {
+	m := map[string]string{}
+	if s == nil || s.State == nil {
+		return m
+	}
+	for gName, grp := range s.State.registry.Groups {
+		for _, r := range grp.Repos {
+			if r.Path != "" {
+				m[r.Path] = gName
+			}
+		}
+	}
+	return m
+}
+
+// repoMatches reports whether the repo path satisfies the caller's repo filter.
+// Matches if the filter equals the path, OR is a case-insensitive substring of
+// it (so "upvate_core" matches "/Users/x/Projects/upvate_core").
+func repoMatches(path, filter string) bool {
+	if path == filter {
+		return true
+	}
+	return strings.Contains(strings.ToLower(path), strings.ToLower(filter))
+}

@@ -44,6 +44,7 @@ Orientation, search, and single-entity lookup. **Call `grafel_whoami` first.**
 |------|-----------------|
 | [`grafel_whoami`](mcp-tools/status-and-discovery.md#grafel_whoami) | Resolve group/repo/ref for the agent's cwd. **Call this first.** |
 | [`grafel_stats`](mcp-tools/status-and-discovery.md#grafel_stats) | Corpus-level entity + relationship counts. Use to scope token budgets. |
+| [`grafel_index_status`](mcp-tools/status-and-discovery.md#grafel_index_status) | Per-repo index freshness; gate on YOUR repo's state, not global is_indexing. |
 | [`grafel_orient`](mcp-tools/status-and-discovery.md#grafel_orient) | Orientation analysis: key entities, cross-cutting edges, orientation questions. |
 | [`grafel_search_entities`](mcp-tools/status-and-discovery.md#grafel_search_entities) | Substring search over entity names; ranked matches with source locations. |
 | [`grafel_find`](mcp-tools/status-and-discovery.md#grafel_find) | BM25-ranked graph query with optional BFS expansion. Primary discovery tool. |
