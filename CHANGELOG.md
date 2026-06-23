@@ -84,6 +84,25 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
   (`docs/c3-feature-impact-analysis.md`)
 
 ### Fixed
+- **Graph view: Reset / re-explode no longer drifts the camera off-screen
+  (#5462):** pressing **Reset** (or any path that triggers a fresh re-settle —
+  group-by, layout change, deep-link re-explode) made the graph spread but the
+  camera drifted off toward a corner instead of staying centered + framed,
+  sometimes leaving the viewport entirely; the initial page load framed fine. The
+  during-settle camera tracker self-terminated on "user interaction" via a
+  **sticky** latch that flips true on the first canvas click/pan/zoom and never
+  resets — so because the user has almost always clicked/selected a node before
+  pressing Reset, the tracker bailed the instant the explode began and the spread
+  ran with a frozen camera. A programmatic re-settle now ARMS an **auto-follow
+  window** that keeps the camera tracking the live node bounding box through the
+  *entire* explode regardless of that latch; only a **genuine** subsequent user
+  pan/zoom/drag during the settle stops auto-following. Real vs. programmatic
+  camera moves are told apart via cosmos.gl's `userDriven` flag (the tracker's own
+  `fitView` glides report `userDriven === false`, so they don't self-cancel the
+  window they serve), and the fit cadence was tightened (~120ms) so a fast
+  `start(1)` explode never outruns the camera. Initial-load framing and the
+  streaming live-explode are unchanged. The interaction-vs-programmatic decision is
+  extracted to a pure, unit-tested helper.
 - **Streaming graph now visibly spreads/explodes live instead of staying a
   clustered blob until done (#5446, #5460):** when the Graph screen loaded a
   large group progressively (chunked stream), the layout stayed a tight,

@@ -50,6 +50,7 @@ import {
 import { saveLayout, loadLayout, isDegenerateLayout, isLayoutHealthy } from "@/lib/graph-layout-cache";
 import { isRenderableGraph } from "@/lib/graph-render-guard";
 import { shouldFitReplayStep } from "@/lib/replay-glow-visibility";
+import { shouldTrackSettleFit, isGenuineUserCameraMove } from "@/lib/settle-fit-follow";
 import {
   autoBasePx,
   type ColorMode,
@@ -878,6 +879,20 @@ function GraphCanvasInner(
   // verify-then-retry controller checks it so it only ever auto-corrects the
   // INITIAL collapsed render — once the user takes control we never re-fire.
   const userInteractedRef = useRef(false);
+  // #5462 — "auto-follow window" flag. A PROGRAMMATIC re-settle (Reset / any
+  // kickFreshSettle: group-by, layout change, deep-link re-explode) ARMS this so
+  // the during-settle camera tracker follows the explode the whole way EVEN THOUGH
+  // userInteractedRef has long since latched true (the user almost always clicked /
+  // panned / selected a node before pressing Reset). Without this, the sticky
+  // userInteractedRef latch made startSettleFitTracking bail on its first line, so
+  // the graph spread with a frozen camera and drifted off to a corner. Only a
+  // GENUINE subsequent user camera move during the settle clears it (see
+  // cancelProgrammaticFollow), so we still never fight a real pan/zoom/drag. The
+  // triggering button click is a DOM click on the toolbar, not a canvas event, so
+  // it never reaches here; and the tracker's OWN fitView transitions are
+  // programmatic (d3 sourceEvent === null → userDriven === false), so they don't
+  // self-cancel.
+  const programmaticFollowRef = useRef(false);
   // #5458 — live mirror of the isFocusView prop so the mount-stable settle-fit
   // tracker can gate on it without re-running on every focus toggle.
   const isFocusViewRef = useRef(isFocusView);
@@ -899,12 +914,34 @@ function GraphCanvasInner(
     applyZoomLinkWidthsRef.current();
     rafRef.current = requestAnimationFrame(motionLoop);
   }, []);
-  const startInteraction = useCallback(() => {
-    interactingRef.current = true;
-    // #4654: latch — the user is now driving the camera; stop any auto-correct.
-    userInteractedRef.current = true;
-    if (rafRef.current === null) rafRef.current = requestAnimationFrame(motionLoop);
-  }, [motionLoop]);
+  // #5462 — a GENUINE user camera move (real pointer drag, real wheel/pinch zoom,
+  // or a canvas click) cancels the programmatic auto-follow window so we stop
+  // re-framing and hand the camera back to the user mid-settle. Programmatic fits
+  // (the tracker's own fitView, which emit zoom events with userDriven === false)
+  // must NOT call this.
+  const cancelProgrammaticFollow = useCallback(() => {
+    programmaticFollowRef.current = false;
+    stopSettleFitTrackingRef.current();
+  }, []);
+  const cancelProgrammaticFollowRef = useRef(cancelProgrammaticFollow);
+  cancelProgrammaticFollowRef.current = cancelProgrammaticFollow;
+  // #5462 — `userDriven` distinguishes a real user pan/zoom/drag (d3 sourceEvent
+  // present) from a programmatic camera transition (our own fitView, sourceEvent
+  // null). Only a user-driven move latches userInteractedRef and cancels the
+  // auto-follow window; a programmatic fit just keeps the rAF label loop alive.
+  const startInteraction = useCallback(
+    (userDriven = true) => {
+      interactingRef.current = true;
+      if (userDriven) {
+        // #4654: latch — the user is now driving the camera; stop any auto-correct.
+        userInteractedRef.current = true;
+        // #5462: a genuine move during a Reset/re-explode settle ends auto-follow.
+        cancelProgrammaticFollowRef.current();
+      }
+      if (rafRef.current === null) rafRef.current = requestAnimationFrame(motionLoop);
+    },
+    [motionLoop],
+  );
   const endInteraction = useCallback(() => {
     interactingRef.current = false;
     if (rafRef.current !== null) {
@@ -1050,7 +1087,12 @@ function GraphCanvasInner(
   // user interaction, or on focus/ego (where restoreCamera / the ego fit own the
   // view). Only ONE tracker runs at a time (settleFitRafRef).
   const settleFitRafRef = useRef<number | null>(null);
-  const FIT_TRACK_MS = 350; // throttle between tracking fits
+  // #5462 — tighter cadence than the original 350ms. A fresh start(1) explode
+  // spreads FAST in its first ~half-second; at 350ms the camera lagged far enough
+  // behind that the layout had already shot toward a corner between fits. ~120ms
+  // keeps the camera glued to the live bbox through the energetic spread, then the
+  // eased FINAL_FIT_MS glide in doSettle lands the final framing.
+  const FIT_TRACK_MS = 120; // throttle between tracking fits
   const stopSettleFitTracking = useCallback(() => {
     if (settleFitRafRef.current !== null) {
       cancelAnimationFrame(settleFitRafRef.current);
@@ -1062,22 +1104,41 @@ function GraphCanvasInner(
   const startSettleFitTracking = useCallback(() => {
     const g = graphRef.current;
     if (!g) return;
-    // Don't track during focus/ego (the ego re-fit / camera restore owns the view)
-    // or when a fit is being suppressed for a camera restore.
-    if (isFocusViewRef.current || suppressFitRef.current) return;
-    if (userInteractedRef.current) return; // never fight a manual pan/zoom
+    // #5462 — gate on the pure decision: the sticky userInteractedRef latch must
+    // NOT block a PROGRAMMATIC re-settle (Reset / kickFreshSettle armed
+    // programmaticFollowRef). During the auto-follow window we ignore the latch
+    // entirely; outside it we keep the old "never fight a manual pan/zoom" guard.
+    // Focus/ego and a camera-restore suppression always win. A genuine user move
+    // during the window clears programmaticFollowRef (cancelProgrammaticFollow) and
+    // stops the tracker.
+    if (
+      !shouldTrackSettleFit({
+        programmaticFollow: programmaticFollowRef.current,
+        userInteracted: userInteractedRef.current,
+        isFocusView: isFocusViewRef.current,
+        suppressFit: suppressFitRef.current,
+      })
+    ) {
+      return;
+    }
     stopSettleFitTrackingRef.current();
     let last = 0;
     const tick = (now: number) => {
       const gg = graphRef.current;
-      // Stop the moment any owner takes over or the settle finishes.
+      // Stop the moment any owner takes over or the settle finishes. The
+      // userInteractedRef check is skipped while the auto-follow window is armed
+      // (a real move clears the window via cancelProgrammaticFollow, so this still
+      // bails the instant the user genuinely takes over). (#5462)
       if (
         !gg ||
         hasSettledRef.current ||
-        userInteractedRef.current ||
-        isFocusViewRef.current ||
-        suppressFitRef.current ||
-        !gg.isSimulationRunning
+        !gg.isSimulationRunning ||
+        !shouldTrackSettleFit({
+          programmaticFollow: programmaticFollowRef.current,
+          userInteracted: userInteractedRef.current,
+          isFocusView: isFocusViewRef.current,
+          suppressFit: suppressFitRef.current,
+        })
       ) {
         settleFitRafRef.current = null;
         return;
@@ -1134,7 +1195,10 @@ function GraphCanvasInner(
     }
 
     // #5458 — stop the during-settle camera tracker; doSettle now owns the
-    // final framing.
+    // final framing. #5462 — close the auto-follow window: the settle is complete,
+    // so from here the sticky userInteractedRef latch governs again and we never
+    // re-fit behind a manual pan.
+    programmaticFollowRef.current = false;
     stopSettleFitTrackingRef.current();
 
     if (suppressFitRef.current) {
@@ -1311,6 +1375,13 @@ function GraphCanvasInner(
     g.render();
     g.create();
     g.start(1);
+    // #5462 — ARM the auto-follow window: this is a PROGRAMMATIC re-settle (the
+    // user pressed Reset / changed group-by / a deep-link re-explode), so the
+    // camera must follow the explode even though userInteractedRef latched true on
+    // an earlier click/pan. Set BEFORE startSettleFitTracking so the tracker's
+    // userInteractedRef guard is bypassed. Cleared at doSettle, or earlier by a
+    // genuine user pan/zoom/drag during the settle (cancelProgrammaticFollow).
+    programmaticFollowRef.current = true;
     // #5458 — track the camera to the spreading layout for the whole settle so the
     // graph stays centered + framed instead of drifting to a corner then snapping.
     startSettleFitTrackingRef.current();
@@ -1439,6 +1510,7 @@ function GraphCanvasInner(
       onSimulationTick: scheduleLabelsLive,
       onClick: (index?: number) => {
         userInteractedRef.current = true; // #4654: user took control → no auto-correct
+        cancelProgrammaticFollowRef.current(); // #5462: a real click ends auto-follow
         if (index === undefined) {
           onNodeClickRef.current(null);
           return;
@@ -1465,8 +1537,16 @@ function GraphCanvasInner(
       // so onZoomStart/onZoomEnd bracket every camera move. Start the per-frame
       // rAF label loop on start, stop it on end. onZoom still nudges a refresh
       // for the (rare) single-shot zoom that doesn't emit start/end.
-      onZoomStart: () => startInteractionRef.current(),
-      onZoom: () => {
+      // #5462 — cosmos passes `userDriven` (d3 sourceEvent !== null) as the 2nd
+      // arg: TRUE for a real wheel/pinch/pan, FALSE for a PROGRAMMATIC transition
+      // (our during-settle tracker's own fitView). We MUST forward it: the tracker
+      // fires onZoomStart/onZoom on every glide, and if those were treated as user
+      // input they'd latch userInteractedRef + cancel the auto-follow window the
+      // very first track — re-breaking the drift. Only a user-driven zoom latches /
+      // cancels; a programmatic fit just keeps the rAF label loop alive.
+      onZoomStart: (_e, userDriven) =>
+        startInteractionRef.current(isGenuineUserCameraMove(userDriven)),
+      onZoom: (_e, userDriven) => {
         // Fix #1607: drive the sublinear, capped point size off every zoom event
         // (covers the single-shot wheel zoom that doesn't bracket start/end). The
         // rAF motion loop handles continuous zoom/pan; this catches the rest.
@@ -1474,10 +1554,18 @@ function GraphCanvasInner(
         // Fix #2110: also re-pack link widths with updated zoom compensation on
         // single-shot wheel zoom events not bracketed by start/end.
         applyZoomLinkWidthsRef.current();
+        // #5462: a user-driven single-shot wheel zoom (not bracketed by start/end)
+        // must still latch + end the auto-follow window; a programmatic fit must not.
+        if (isGenuineUserCameraMove(userDriven)) {
+          userInteractedRef.current = true;
+          cancelProgrammaticFollowRef.current();
+        }
         if (!interactingRef.current) scheduleLabelsLive();
       },
       onZoomEnd: () => endInteractionRef.current(),
-      onDragStart: () => startInteractionRef.current(),
+      // Dragging the canvas is ALWAYS a genuine user move (only a real pointer can
+      // drag), so it latches + cancels the auto-follow window unconditionally.
+      onDragStart: () => startInteractionRef.current(true),
       onDragEnd: () => endInteractionRef.current(),
     });
     graphRef.current = g;
@@ -1775,6 +1863,9 @@ function GraphCanvasInner(
     // step is just polish, so use the gentle cool-down alpha (not the full live one).
     g.start(STREAM_FINAL_COOLDOWN_ALPHA);
     // #5458 — keep the camera framed during the final stream cool-down too.
+    // #5462 — programmatic re-settle: arm the auto-follow window so the final fit
+    // tracks even if the user clicked/panned a node while the stream was running.
+    programmaticFollowRef.current = true;
     startSettleFitTrackingRef.current();
     capTimerRef.current = setTimeout(() => {
       if (!hasSettledRef.current) doSettleRef.current();
