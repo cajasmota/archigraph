@@ -27,13 +27,13 @@ import (
 	"context"
 	"testing"
 
-	tscsharp "github.com/smacker/go-tree-sitter/csharp"
+	tscsharp "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/csharp"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/csharp"
 	"github.com/cajasmota/grafel/internal/graph"
 	"github.com/cajasmota/grafel/internal/resolve"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -45,7 +45,7 @@ func extractCSharpProjectForTest(t *testing.T, files map[string]string) []types.
 	}
 	var merged []types.EntityRecord
 	for rel, src := range files {
-		parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tscsharp.GetLanguage()))
+		parser, err := tsofficial.New().NewParser(tscsharp.Language())
 		if err != nil {
 			t.Fatalf("parser init %s: %v", rel, err)
 		}

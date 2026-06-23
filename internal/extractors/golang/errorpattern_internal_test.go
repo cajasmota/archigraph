@@ -3,17 +3,17 @@ package golang
 import (
 	"testing"
 
-	tsgo "github.com/smacker/go-tree-sitter/golang"
+	tsgo "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/golang"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 )
 
 // parseGoInternal parses Go source inside the package test (so it can reach
-// unexported helpers) into the binding-agnostic ts.Tree via the smacker adapter.
+// unexported helpers) into the binding-agnostic ts.Tree via the official adapter.
 func parseGoInternal(t *testing.T, src string) ts.Tree {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tsgo.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tsgo.Language())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

@@ -10,10 +10,9 @@ package javascript_test
 
 import (
 	"context"
+	tstsx "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/typescript"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 	"testing"
-
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
-	tstsx "github.com/smacker/go-tree-sitter/typescript/tsx"
 
 	extreg "github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/types"
@@ -21,7 +20,7 @@ import (
 
 func extractReact(t *testing.T, path string, content []byte) []types.EntityRecord {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tstsx.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tstsx.LanguageTSX())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

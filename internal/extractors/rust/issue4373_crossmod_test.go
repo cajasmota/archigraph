@@ -23,13 +23,13 @@ import (
 	"context"
 	"testing"
 
-	tsrust "github.com/smacker/go-tree-sitter/rust"
+	tsrust "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/rust"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/rust"
 	"github.com/cajasmota/grafel/internal/graph"
 	"github.com/cajasmota/grafel/internal/resolve"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -45,7 +45,7 @@ func extractRustCrateForTest(t *testing.T, files map[string]string) []types.Enti
 	}
 	var merged []types.EntityRecord
 	for rel, src := range files {
-		parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tsrust.GetLanguage()))
+		parser, err := tsofficial.New().NewParser(tsrust.Language())
 		if err != nil {
 			t.Fatalf("parser init %s: %v", rel, err)
 		}

@@ -13,12 +13,11 @@ package javascript_test
 
 import (
 	"context"
+	tstsx "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/typescript"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 	"os"
 	"path/filepath"
 	"testing"
-
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
-	tstsx "github.com/smacker/go-tree-sitter/typescript/tsx"
 
 	extreg "github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/types"
@@ -31,7 +30,7 @@ func extractAngularFixture(t *testing.T) []types.EntityRecord {
 	if err != nil {
 		t.Fatalf("read fixture: %v", err)
 	}
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tstsx.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tstsx.LanguageTSX())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}
@@ -184,7 +183,7 @@ func TestIssue2874_RealData_Rxjs(t *testing.T) {
 	if err != nil {
 		t.Skipf("real-world angular fixture not present: %v", err)
 	}
-	parser, _ := tssmacker.New().NewParser(tssmacker.WrapLanguage(tstsx.GetLanguage()))
+	parser, _ := tsofficial.New().NewParser(tstsx.LanguageTSX())
 	defer parser.Close()
 	tree, _ := parser.Parse(content)
 	ext, _ := extreg.Get("typescript")

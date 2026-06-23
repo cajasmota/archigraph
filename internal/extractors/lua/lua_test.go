@@ -4,17 +4,17 @@ import (
 	"context"
 	"testing"
 
-	tslua "github.com/smacker/go-tree-sitter/lua"
+	tslua "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/lua"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/lua"
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 )
 
 func parseForTest(t *testing.T, src string) ts.Tree {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tslua.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tslua.Language())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

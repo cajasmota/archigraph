@@ -6,12 +6,11 @@ package javascript_test
 
 import (
 	"context"
+	tstsx "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/typescript"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 	"os"
 	"path/filepath"
 	"testing"
-
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
-	tstsx "github.com/smacker/go-tree-sitter/typescript/tsx"
 
 	extreg "github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/types"
@@ -24,7 +23,7 @@ func extractRealWorld(t *testing.T, rel string) []types.EntityRecord {
 	if err != nil {
 		t.Skipf("real-world fixture %s not present: %v", rel, err)
 	}
-	parser, _ := tssmacker.New().NewParser(tssmacker.WrapLanguage(tstsx.GetLanguage()))
+	parser, _ := tsofficial.New().NewParser(tstsx.LanguageTSX())
 	defer parser.Close()
 	tree, _ := parser.Parse(content)
 	ext, _ := extreg.Get("typescript")

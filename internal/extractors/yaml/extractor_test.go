@@ -7,12 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	tsyaml "github.com/smacker/go-tree-sitter/yaml"
+	tsyaml "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/yaml"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/yaml" // trigger init()
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -21,7 +21,7 @@ import (
 // ---------------------------------------------------------------------------
 
 func parseYAML(src []byte) ts.Tree {
-	p, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tsyaml.GetLanguage()))
+	p, err := tsofficial.New().NewParser(tsyaml.Language())
 	if err != nil {
 		panic("test helper: yaml parser init failed: " + err.Error())
 	}

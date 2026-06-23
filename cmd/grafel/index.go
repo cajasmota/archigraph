@@ -15,8 +15,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	sitter "github.com/smacker/go-tree-sitter"
-
 	"github.com/cajasmota/grafel/internal/algorithms"
 	"github.com/cajasmota/grafel/internal/classifier"
 	"github.com/cajasmota/grafel/internal/coverage"
@@ -44,6 +42,7 @@ import (
 	"github.com/cajasmota/grafel/internal/progress"
 	"github.com/cajasmota/grafel/internal/resolve"
 	"github.com/cajasmota/grafel/internal/treesitter"
+	"github.com/cajasmota/grafel/internal/treesitter/ts"
 	"github.com/cajasmota/grafel/internal/types"
 	"github.com/cajasmota/grafel/internal/version"
 )
@@ -91,7 +90,7 @@ type classifiedFile struct {
 	absPath  string
 	language string
 	content  []byte
-	tree     *sitter.Tree
+	tree     ts.Tree
 }
 
 // Indexer owns the pass-by-pass orchestration. Constructing a fresh Indexer
@@ -2856,9 +2855,8 @@ func (i *Indexer) classifyAndReadWithProgress(ctx context.Context, absRepo strin
 					}
 				}
 				if pr, perr := i.parser.Parse(ctx, content, parseLang); perr == nil && pr != nil {
-					file.Tree = pr.Tree
 					file.TSTree = pr.TSTree
-					cf.tree = pr.Tree
+					cf.tree = pr.TSTree
 					// A4 canary (#5414): fold this parse's ERROR-node ratio
 					// into the per-language accumulator. Key by the classifier
 					// language (not the tsx parse override) so .tsx/.jsx roll
@@ -3075,7 +3073,7 @@ func (i *Indexer) runPass3CrossLang(ctx context.Context, absRepo string, classif
 					RepoRoot: absRepo,
 				}
 				if cf.tree != nil {
-					input.Tree = cf.tree
+					input.TSTree = cf.tree
 				}
 				for _, e := range exts {
 					ents, err := e.Extractor.Extract(ctx, input)

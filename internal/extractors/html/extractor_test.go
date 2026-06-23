@@ -5,12 +5,12 @@ import (
 	"strings"
 	"testing"
 
-	tshtml "github.com/smacker/go-tree-sitter/html"
+	tshtml "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/html"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/html"
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -20,7 +20,7 @@ import (
 
 func parseHTML(t *testing.T, src string) ts.Tree {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tshtml.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tshtml.Language())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

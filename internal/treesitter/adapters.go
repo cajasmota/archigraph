@@ -1,5 +1,3 @@
-//go:build ts_official
-
 package treesitter
 
 import (
@@ -34,28 +32,26 @@ import (
 	tstypescript "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/typescript"
 	tsyaml "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/yaml"
 	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 )
 
-// ts_official build: Go (B2 Phase 0) plus the high-value batch — python, java,
-// csharp, typescript (+tsx), javascript, rust (B2 cutover Part A, #5418) — are
-// migrated onto the official tree-sitter/go-tree-sitter binding (ADR 0023).
-// Every other language stays on smacker for now.
-// NOTE: this build links BOTH runtimes and currently fails at link time on
-// macOS (the co-link blocker — see adapters_default.go). It exists to exercise
-// and CI-test the official adapter + migrated grammars + ABI guard in isolation
-// and on platforms/toolchains where multiple-definition linking is permitted;
-// resolving the co-link is the eventual default-flip (cutover §7).
+// Binding (B2 cutover, ADR 0023, #5418). Every grammar is now bound to the
+// official tree-sitter/go-tree-sitter runtime via its per-language provider in
+// internal/treesitter/ts/grammars/<lang>. The legacy smacker binding has been
+// removed entirely, so this is the sole, un-tagged binding configuration — the
+// co-link blocker that previously forced an opt-in `-tags ts_official` build is
+// gone now that nothing links the second runtime. ParseResult.TSTree is the
+// binding-agnostic tree every extractor consumes.
 
-// officialAdapter is the official binding adapter (only compiled under the tag).
+// officialAdapter is the official binding adapter (the only adapter).
 var officialAdapter = tsofficial.New()
 
-// migratedLanguages maps each migrated language to its official ts.Language.
-// Phase 0 migrated Go; B2 cutover A1 (#5418) adds the high-value batch. The
-// registry key "tsx" routes .tsx/.jsx files to the TSX grammar (the JSX-enabled
-// superset) from the same tree-sitter-typescript module.
+// migratedLanguages maps each supported language to its official ts.Language.
+// The registry key "tsx" routes .tsx/.jsx files to the TSX grammar (the
+// JSX-enabled superset) from the same tree-sitter-typescript module.
 var migratedLanguages = map[string]ts.Language{
 	"go":         tsgolang.Language(),
+	"shell":      tsbash.Language(), // alias: shell files use the bash grammar
+	"terraform":  tshcl.Language(),  // alias: terraform files use the HCL grammar
 	"python":     tspython.Language(),
 	"java":       tsjava.Language(),
 	"csharp":     tscsharp.Language(),
@@ -63,53 +59,33 @@ var migratedLanguages = map[string]ts.Language{
 	"tsx":        tstypescript.LanguageTSX(),
 	"javascript": tsjavascript.Language(),
 	"rust":       tsrust.Language(),
-	// B2 cutover Part B (#5418): additive provider batch — all ABI 14.
-	"bash": tsbash.Language(),
-	"c":    tsc.Language(),
-	"cpp":  tscpp.Language(),
-	"css":  tscss.Language(),
-	"html": tshtml.Language(),
-	"ruby": tsruby.Language(),
-	// B2 cutover Part B batch 2 (#5418): official-binding providers — all ABI ≤14.
-	"elixir": tselixir.Language(),
-	"ocaml":  tsocaml.Language(),
-	"php":    tsphp.Language(),
-	"scala":  tsscala.Language(),
-	"swift":  tsswift.Language(),
-	// B2 cutover Part B batch 3 (#5418): source-swap providers — off the dead,
-	// binding-less bundled repos onto the maintained tree-sitter-grammars org
-	// (a freshness win + the one-runtime requirement), all ABI 14. hcl is
-	// deferred to the vendored-C track: the tree-sitter-grammars/tree-sitter-hcl
-	// bindings/go only exists from v1.2.0 (ABI 15, SIGSEGVs at RootNode), and the
-	// ABI-14 tags (v1.1.0/v1.1.1) ship no Go binding — so it cannot use this
-	// go-get-a-binding pattern (cutover plan §3/§4).
-	"lua":  tslua.Language(),
-	"toml": tstoml.Language(),
-	"yaml": tsyaml.Language(),
-	// B2 cutover batch 4a (#5418): directly-vendorable C grammars whose committed
-	// parser.c is ABI ≤14 — vendored C + a hand-written official-style binding,
-	// compiled against the official runtime (no go-get module). proto has no Go
-	// binding anywhere and is ABI 13; dockerfile and kotlin commit an ABI-14
-	// parser.c + an external scanner.c, but their module go.mod / module boundary
-	// blocks the go-get-a-binding pattern. See cutover plan §3/§4. (sql/hcl/groovy
-	// are handled in batch 4b below — they needed ABI-14 regeneration first.)
+	"bash":       tsbash.Language(),
+	"c":          tsc.Language(),
+	"cpp":        tscpp.Language(),
+	"css":        tscss.Language(),
+	"html":       tshtml.Language(),
+	"ruby":       tsruby.Language(),
+	"elixir":     tselixir.Language(),
+	"ocaml":      tsocaml.Language(),
+	"php":        tsphp.Language(),
+	"scala":      tsscala.Language(),
+	"swift":      tsswift.Language(),
+	"lua":        tslua.Language(),
+	"toml":       tstoml.Language(),
+	"yaml":       tsyaml.Language(),
 	"proto":      tsproto.Language(),
 	"dockerfile": tsdockerfile.Language(),
 	"kotlin":     tskotlin.Language(),
-	// B2 cutover batch 4b (#5418): regeneration-required vendored C grammars.
-	// Their committed parser.c is ABI 15 (hcl/groovy) or .gitignore'd (sql), so
-	// none is directly vendorable — each parser.c was regenerated from grammar.js
-	// with tree-sitter-cli v0.23.2 (emits ABI 14) then vendored + compiled
-	// against the official runtime. sql and hcl carry an external scanner.c;
-	// groovy has none. See cutover plan §3/§4/§5.
-	"sql":    tssql.Language(),
-	"hcl":    tshcl.Language(),
-	"groovy": tsgroovy.Language(),
+	"sql":        tssql.Language(),
+	"hcl":        tshcl.Language(),
+	"groovy":     tsgroovy.Language(),
 }
 
-// abiProbeSource is trivial, valid source per migrated language for the ABI guard.
+// abiProbeSource is trivial, valid source per language for the ABI guard.
 var abiProbeSource = map[string][]byte{
 	"go":         []byte("package p\nfunc F() int { return 1 }\n"),
+	"shell":      []byte("f() { echo hi; }\n"),
+	"terraform":  []byte("resource \"x\" \"y\" {\n  name = \"v\"\n}\n"),
 	"python":     []byte("def f():\n    return 1\n"),
 	"java":       []byte("class C { int f() { return 1; } }\n"),
 	"csharp":     []byte("class C { int F() { return 1; } }\n"),
@@ -139,26 +115,22 @@ var abiProbeSource = map[string][]byte{
 	"groovy":     []byte("def f() { return 1 }\n"),
 }
 
-// tsLanguageFor resolves a language to the official adapter (if migrated) or the
-// smacker adapter (everything else).
+// tsLanguageFor resolves a language to the official adapter and its grammar
+// handle. Returns false when the language is not supported.
 func tsLanguageFor(language string) (ts.Language, ts.Adapter, bool) {
-	if l, migrated := migratedLanguages[language]; migrated {
+	if l, ok := migratedLanguages[language]; ok {
 		return l, officialAdapter, true
 	}
-	sl, present := languageRegistry[language]
-	if !present {
-		return nil, nil, false
-	}
-	return tssmacker.WrapLanguage(sl), smackerAdapter, true
+	return nil, nil, false
 }
 
-// abiGuard parses trivial source for a migrated grammar and asserts a sane,
-// non-error root. An ABI-incompatible grammar bump compiles but SIGSEGVs at
-// RootNode (ADR 0023 §6); this catches a detectable mismatch before any real
-// file is parsed.
+// abiGuard parses trivial source for a grammar and asserts a sane, non-error
+// root. An ABI-incompatible grammar bump compiles but SIGSEGVs at RootNode
+// (ADR 0023 §6); this catches a detectable mismatch before any real file is
+// parsed.
 func abiGuard(language string) error {
-	l, migrated := migratedLanguages[language]
-	if !migrated {
+	l, ok := migratedLanguages[language]
+	if !ok {
 		return nil
 	}
 	p, err := officialAdapter.NewParser(l)

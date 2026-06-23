@@ -3,11 +3,10 @@ package dashboard
 import (
 	"context"
 	"encoding/json"
+	tstypescript "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/typescript"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 	"net/http"
 	"testing"
-
-	sitter "github.com/smacker/go-tree-sitter"
-	tstypescript "github.com/smacker/go-tree-sitter/typescript/typescript"
 
 	extreg "github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/extractors/javascript"
@@ -56,9 +55,12 @@ interface AlternateAddressResponse {
 // extractTSEntities runs the real javascript extractor over TS source.
 func extractTSEntities(t *testing.T, src string) []types.EntityRecord {
 	t.Helper()
-	p := sitter.NewParser()
-	p.SetLanguage(tstypescript.GetLanguage())
-	tree, err := p.ParseCtx(context.Background(), nil, []byte(src))
+	parser, err := tsofficial.New().NewParser(tstypescript.Language())
+	if err != nil {
+		t.Fatalf("NewParser: %v", err)
+	}
+	defer parser.Close()
+	tree, err := parser.Parse([]byte(src))
 	if err != nil {
 		t.Fatalf("parse TS: %v", err)
 	}
@@ -66,7 +68,7 @@ func extractTSEntities(t *testing.T, src string) []types.EntityRecord {
 		Path:     issue4881File,
 		Content:  []byte(src),
 		Language: "typescript",
-		Tree:     tree,
+		TSTree:   tree,
 	})
 	if err != nil {
 		t.Fatalf("extract: %v", err)

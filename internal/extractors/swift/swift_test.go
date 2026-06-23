@@ -6,18 +6,18 @@ import (
 	"strings"
 	"testing"
 
-	tsswift "github.com/smacker/go-tree-sitter/swift"
+	tsswift "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/swift"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/swift"
 	"github.com/cajasmota/grafel/internal/treesitter"
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 )
 
 func parseForTest(t *testing.T, src string) ts.Tree {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tsswift.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tsswift.Language())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

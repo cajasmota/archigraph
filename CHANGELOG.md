@@ -179,6 +179,25 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
   (`docs/c3-feature-impact-analysis.md`)
 
 ### Changed
+- **B2 cutover, Step B — flipped to the official binding as the sole build;
+  removed smacker entirely (#5418):** every language now resolves to its
+  `internal/treesitter/ts/grammars/<lang>` provider on the official
+  `tree-sitter/go-tree-sitter` runtime, with **no build tag** — the
+  `ts_official` / `!ts_official` split is gone and official is the only build.
+  The build-tagged adapter pair (`adapters_default.go` / `adapters_official.go`)
+  was collapsed into a single un-tagged `adapters.go`, and the per-extractor
+  `language_smacker.go` / smacker grammar-handle files were dropped. The legacy
+  `github.com/smacker/go-tree-sitter` dependency is removed from `go.mod`/`go.sum`
+  and its adapter package (`internal/treesitter/ts/smacker/`) deleted; the
+  concrete smacker tree fields `ParseResult.Tree` and `FileInput.Tree` are
+  retired — only the binding-agnostic façade `ParseResult.TSTree` / `TSTree`
+  remains. The full tree now compiles and links all 26 grammars on the official
+  runtime in one binary (the co-link blocker is gone once the second runtime is
+  no longer linked). The **markdown** grammar was dropped from the parser
+  registry and `grammars.lock` (its extractor is pure-stdlib; no functional
+  impact). Per-language C3 (c) extractor adaptations for the newer grammars'
+  changed node shapes, and the full B1 fidelity re-bench, remain gated follow-ups
+  before tag (cutover plan §7).
 - **B2 cutover, Step A — node-traversing extractors moved onto the
   binding-agnostic `ts.Node` façade (#5418):** the remaining extractor files
   that still typed their CST walks against the concrete smacker `*sitter.Node`

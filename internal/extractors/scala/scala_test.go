@@ -5,18 +5,18 @@ import (
 	"errors"
 	"testing"
 
-	tsscala "github.com/smacker/go-tree-sitter/scala"
+	tsscala "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/scala"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/scala"
 	"github.com/cajasmota/grafel/internal/treesitter"
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
 )
 
 func parseForTest(t *testing.T, src string) ts.Tree {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tsscala.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tsscala.Language())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

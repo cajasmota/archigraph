@@ -11,12 +11,11 @@ package javascript_test
 
 import (
 	"context"
+	tstsx "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/typescript"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 	"os"
 	"path/filepath"
 	"testing"
-
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
-	tstsx "github.com/smacker/go-tree-sitter/typescript/tsx"
 
 	extreg "github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/types"
@@ -29,7 +28,7 @@ func extractAngularTanstack(t *testing.T) []types.EntityRecord {
 	if err != nil {
 		t.Fatalf("read fixture: %v", err)
 	}
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tstsx.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tstsx.LanguageTSX())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

@@ -15,9 +15,9 @@ import (
 	"testing"
 
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
-	tsjavascript "github.com/smacker/go-tree-sitter/javascript"
-	tstypescript "github.com/smacker/go-tree-sitter/typescript/typescript"
+	tsjavascript "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/javascript"
+	tstypescript "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/typescript"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/javascript"
@@ -27,7 +27,7 @@ import (
 // parseJSDSL parses JS source with the JS grammar.
 func parseJSDSL(t *testing.T, src []byte) ts.Tree {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tsjavascript.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tsjavascript.Language())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}
@@ -42,7 +42,7 @@ func parseJSDSL(t *testing.T, src []byte) ts.Tree {
 // parseTSDSL parses TS source with the TS grammar.
 func parseTSDSL(t *testing.T, src []byte) ts.Tree {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tstypescript.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tstypescript.Language())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

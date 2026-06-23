@@ -27,11 +27,10 @@ package kotlin_test
 
 import (
 	"context"
+	tskotlin "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/kotlin"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 	"strings"
 	"testing"
-
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
-	tskotlin "github.com/smacker/go-tree-sitter/kotlin"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	_ "github.com/cajasmota/grafel/internal/extractors/kotlin"
@@ -48,7 +47,7 @@ func extractKotlinProjectForTest(t *testing.T, files map[string]string) []types.
 	}
 	var merged []types.EntityRecord
 	for rel, src := range files {
-		parser, perr := tssmacker.New().NewParser(tssmacker.WrapLanguage(tskotlin.GetLanguage()))
+		parser, perr := tsofficial.New().NewParser(tskotlin.Language())
 		if perr != nil {
 			t.Fatalf("parser init: %v", perr)
 		}

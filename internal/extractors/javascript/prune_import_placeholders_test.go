@@ -16,8 +16,8 @@ import (
 	"testing"
 
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
-	tstypescript "github.com/smacker/go-tree-sitter/typescript/typescript"
+	tstypescript "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/typescript"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/types"
@@ -67,7 +67,7 @@ func findImportOnAny742(ents []types.EntityRecord, spec string) *types.Relations
 
 func parseTS742(t *testing.T, src []byte) ts.Tree {
 	t.Helper()
-	parser, err := tssmacker.New().NewParser(tssmacker.WrapLanguage(tstypescript.GetLanguage()))
+	parser, err := tsofficial.New().NewParser(tstypescript.Language())
 	if err != nil {
 		t.Fatalf("parser init: %v", err)
 	}

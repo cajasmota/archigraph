@@ -5,11 +5,10 @@ package kotlin
 
 import (
 	"context"
+	tskotlin "github.com/cajasmota/grafel/internal/treesitter/ts/grammars/kotlin"
+	tsofficial "github.com/cajasmota/grafel/internal/treesitter/ts/official"
 	"strings"
 	"testing"
-
-	tssmacker "github.com/cajasmota/grafel/internal/treesitter/ts/smacker"
-	tskotlin "github.com/smacker/go-tree-sitter/kotlin"
 
 	"github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/types"
@@ -20,7 +19,7 @@ import (
 // bubble up via t.Fatal so callers can assume non-nil non-empty output.
 func runKotlinExtract(t *testing.T, src string) []types.EntityRecord {
 	t.Helper()
-	parser, perr := tssmacker.New().NewParser(tssmacker.WrapLanguage(tskotlin.GetLanguage()))
+	parser, perr := tsofficial.New().NewParser(tskotlin.Language())
 	if perr != nil {
 		t.Fatalf("parser init: %v", perr)
 	}
