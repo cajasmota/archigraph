@@ -8,6 +8,25 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 
 ## [Unreleased]
 
+### Fixed
+
+- **MCP read-side now serves the group-algo overlay instead of per-repo Louvain
+  (Fixes #5396, #5397):** the group-level overlay (`~/.grafel/groups/<group>-algo.json`)
+  was computed correctly and stamped onto entities by `applyGroupAlgoOverlay`,
+  but the query tools never read it. `grafel_clusters`/`handleListCommunities`
+  now serves the **group** communities when the overlay is applied — so a
+  community can surface members spanning >1 repo (reported via a `repos` list and
+  a `cross_repo` flag instead of being force-tagged to a single repo), and
+  `core-mobile` entities (community 80) appear instead of a whole repo silently
+  showing 0 communities (#5397). A `repo_filter` naming only one repo of a
+  cross-repo community still surfaces that community. `grafel_inspect` now
+  surfaces the overlay `community_id`/`pagerank`/`centrality` (and god-node /
+  articulation-point flags) when requested via
+  `include=community,pagerank,centrality`, not only under `verbose` — and
+  `centrality` is surfaced at all for the first time. `grafel_orient` already
+  reads the overlay-stamped per-entity values. Fully absence-tolerant: with no
+  overlay present, every tool keeps its prior per-repo behavior unchanged.
+
 ### Changed
 
 - **Un-deprecated `grafel_expand` / `grafel_find_callers` / `grafel_find_callees`
