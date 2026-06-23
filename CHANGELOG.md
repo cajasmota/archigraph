@@ -51,6 +51,18 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
   (`docs/c3-feature-impact-analysis.md`)
 
 ### Fixed
+- **Tests can no longer clobber a developer's real `~/.config/grafel` fleet
+  config (#5443):** a group-overlay test resolved the fleet-config path
+  (`registry.ConfigPathFor` → `registry.ConfigDir`) without redirecting
+  `HOME`/`XDG_CONFIG_HOME`/`GRAFEL_HOME` into a TempDir. When run from a real
+  home it fell back to the live `~/.config/grafel/<group>.fleet.json` and
+  overwrote it, repointing the group's repos at an already-deleted `t.TempDir`
+  so the group dropped to 0 entities. The offending test now isolates via
+  `testsupport.IsolateHome(t)`, and — as a fail-closed guardrail — the registry
+  config writers (`SaveGroupConfig`, the `registry.json` writer) now **panic
+  loudly under `go test` if the write target lands inside the real user home**,
+  so a future un-isolated test fails immediately instead of silently corrupting
+  the developer's live config.
 - **Dashboard/`grafel status` no longer show "0 entities / never indexed" for a
   cold-but-indexed group (#5442):** the WebUI group overview and `grafel status`
   derived per-repo entity counts + last-indexed time only from the

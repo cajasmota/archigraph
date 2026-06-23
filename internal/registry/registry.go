@@ -288,6 +288,7 @@ func Save(r *Registry) error {
 }
 
 func saveTo(path string, r *Registry) error {
+	guardResolvedConfigPath(path, "registry.json")
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
@@ -372,6 +373,7 @@ func LoadGroupConfig(path string) (*GroupConfig, error) {
 
 // SaveGroupConfig writes a per-group config atomically.
 func SaveGroupConfig(path string, cfg *GroupConfig) error {
+	guardResolvedConfigPath(path, "fleet config")
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
