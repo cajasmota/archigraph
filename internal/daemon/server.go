@@ -687,6 +687,16 @@ func Run(ctx context.Context, cfg Config) error {
 // each conn so Run can join them on shutdown.
 func acceptLoop(l net.Listener, srv *rpc.Server, wg *sync.WaitGroup, logger *slog.Logger, done chan<- struct{}) {
 	defer close(done)
+	// Exponential backoff bounds for transient Accept() errors, mirroring
+	// the pattern in net/http.Server.Serve (see "tempDelay"). A transient
+	// failure (e.g. EMFILE under fd pressure) must NOT bring the daemon
+	// down: returning here causes Run to unlink the socket and every MCP
+	// client drops. So we back off and keep serving instead.
+	const (
+		backoffStart = 5 * time.Millisecond
+		backoffMax   = 1 * time.Second
+	)
+	var backoff time.Duration
 	for {
 		conn, err := l.Accept()
 		if err != nil {
@@ -694,9 +704,35 @@ func acceptLoop(l net.Listener, srv *rpc.Server, wg *sync.WaitGroup, logger *slo
 			if errors.Is(err, net.ErrClosed) {
 				return
 			}
-			logger.Error("accept", "err", err)
+			// Transient error: do not exit. Resource-exhaustion and
+			// connection-reset conditions are expected under load and
+			// recover on their own. Treating them as fatal removed the
+			// socket and caused MCP outages (issue: acceptLoop exits on
+			// transient Accept errors). net.Error.Timeout() is the modern
+			// stand-in for the deprecated Temporary().
+			if isTransientAcceptErr(err) {
+				if backoff == 0 {
+					backoff = backoffStart
+				} else {
+					backoff *= 2
+				}
+				if backoff > backoffMax {
+					backoff = backoffMax
+				}
+				logger.Warn("accept: transient error, backing off",
+					"err", err, "retry_in", backoff)
+				time.Sleep(backoff)
+				continue
+			}
+			// Genuinely unrecoverable: log and exit. The deferred cleanup
+			// in Run will remove the socket. Non-transient Accept errors
+			// on a unix listener are rare and indicate the listener itself
+			// is unusable.
+			logger.Error("accept: fatal", "err", err)
 			return
 		}
+		// Successful Accept — reset the transient-error backoff.
+		backoff = 0
 		wg.Add(1)
 		go func(c net.Conn) {
 			defer wg.Done()
@@ -704,6 +740,31 @@ func acceptLoop(l net.Listener, srv *rpc.Server, wg *sync.WaitGroup, logger *slo
 			srv.ServeCodec(jsonrpc.NewServerCodec(&loggingConn{Conn: c, log: logger}))
 		}(conn)
 	}
+}
+
+// isTransientAcceptErr reports whether an error returned by net.Listener.Accept
+// is transient — i.e. the listener is still usable and the loop should back off
+// and retry rather than tear the daemon (and its socket) down.
+//
+// This mirrors net/http.Server.Serve, which retries on any net.Error whose
+// (deprecated) Temporary() reports true. We use Timeout() as the modern
+// stand-in and additionally recognise the specific syscall errnos that show up
+// under resource pressure: EMFILE/ENFILE (fd exhaustion), ENOMEM/ENOBUFS
+// (memory pressure), and ECONNABORTED (peer reset between the SYN and accept).
+func isTransientAcceptErr(err error) bool {
+	switch {
+	case errors.Is(err, syscall.EMFILE),
+		errors.Is(err, syscall.ENFILE),
+		errors.Is(err, syscall.ENOMEM),
+		errors.Is(err, syscall.ENOBUFS),
+		errors.Is(err, syscall.ECONNABORTED):
+		return true
+	}
+	var ne net.Error
+	if errors.As(err, &ne) && ne.Timeout() {
+		return true
+	}
+	return false
 }
 
 // loggingConn wraps a net.Conn so EOF / read errors get a single log
