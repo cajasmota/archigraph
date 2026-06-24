@@ -2,6 +2,7 @@ package javascript_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	extreg "github.com/cajasmota/grafel/internal/extractor"
@@ -380,6 +381,34 @@ export async function POST(request: Request) { return Response.json({}) }
 	ents := extract(t, "custom_js_nextjs", fi("app/api/users/route.ts", "typescript", src))
 	if !containsSubtype(ents, "endpoint") {
 		t.Error("expected endpoint entity")
+	}
+}
+
+// #5486: `export const GET = ...` route-handler form is recognised, and a
+// Route Handler outside /api/ (App Router permits route.* anywhere under app/)
+// still yields an endpoint.
+func TestNextjsHTTPHandlerConstForm(t *testing.T) {
+	src := `
+export const GET = async (req: Request) => Response.json([])
+export const POST = async (req: Request) => Response.json({})
+`
+	ents := extract(t, "custom_js_nextjs", fi("app/feed/route.ts", "typescript", src))
+	if !containsSubtype(ents, "endpoint") {
+		t.Error("expected endpoint entity from const-form route handler")
+	}
+}
+
+// #5486: a page.tsx exporting a GET function is NOT a Route Handler — it must
+// not yield an http-method endpoint (it may still be a page-route entity, but
+// none carrying an http_method property).
+func TestNextjsPageGetExportNotEndpoint(t *testing.T) {
+	src := `export async function GET(req: Request) { return Response.json({}) }`
+	ents := extract(t, "custom_js_nextjs", fi("app/dashboard/page.tsx", "typescript", src))
+	for _, e := range ents {
+		// HTTP-method route-handler endpoints are named "<VERB> <path>".
+		if strings.HasPrefix(e.Name, "GET ") {
+			t.Errorf("page.tsx GET export must NOT produce an http-method endpoint; got %q", e.Name)
+		}
 	}
 }
 

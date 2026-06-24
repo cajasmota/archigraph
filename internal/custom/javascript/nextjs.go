@@ -24,8 +24,13 @@ type nextjsExtractor struct{}
 func (e *nextjsExtractor) Language() string { return "custom_js_nextjs" }
 
 var (
+	// App-Router Route Handler verb exports — both the function-declaration
+	// form (`export async function GET(`) and the const arrow / function-expr
+	// form (`export const GET = `) (#5486). Group 1 (function) or group 2
+	// (const) is the verb.
 	reNextjsHTTPHandler = regexp.MustCompile(
-		`export\s+(?:async\s+)?function\s+(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\s*\(`,
+		`export\s+(?:async\s+)?function\s+(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\s*\(` +
+			`|export\s+const\s+(GET|POST|PUT|DELETE|PATCH|HEAD|OPTIONS)\s*=`,
 	)
 	reNextjsServerSideProps = regexp.MustCompile(
 		`export\s+(?:async\s+)?function\s+(getServerSideProps|getStaticProps|getStaticPaths)\s*\(`,
@@ -141,12 +146,27 @@ func (e *nextjsExtractor) Extract(ctx context.Context, file extreg.FileInput) ([
 	// Accept both absolute (/app/) and relative (app/) path prefixes.
 	isAppRouter := strings.Contains(fp, "/app/") || strings.HasPrefix(fp, "app/")
 	isPagesRouter := strings.Contains(fp, "/pages/") || strings.HasPrefix(fp, "pages/")
-	isAPIRoute := strings.Contains(fp, "/api/") || strings.HasPrefix(fp, "api/") || stem == "route"
 
-	// App Router: HTTP method handlers in route.ts
-	if isAppRouter && isAPIRoute {
+	// App Router: HTTP method handlers in route.{ts,js,tsx} (#5486). Gate on
+	// the `route` basename so page.tsx / arbitrary verb exports under /api/ are
+	// NOT treated as Route Handlers; App Router permits route.* anywhere under
+	// app/, not only under api/.
+	if isAppRouter && stem == "route" {
+		seenVerb := make(map[string]bool)
 		for _, m := range reNextjsHTTPHandler.FindAllStringSubmatchIndex(src, -1) {
-			method := src[m[2]:m[3]]
+			// Group 1 = function form; group 2 = const form.
+			var method string
+			if m[2] >= 0 {
+				method = src[m[2]:m[3]]
+			} else if m[4] >= 0 {
+				method = src[m[4]:m[5]]
+			} else {
+				continue
+			}
+			if seenVerb[method] {
+				continue
+			}
+			seenVerb[method] = true
 			routePath := normalizeNextjsPath(fp)
 			// strip app/ prefix and route/page suffixes
 			if idx := strings.Index(routePath, "/app/"); idx >= 0 {

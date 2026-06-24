@@ -35,7 +35,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Route extraction | ✅ `full` | `2026-05-28` | 2932 | `internal/custom/javascript/nextjs.go`<br>`internal/engine/http_endpoint_jsts_extra.go`<br>`internal/engine/rules/javascript_typescript/frameworks/next_js.yaml` | — |
+| Route extraction | ✅ `full` | `2026-06-24` | [link](https://github.com/cajasmota/grafel/issues/5486) | `internal/custom/javascript/nextjs.go`<br>`internal/engine/http_endpoint_jsts_extra.go`<br>`internal/engine/http_endpoint_next_route_handler_5486_test.go`<br>`internal/engine/rules/javascript_typescript/frameworks/next_js.yaml` | App Router Route Handlers (#5486): each exported HTTP-method handler in app/.../route.{ts,js,tsx} — both `export async function GET(` and `export const GET = ...` forms — is synthesized as one http_endpoint_definition keyed `http:<METHOD>:<path>`. Path = the app/-relative directory with route groups `(group)` stripped and dynamic `[seg]`/`[...seg]` normalised to `{seg}`; Route Handlers are recognised anywhere under app/, not only under api/. Gating on the `route.*` basename keeps page.tsx/layout.tsx and arbitrary verb exports out. The verb-named handler is bound by the resolver to the SCOPE.Operation the JS/TS extractor emits. |
 | Router pattern | ✅ `full` | `2026-05-28` | — | `internal/engine/rules/javascript_typescript/frameworks/next_js.yaml` | — |
 
 ### Build

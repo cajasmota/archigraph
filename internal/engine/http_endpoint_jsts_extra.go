@@ -257,16 +257,31 @@ func synthesizeFastify(content string, emit emitFn) {
 // dispatch happens inside the handler at runtime).
 var nextPagesAPIRe = regexp.MustCompile(`(?:^|/)pages/api/(.+?)(?:\.(?:ts|tsx|js|jsx|mjs|cjs))$`)
 
-// nextAppRouterRe matches an `app/api/<segments>/route.{ts,js}` file path
-// (app router). Each verb is an exported function `export async function GET`
-// etc.; we emit one endpoint per exported verb.
-var nextAppRouterRe = regexp.MustCompile(`(?:^|/)app/api/(.+?)/route\.(?:ts|tsx|js|jsx|mjs|cjs)$`)
+// nextAppRouterRe matches any App-Router Route Handler file
+// `app/.../route.{ts,tsx,js,jsx,mjs,cjs}` (#5486). Route Handlers are NOT
+// restricted to an `api/` segment — `app/app/feed/route.ts`,
+// `app/(admin)/users/route.ts`, etc. are all valid. Capture group 1 is the
+// `app/`-relative directory (which may be empty for a top-level
+// `app/route.ts`); the route groups `(group)` and dynamic `[seg]` segments are
+// normalised by nextNormalizePath at emit time. Gating on the `route.*`
+// basename keeps `page.tsx`/`layout.tsx` and arbitrary verb exports out.
+var nextAppRouterRe = regexp.MustCompile(`(?:^|/)app/(?:(.+?)/)?route\.(?:ts|tsx|js|jsx|mjs|cjs)$`)
 
-// nextAppRouterVerbRe captures `export (async )?function <VERB>(` for the
-// app-router verb exports. We accept GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS.
-// Group 1 = verb.
+// nextRouteGroupRe matches an App-Router route group segment `(group)` — a
+// path component wrapped in parentheses. Route groups organise files without
+// affecting the URL, so the whole segment is removed during normalisation.
+var nextRouteGroupRe = regexp.MustCompile(`(?:^|/)\([^/]*\)(?:/|$)`)
+
+// nextAppRouterVerbRe captures the two App-Router verb-export forms (#5486):
+//
+//	export (async )?function GET(req) { … }   // function declaration
+//	export const GET = (req) => { … }          // const arrow / function expr
+//
+// We accept GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS. Group 1 (function form)
+// or group 2 (const form) is the verb.
 var nextAppRouterVerbRe = regexp.MustCompile(
-	`export\s+(?:async\s+)?function\s+(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s*\(`,
+	`export\s+(?:async\s+)?function\s+(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s*\(` +
+		`|export\s+const\s+(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)\s*=`,
 )
 
 // nextPagesHandlerNameRe captures the function name on
@@ -287,14 +302,26 @@ func synthesizeNextAPIRoute(filePath, content string, emit emitFn) {
 	}
 	slash := filepath.ToSlash(filePath)
 
-	// App router: app/api/<segments>/route.ts → verbs from named exports.
+	// App router: app/.../route.ts → one endpoint per exported verb handler.
+	// The path is the `app/`-relative directory; route groups `(group)` and
+	// dynamic `[seg]` segments are normalised by nextNormalizePath (#5486).
 	if m := nextAppRouterRe.FindStringSubmatch(slash); len(m) == 2 {
-		canonical := nextNormalizePath("/api/" + m[1])
+		canonical := nextNormalizePath("/" + m[1])
+		seen := make(map[string]bool)
 		for _, vm := range nextAppRouterVerbRe.FindAllStringSubmatch(content, -1) {
-			if len(vm) < 2 {
+			// Group 1 = `export function GET`; group 2 = `export const GET =`.
+			raw := vm[1]
+			if raw == "" {
+				raw = vm[2]
+			}
+			if raw == "" {
 				continue
 			}
-			verb := strings.ToUpper(vm[1])
+			verb := strings.ToUpper(raw)
+			if seen[verb] {
+				continue
+			}
+			seen[verb] = true
 			// The handler IS the verb function — name it by its export
 			// (GET/POST/...) so the resolver can bind it to the
 			// SCOPE.Operation entity the JS/TS extractor emits.
@@ -330,8 +357,29 @@ func synthesizeNextAPIRoute(filePath, content string, emit emitFn) {
 //	[...slug]    → {slug}
 //	[[...slug]]  → {slug}
 //
-// Index routes (`/api/users/index`) collapse to `/api/users`.
+// App-Router route groups `(group)` are organisational only — invisible to
+// routing — so they are stripped (#5486). Index routes (`/api/users/index`)
+// collapse to `/api/users`.
 func nextNormalizePath(p string) string {
+	// Strip App-Router route groups `(group)` — they do not appear in the URL.
+	// Replace the matched `/group/` with a single `/` so adjacent segments stay
+	// joined; run repeatedly to catch consecutive groups.
+	for nextRouteGroupRe.MatchString(p) {
+		p = nextRouteGroupRe.ReplaceAllString(p, "/")
+	}
+	// Collapse any resulting double slashes and re-establish a leading slash.
+	for strings.Contains(p, "//") {
+		p = strings.ReplaceAll(p, "//", "/")
+	}
+	if p == "" {
+		p = "/"
+	} else if !strings.HasPrefix(p, "/") {
+		p = "/" + p
+	}
+	p = strings.TrimSuffix(p, "/")
+	if p == "" {
+		p = "/"
+	}
 	// Strip trailing `/index` — Next.js treats `pages/api/users/index.ts`
 	// the same as `pages/api/users.ts`.
 	if strings.HasSuffix(p, "/index") {

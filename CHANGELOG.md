@@ -9,6 +9,24 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 ## [Unreleased]
 
 ### Added
+- **Next.js App Router `route.ts` HTTP-method handlers extracted as endpoints
+  (#5486):** each exported HTTP-method handler in an App Router Route Handler
+  file (`app/.../route.{ts,js,tsx}`) is now synthesized as a per-method
+  `http_endpoint_definition` keyed `http:<METHOD>:<path>`. Both export forms are
+  recognised — the function declaration (`export async function GET(req) {…}`)
+  and the const arrow / function-expression (`export const GET = (req) => {…}`)
+  — for the full verb set (`GET`/`POST`/`PUT`/`PATCH`/`DELETE`/`HEAD`/
+  `OPTIONS`). The endpoint path is derived from the file's `app/`-relative
+  directory using the App Router convention: route groups `(group)` are stripped
+  (invisible to routing), dynamic segments `[id]`/`[...slug]` are normalised to
+  the canonical `{id}`/`{slug}` form, and Route Handlers are recognised anywhere
+  under `app/`, not only under `api/` (e.g. `app/feed/route.ts` → `GET /feed`,
+  `app/api/users/[id]/route.ts` → `GET /api/users/{id}`,
+  `app/(admin)/api/x/route.ts` → `GET /api/x`). Detection gates on the `route.*`
+  basename, so a `page.tsx` exporting a `GET` function is not mistaken for a
+  Route Handler. Reuses the existing `http_endpoint_definition` model; the
+  verb-named handler binds to the `SCOPE.Operation` the JS/TS extractor emits.
+  Part of the Next.js routing-coverage epic (#5479).
 - **Topology screen renders Inngest event→function workflows (#5485):** the
   dashboard topology surface now reflects the Inngest async-workflow graph.
   Inngest event topics (`framework=inngest`) are grouped under a dedicated
