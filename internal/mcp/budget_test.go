@@ -58,7 +58,15 @@ func TestMCPHandshakeBudget(t *testing.T) {
 	totalChars := envelopeBytes
 	var descViolations []string
 
+	advertised := 0
 	for name, st := range byName {
+		// Hidden aliases (#5546/#5552) are callable but excluded from the
+		// handshake, so they do not count against the budget. Measure the
+		// advertised surface only.
+		if mcp.IsHiddenAlias(name) {
+			continue
+		}
+		advertised++
 		b, err := json.Marshal(st.Tool)
 		if err != nil {
 			t.Fatalf("marshal tool %s: %v", name, err)
@@ -73,8 +81,8 @@ func TestMCPHandshakeBudget(t *testing.T) {
 
 	handshakeTokens := int(math.Ceil(float64(totalChars) / charsPerToken))
 
-	t.Logf("tools=%d  chars=%d  tokens=%d  ceiling=%d",
-		len(byName), totalChars, handshakeTokens, tokenCeiling)
+	t.Logf("advertised=%d (of %d registered)  chars=%d  tokens=%d  ceiling=%d",
+		advertised, len(byName), totalChars, handshakeTokens, tokenCeiling)
 
 	for _, v := range descViolations {
 		t.Errorf("description too long: %s", v)
