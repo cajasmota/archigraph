@@ -1078,7 +1078,7 @@ func rebuildWorkerPool(conc int, work []repoWork, workFn func(idx int, rw repoWo
 					results[idx] = repoResult{path: rw.r.Path, slug: rw.r.Slug, err: err}
 					return
 				}
-				defer gate.Release()
+				defer gate.Release(foreground)
 			}
 
 			results[idx] = workFn(idx, rw)
@@ -1150,6 +1150,17 @@ func daemonRebuildFuncCore(
 
 	perRepoTimeout := resolvePerRepoRebuildTimeout()
 
+	// #5328: classify on the interactive-vs-automatic axis, NOT slug-vs-group.
+	// A human-awaited request (dashboard wizard index, explicit CLI
+	// index/rebuild/wizard/repair) sets args.Interactive, regardless of whether
+	// it targets one slug or a whole group. Only the automatic watcher/git-hook
+	// reindex leaves it false. Foreground acquisitions get priority + the
+	// reserved gate slot and the higher rebuild CPU cap so they aren't starved
+	// behind a many-module background storm. (The old `args.Slug != ""` heuristic
+	// miscategorised a wizard whole-group index as background and a watcher
+	// single-slug reindex as foreground — exactly backwards.)
+	foreground := args.Interactive
+
 	// indexOne executes the index function for a single repo and returns its
 	// result. It is shared by both the serial and parallel paths so the logic
 	// (panic recovery, wipe, incremental opts, progress slugs, slug tag) stays
@@ -1181,6 +1192,11 @@ func daemonRebuildFuncCore(
 			opts = append(opts,
 				WithPublisher(daemonProgressBroker),
 				WithProgressSlugs(args.Group, rw.r.Slug))
+			// #5328: run at the foreground (higher) CPU cap only for human-awaited
+			// rebuilds; an automatic watcher/git-hook-triggered rebuild stays at
+			// the throttled background cap. This appears AFTER indexFn's prepended
+			// default so it is the effective WithInteractive value.
+			opts = append(opts, WithInteractive(foreground))
 			// #1576: tag the graph with the CONFIG slug (not the on-disk
 			// directory basename) so doc.Repo matches the slug the dashboard
 			// keys nodes by and the slug the cross-repo link pass emits as the
@@ -1228,12 +1244,6 @@ func daemonRebuildFuncCore(
 			}
 		}
 	}
-
-	// #5493: a single-slug rebuild is an interactive/foreground request (e.g.
-	// `grafel rebuild <slug>`); a whole-group rebuild is background cold-start /
-	// forced-rebuild fan-out. Foreground acquisitions get priority + the reserved
-	// gate slot so they aren't starved behind a many-module background storm.
-	foreground := args.Slug != ""
 
 	var results []repoResult
 	if conc == 1 || len(work) <= 1 {

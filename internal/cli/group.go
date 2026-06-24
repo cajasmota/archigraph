@@ -293,6 +293,7 @@ func indexGroup(group, socketPath string) error {
 	}
 	defer c.Close()
 
-	_, err = c.Rebuild(proto.RebuildArgs{Group: group})
+	// #5328: an explicit CLI group rebuild is human-awaited → foreground.
+	_, err = c.Rebuild(proto.RebuildArgs{Group: group, Interactive: true})
 	return err
 }

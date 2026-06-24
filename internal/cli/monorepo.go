@@ -185,7 +185,8 @@ func monorepoNotifyDaemon(group, slug string) error {
 		return err
 	}
 	defer c.Close()
-	_, err = c.Rebuild(proto.RebuildArgs{Group: group, Slug: slug})
+	// #5328: an explicit CLI monorepo rebuild is human-awaited → foreground.
+	_, err = c.Rebuild(proto.RebuildArgs{Group: group, Slug: slug, Interactive: true})
 	return err
 }
 

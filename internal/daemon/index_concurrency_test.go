@@ -116,7 +116,7 @@ func TestIndexGateFIFOOrder(t *testing.T) {
 		waitQueued(t, g, i+1)
 	}
 	// Release the held slot to drain the queue FIFO.
-	g.Release()
+	g.Release(false)
 	done.Wait()
 
 	mu.Lock()
@@ -150,7 +150,7 @@ func TestIndexGateForegroundNotStarved(t *testing.T) {
 			_ = g.Acquire(context.Background(), false)
 			bgHeld.Done()
 			<-release
-			g.Release()
+			g.Release(false)
 		}()
 	}
 	bgHeld.Wait()
@@ -166,7 +166,7 @@ func TestIndexGateForegroundNotStarved(t *testing.T) {
 			return
 		}
 		close(fgGot)
-		g.Release()
+		g.Release(true)
 	}()
 
 	// Free up one slot for the foreground acquirer.
@@ -203,9 +203,152 @@ func TestIndexGateContextCancelDequeues(t *testing.T) {
 		t.Fatal("cancelled Acquire returned nil, want ctx error")
 	}
 	// The held slot is still ours; release it and the gate is empty.
-	g.Release()
+	g.Release(false)
 	if active, queued := g.Stats(); active != 0 || queued != 0 {
 		t.Fatalf("after cancel+release: active=%d queued=%d, want 0/0", active, queued)
+	}
+}
+
+// TestIndexGateForegroundDrainsFirst verifies the #5328 priority guarantee:
+// with the only slot held, a queue of background waiters plus one (later-
+// arriving) foreground waiter must admit the foreground waiter FIRST when the
+// slot frees, regardless of FIFO arrival order across classes.
+func TestIndexGateForegroundDrainsFirst(t *testing.T) {
+	g := NewIndexGate(1)
+
+	// Hold the only slot so every subsequent acquirer queues.
+	if err := g.Acquire(context.Background(), false); err != nil {
+		t.Fatalf("initial acquire: %v", err)
+	}
+
+	const bg = 4
+	var mu sync.Mutex
+	var order []string
+	var done sync.WaitGroup
+
+	// Enqueue background waiters first (they arrive BEFORE the foreground one).
+	for i := 0; i < bg; i++ {
+		done.Add(1)
+		go func() {
+			_ = g.Run(context.Background(), false, func() error {
+				mu.Lock()
+				order = append(order, "bg")
+				mu.Unlock()
+				return nil
+			})
+			done.Done()
+		}()
+		waitQueued(t, g, i+1)
+	}
+	// Now enqueue ONE foreground waiter, last.
+	done.Add(1)
+	go func() {
+		_ = g.Run(context.Background(), true, func() error {
+			mu.Lock()
+			order = append(order, "fg")
+			mu.Unlock()
+			return nil
+		})
+		done.Done()
+	}()
+	waitQueued(t, g, bg+1)
+
+	// Release the held slot; the gate drains the queue one at a time (cap=1).
+	g.Release(false)
+	done.Wait()
+
+	mu.Lock()
+	defer mu.Unlock()
+	if len(order) != bg+1 {
+		t.Fatalf("completed %d, want %d", len(order), bg+1)
+	}
+	// The foreground waiter — though it arrived LAST — must be served FIRST.
+	if order[0] != "fg" {
+		t.Fatalf("first served = %q, want foreground first; order=%v", order[0], order)
+	}
+}
+
+// TestIndexGateForegroundActiveCount verifies ForegroundActive (#5328) reflects
+// exactly how many foreground slots are held, and is balanced on Release — this
+// is the signal background reindexes read to decide whether to yield.
+func TestIndexGateForegroundActiveCount(t *testing.T) {
+	g := NewIndexGate(4)
+
+	if got := g.ForegroundActive(); got != 0 {
+		t.Fatalf("initial ForegroundActive = %d, want 0", got)
+	}
+
+	// One background acquire must NOT bump the foreground-active count.
+	if err := g.Acquire(context.Background(), false); err != nil {
+		t.Fatalf("bg acquire: %v", err)
+	}
+	if got := g.ForegroundActive(); got != 0 {
+		t.Fatalf("after bg acquire ForegroundActive = %d, want 0", got)
+	}
+
+	// Two foreground acquires bump it to 2.
+	if err := g.Acquire(context.Background(), true); err != nil {
+		t.Fatalf("fg acquire 1: %v", err)
+	}
+	if err := g.Acquire(context.Background(), true); err != nil {
+		t.Fatalf("fg acquire 2: %v", err)
+	}
+	if got := g.ForegroundActive(); got != 2 {
+		t.Fatalf("after 2 fg acquires ForegroundActive = %d, want 2", got)
+	}
+
+	// Releasing one foreground slot drops it to 1; the background release must
+	// not touch the foreground count.
+	g.Release(true)
+	if got := g.ForegroundActive(); got != 1 {
+		t.Fatalf("after 1 fg release ForegroundActive = %d, want 1", got)
+	}
+	g.Release(false)
+	if got := g.ForegroundActive(); got != 1 {
+		t.Fatalf("after bg release ForegroundActive = %d, want 1", got)
+	}
+	g.Release(true)
+	if got := g.ForegroundActive(); got != 0 {
+		t.Fatalf("after final fg release ForegroundActive = %d, want 0", got)
+	}
+}
+
+// TestIndexGateForegroundActivePromotedWaiter verifies that a foreground waiter
+// promoted from the QUEUE (woken by Release, not the fast path) is also counted
+// in ForegroundActive — otherwise a background storm could mask an active
+// foreground index from the yield signal.
+func TestIndexGateForegroundActivePromotedWaiter(t *testing.T) {
+	g := NewIndexGate(1)
+
+	// Hold the only slot so the foreground acquirer must queue and be promoted.
+	if err := g.Acquire(context.Background(), false); err != nil {
+		t.Fatalf("initial acquire: %v", err)
+	}
+
+	fgIn := make(chan struct{})
+	go func() {
+		if err := g.Acquire(context.Background(), true); err != nil {
+			t.Errorf("fg acquire: %v", err)
+			return
+		}
+		close(fgIn)
+	}()
+	waitQueued(t, g, 1)
+
+	// Free the slot — the queued foreground waiter is promoted via wakeLocked.
+	g.Release(false)
+
+	select {
+	case <-fgIn:
+	case <-time.After(2 * time.Second):
+		t.Fatal("foreground waiter never promoted")
+	}
+	if got := g.ForegroundActive(); got != 1 {
+		t.Fatalf("promoted foreground waiter not counted: ForegroundActive = %d, want 1", got)
+	}
+	g.Release(true)
+	if got := g.ForegroundActive(); got != 0 {
+		t.Fatalf("after release ForegroundActive = %d, want 0", got)
 	}
 }
 

@@ -12,7 +12,47 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
+
+	"github.com/cajasmota/grafel/internal/indexstate"
 )
+
+// backgroundYieldGOMAXPROCSDefault is the per-child GOMAXPROCS a BACKGROUND
+// (watcher/git-hook) reindex drops to WHILE a foreground (interactive) index is
+// running (#5328). A human is waiting on the foreground index, so background
+// work yields its core share to it instead of adding to it: 1 core keeps the
+// background reindex making slow progress without competing for the foreground
+// index's cores, so foreground+background together stay within the machine's
+// budget. When no foreground index is active the background reindex runs at its
+// normal cap (the child's own GRAFEL_EXTRACT_GOMAXPROCS, default 2). Restored
+// automatically the moment the foreground index finishes — the decision is made
+// per-subprocess at launch and re-evaluated for each subsequent reindex.
+const backgroundYieldGOMAXPROCSDefault = 1
+
+// BackgroundYieldGOMAXPROCS resolves the GOMAXPROCS a background reindex yields
+// to while a foreground index is active, honouring
+// GRAFEL_BACKGROUND_YIELD_GOMAXPROCS (a strictly-positive integer; 1 is valid).
+// Unset, empty, non-numeric, or <= 0 → backgroundYieldGOMAXPROCSDefault.
+func BackgroundYieldGOMAXPROCS() int {
+	if raw := strings.TrimSpace(os.Getenv("GRAFEL_BACKGROUND_YIELD_GOMAXPROCS")); raw != "" {
+		if n, err := strconv.Atoi(raw); err == nil && n > 0 {
+			return n
+		}
+	}
+	return backgroundYieldGOMAXPROCSDefault
+}
+
+// backgroundYieldGOMAXPROCS returns the GOMAXPROCS the next background reindex
+// subprocess should run under, given the live foreground-index state (#5328).
+// It returns (n, true) — meaning "cap the child at n cores" — only when a
+// foreground index is currently active; otherwise (0, false), and the child
+// resolves its own normal background cap. Reading the published gate state keeps
+// the sched package free of any cmd/grafel import cycle.
+func backgroundYieldGOMAXPROCS() (int, bool) {
+	if indexstate.GetIndexConcurrency().ForegroundActive > 0 {
+		return BackgroundYieldGOMAXPROCS(), true
+	}
+	return 0, false
+}
 
 // groupAlgoGOMAXPROCSDefault is the per-child CPU cap (Go GOMAXPROCS) for the
 // background group-algorithm subprocess. The pass (Louvain + PageRank +
@@ -129,9 +169,25 @@ func RunSubprocessIndex(ctx context.Context, repoPath, ref string, skipPasses []
 
 	cmd := exec.CommandContext(ctx, binary, args...)
 	// Daemon's state dirs are inherited via the env (GRAFEL_DAEMON_ROOT,
-	// GRAFEL_HOME). Do NOT set cmd.Env explicitly so the child inherits
-	// the daemon's full environment.
+	// GRAFEL_HOME). Start from the daemon's full environment so the child
+	// resolves the same state dirs and caps.
 	cmd.Env = os.Environ()
+	// #5328: if a FOREGROUND (interactive) index is running right now, make this
+	// BACKGROUND reindex yield its core share to it by capping the child's Go
+	// runtime to BackgroundYieldGOMAXPROCS() cores (default 1). GOMAXPROCS is
+	// appended last so it wins over any inherited value; it is omitted entirely
+	// when no foreground index is active, so the child falls back to its normal
+	// background cap (GRAFEL_EXTRACT_GOMAXPROCS, default 2). This is re-evaluated
+	// per subprocess launch, so background concurrency restores automatically the
+	// moment the foreground index finishes. fg preempts bg's share rather than
+	// adding to it, keeping fg+bg within the machine's core budget.
+	if n, yield := backgroundYieldGOMAXPROCS(); yield {
+		cmd.Env = append(cmd.Env, "GOMAXPROCS="+strconv.Itoa(n))
+		if logger != nil {
+			logger.Info("subprocess-indexer: yielding to foreground index",
+				"gomaxprocs", n, "repo", repoPath)
+		}
+	}
 
 	// Pipe child stdout for IPC JSON lines.
 	stdoutPipe, err := cmd.StdoutPipe()

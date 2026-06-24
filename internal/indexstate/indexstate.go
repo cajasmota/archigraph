@@ -41,13 +41,18 @@ var (
 	indexConcActive atomic.Int64
 	indexConcQueued atomic.Int64
 	indexConcCap    atomic.Int64
+	// indexConcFgActive mirrors how many FOREGROUND (interactive) index ops hold
+	// a gate slot (#5328). >0 means a human-awaited index is running, so the
+	// background reindex paths yield their core share to it.
+	indexConcFgActive atomic.Int64
 )
 
 // SetIndexConcurrency publishes the daemon-wide index-concurrency gate's current
-// active/queued counts and its configured cap (#5493). Called by the gate on
-// every acquire/release. Negative values are clamped to 0. Safe to call from any
+// active/queued counts, its configured cap (#5493), and the count of in-flight
+// FOREGROUND (interactive) index ops (#5328). Called by the gate on every
+// acquire/release. Negative values are clamped to 0. Safe to call from any
 // goroutine.
-func SetIndexConcurrency(active, queued, cap int) {
+func SetIndexConcurrency(active, queued, cap, foregroundActive int) {
 	if active < 0 {
 		active = 0
 	}
@@ -57,9 +62,13 @@ func SetIndexConcurrency(active, queued, cap int) {
 	if cap < 0 {
 		cap = 0
 	}
+	if foregroundActive < 0 {
+		foregroundActive = 0
+	}
 	indexConcActive.Store(int64(active))
 	indexConcQueued.Store(int64(queued))
 	indexConcCap.Store(int64(cap))
+	indexConcFgActive.Store(int64(foregroundActive))
 }
 
 // IndexConcurrency is a point-in-time view of the daemon-wide index-concurrency
@@ -71,15 +80,19 @@ type IndexConcurrency struct {
 	Queued int
 	// Cap is the configured concurrency limit (GRAFEL_INDEX_CONCURRENCY).
 	Cap int
+	// ForegroundActive is the number of FOREGROUND (interactive) index ops
+	// currently holding a slot (#5328). >0 means background reindexes yield.
+	ForegroundActive int
 }
 
 // GetIndexConcurrency returns the current gate counts. Lock-free; safe from an
 // MCP request handler.
 func GetIndexConcurrency() IndexConcurrency {
 	return IndexConcurrency{
-		Active: int(indexConcActive.Load()),
-		Queued: int(indexConcQueued.Load()),
-		Cap:    int(indexConcCap.Load()),
+		Active:           int(indexConcActive.Load()),
+		Queued:           int(indexConcQueued.Load()),
+		Cap:              int(indexConcCap.Load()),
+		ForegroundActive: int(indexConcFgActive.Load()),
 	}
 }
 

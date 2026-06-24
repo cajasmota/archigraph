@@ -420,6 +420,8 @@ func (s *Server) enqueueWizardIndex(w http.ResponseWriter, group string) {
 	args := proto.RebuildArgs{
 		Group:         group,
 		ProgressToken: token,
+		// #5328: the dashboard wizard index is human-awaited → foreground.
+		Interactive: true,
 	}
 	go s.runRebuildJob(job.ID, args)
 

@@ -119,6 +119,8 @@ func (s *Server) dispatchV2Rebuild(w http.ResponseWriter, group, repo string, wi
 		Slug:          repo,
 		Wipe:          wipe,
 		ProgressToken: token,
+		// #5328: a dashboard-initiated rebuild/reindex action is human-awaited → foreground.
+		Interactive: true,
 	}
 
 	// Fire the RPC asynchronously. The handler returns 202 immediately; this
