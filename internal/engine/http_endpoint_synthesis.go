@@ -146,6 +146,14 @@ func synthesisSupportsLanguage(lang string) bool {
 	// #3484: Lua Lapis / OpenResty producer-side route synthesis.
 	case "lua":
 		return true
+	// #5373 (bootstrap epic #5360): Haskell Scotty / Yesod / Servant producer-
+	// side route synthesis — Scotty `get "/path"` verb calls, Yesod
+	// `[parseRoutes| ... |]` quasiquotes and Servant `:>`-chain type-level APIs
+	// have no compiled YAML rules, so allow Haskell through for
+	// synthesizeScottyRoutes / synthesizeYesodRoutes / synthesizeServantRoutes.
+	// Files without a Haskell web marker are no-ops inside the synthesizers.
+	case "haskell":
+		return true
 	// #4749 (epic #4615 tail): Erlang Cowboy producer-side route synthesis —
 	// `cowboy_router:compile([{'_', [{"/path", handler, []}]}])` dispatch tables
 	// have no compiled YAML rules, so allow Erlang through for synthesizeCowboy.
@@ -1452,6 +1460,19 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 		// extractor stays structural-only; this pass adds the canonical
 		// definitions the coverage substrate keys off.
 		synthesizeGroovyRoutes(string(content), path, emit)
+	case "haskell":
+		// Producer side (#5373, bootstrap epic #5360): Haskell web route
+		// registrations — Scotty (`get "/users/:id" $ do …`), Yesod
+		// (`[parseRoutes| /user/#UserId UserR GET |]`) and Servant type-level
+		// API DSL (`"users" :> Capture "id" Int :> Get '[JSON] User`) →
+		// canonical http_endpoint_definition, in the same shape
+		// axum/Express/Vapor/Kemal/Clojure emit, so the shared resolver and the
+		// e2e route-test linker (#4351) light up for Haskell. The base haskell
+		// extractor stays structural-only; this pass adds the canonical
+		// definitions the coverage substrate keys off.
+		synthesizeScottyRoutes(string(content), emit)
+		synthesizeYesodRoutes(string(content), emit)
+		synthesizeServantRoutes(string(content), emit)
 	case "yaml", "json":
 		// Producer side (#3628, area #16): OpenAPI 3.x / Swagger 2.0 spec
 		// files declare the HTTP API surface as ground-truth. Each

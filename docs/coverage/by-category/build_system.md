@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # build_system
 
-**Total**: 111 records · **C/C++**: 12 · **clojure**: 4 · **C#**: 6 · **elixir**: 8 · **erlang**: 4 · **F#**: 1 · **go**: 7 · **groovy**: 1 · **java**: 8 · **JS/TS**: 20 · **lua**: 1 · **multi**: 4 · **php**: 5 · **python**: 12 · **ruby**: 5 · **rust**: 9 · **scala**: 2 · **solidity**: 2
+**Total**: 112 records · **C/C++**: 12 · **clojure**: 4 · **C#**: 6 · **elixir**: 8 · **erlang**: 4 · **F#**: 1 · **go**: 7 · **groovy**: 1 · **haskell**: 1 · **java**: 8 · **JS/TS**: 20 · **lua**: 1 · **multi**: 4 · **php**: 5 · **python**: 12 · **ruby**: 5 · **rust**: 9 · **scala**: 2 · **solidity**: 2
 
 Back to [summary](../summary.md). Bucket: **Tools**.
 
@@ -51,6 +51,7 @@ Back to [summary](../summary.md). Bucket: **Tools**.
 | [go](../by-language/go.md) | [go testing (stdlib)](../detail/test.go-testing.md) | ✅ | ✅ | |
 | [go](../by-language/go.md) | [testify](../detail/test.testify.md) | ✅ | ✅ | |
 | [groovy](../by-language/groovy.md) | [Spock](../detail/test.spock.md) | 🔴 | 🔴 | |
+| [haskell](../by-language/haskell.md) | [hspec (Haskell testing)](../detail/test.hspec.md) | 🟢 | ✅ | |
 | [java](../by-language/java.md) | [AssertJ](../detail/test.assertj.md) | 🔴 | 🔴 | |
 | [java](../by-language/java.md) | [Gradle (Groovy + Kotlin DSL)](../detail/build.gradle.md) | ✅ | ✅ | |
 | [java](../by-language/java.md) | [JUnit 4](../detail/test.junit4.md) | 🟢 | 🟢 | |

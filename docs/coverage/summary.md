@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # grafel capabilities
 
-**Languages**: 39 (26 active · 13 placeholder) · **Frameworks**: 256 · **ORMs**: 184 · **Tools**: 137 · **Other**: 208
+**Languages**: 39 (27 active · 12 placeholder) · **Frameworks**: 259 · **ORMs**: 185 · **Tools**: 139 · **Other**: 208
 
 ## Coverage by language
 
@@ -23,6 +23,7 @@
 | [clojure](by-language/clojure.md) | 4 | 4 | 5 | 1 |
 | [lua](by-language/lua.md) | 4 | 2 | 0 | 1 |
 | [dart](by-language/dart.md) | 3 | 1 | 6 | 1 |
+| [haskell](by-language/haskell.md) | 3 | 2 | 1 | 0 |
 | [crystal](by-language/crystal.md) | 2 | 1 | 5 | 1 |
 | [F#](by-language/fsharp.md) | 2 | 2 | 0 | 2 |
 | [erlang](by-language/erlang.md) | 1 | 5 | 0 | 2 |
@@ -71,7 +72,6 @@ The [Platform / k8s](by-category/platform.md) category splits into the lanes bel
 |---|
 | [Bicep](by-language/bicep.md) |
 | [Elm](by-language/elm.md) |
-| [Haskell](by-language/haskell.md) |
 | [Idris](by-language/idris.md) |
 | [Lisp](by-language/lisp.md) |
 | [OCaml](by-language/ocaml.md) |
@@ -83,4 +83,4 @@ The [Platform / k8s](by-category/platform.md) category splits into the lanes bel
 | [Verilog](by-language/verilog.md) |
 | [Zig](by-language/zig.md) |
 
-Total: 256 frameworks · 137 tools · 184 ORMs · 208 other
+Total: 259 frameworks · 139 tools · 185 ORMs · 208 other
