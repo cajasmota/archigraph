@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # http_framework
 
-**Total**: 256 records · **C/C++**: 25 · **clojure**: 4 · **crystal**: 2 · **C#**: 18 · **dart**: 3 · **elixir**: 14 · **erlang**: 1 · **F#**: 2 · **go**: 21 · **groovy**: 1 · **java**: 23 · **JS/TS**: 33 · **kotlin**: 18 · **lua**: 4 · **nim**: 1 · **php**: 16 · **python**: 25 · **ruby**: 9 · **rust**: 17 · **scala**: 14 · **swift**: 5
+**Total**: 259 records · **C/C++**: 25 · **clojure**: 4 · **crystal**: 2 · **C#**: 18 · **dart**: 3 · **elixir**: 14 · **erlang**: 1 · **F#**: 2 · **go**: 21 · **groovy**: 1 · **haskell**: 3 · **java**: 23 · **JS/TS**: 33 · **kotlin**: 18 · **lua**: 4 · **nim**: 1 · **php**: 16 · **python**: 25 · **ruby**: 9 · **rust**: 17 · **scala**: 14 · **swift**: 5
 
 Back to [summary](../summary.md). Bucket: **Frameworks**.
 
@@ -73,6 +73,9 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [go](../by-language/go.md) | [net/http (stdlib)](../detail/lang.go.framework.net-http.md) | 🟡 6/7 | — | 🟢 3/3 | 🟢 1/1 | 🟢 24/24 | 🟡 7/12 | |
 | [go](../by-language/go.md) | [uber/fx (DI)](../detail/lang.go.framework.fx.md) | 🔴 0/7 | 🔴 0/1 | 🟡 1/4 | 🔴 0/1 | 🟡 12/24 | 🟡 2/11 | |
 | [groovy](../by-language/groovy.md) | [Grails / Ratpack (Groovy HTTP)](../detail/lang.groovy.framework.grails.md) | 🟡 3/7 | 🔴 0/1 | 🟡 3/4 | ✅ 1/1 | 🔴 0/24 | 🔴 0/13 | |
+| [haskell](../by-language/haskell.md) | [Scotty (Haskell HTTP)](../detail/lang.haskell.framework.scotty.md) | 🟡 3/7 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🔴 0/24 | 🔴 0/13 | |
+| [haskell](../by-language/haskell.md) | [Servant (Haskell type-level API)](../detail/lang.haskell.framework.servant.md) | 🟡 3/7 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🔴 0/24 | 🔴 0/13 | |
+| [haskell](../by-language/haskell.md) | [Yesod (Haskell web framework)](../detail/lang.haskell.framework.yesod.md) | 🟡 3/7 | 🔴 0/1 | 🔴 0/4 | 🔴 0/1 | 🔴 0/24 | 🔴 0/13 | |
 | [JS/TS](../by-language/jsts.md) | [AdonisJS](../detail/lang.jsts.framework.adonisjs.md) | 🟡 5/7 | ✅ 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 24/24 | 🟡 6/11 | |
 | [JS/TS](../by-language/jsts.md) | [Express](../detail/lang.jsts.framework.express.md) | 🟡 6/7 | ✅ 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 24/24 | 🟡 10/13 | |
 | [JS/TS](../by-language/jsts.md) | [Fastify](../detail/lang.jsts.framework.fastify.md) | 🟡 5/7 | ✅ 1/1 | ✅ 4/4 | ✅ 1/1 | 🟢 24/24 | 🟡 8/13 | |

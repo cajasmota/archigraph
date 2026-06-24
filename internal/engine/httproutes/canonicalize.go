@@ -274,6 +274,24 @@ const (
 	// segment is rewritten to the Express-style `:param` form, so canonicalisation
 	// reuses canonicalizeColonParams.
 	FrameworkRoda = "roda"
+	// FrameworkScotty (#5373) — Haskell Scotty `get "/users/:id"` verb routes.
+	// Scotty uses the Sinatra/Express-style `:name` colon path-parameter
+	// convention, so canonicalisation reuses canonicalizeColonParams.
+	FrameworkScotty = "scotty"
+	// FrameworkYesod (#5373) — Haskell Yesod `parseRoutes` quasiquote route
+	// table. A path segment is either a literal, a typed single-segment capture
+	// `#Type` (e.g. `/user/#UserId`) or a typed multi-segment capture `*Type`
+	// (e.g. `/static/*Texts`). The synthesizer NORMALISES `#Foo`/`*Foo` capture
+	// segments to the Express-style `:foo` form (lower-cased type name) before
+	// canonicalisation, so it reuses canonicalizeColonParams.
+	FrameworkYesod = "yesod"
+	// FrameworkServant (#5373) — Haskell Servant type-level API DSL. A route is a
+	// chain of `:>`-combined components ending in a verb combinator
+	// (`Get`/`Post`/…): string-literal segments are path literals and
+	// `Capture "name" Type` segments are path params. The synthesizer
+	// NORMALISES each `Capture "name" _` to the Express-style `:name` form before
+	// canonicalisation, so it reuses canonicalizeColonParams.
+	FrameworkServant = "servant"
 )
 
 // Canonicalize maps a framework-specific raw path string to the canonical
@@ -334,7 +352,8 @@ func Canonicalize(framework, raw string) string {
 		FrameworkAdonis, FrameworkMarble, FrameworkPolka, FrameworkRestify, FrameworkSails,
 		FrameworkRobyn, FrameworkPlug, FrameworkCowboy,
 		FrameworkLapis, FrameworkOpenResty, FrameworkVapor, FrameworkClojure,
-		FrameworkKemal, FrameworkRatpack, FrameworkGrape, FrameworkRoda:
+		FrameworkKemal, FrameworkRatpack, FrameworkGrape, FrameworkRoda,
+		FrameworkScotty, FrameworkYesod, FrameworkServant:
 		out = canonicalizeColonParams(raw)
 	case FrameworkGiraffe:
 		// Giraffe `routef "/users/%i"` printf placeholders → `{}` first, then

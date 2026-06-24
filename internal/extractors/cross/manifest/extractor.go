@@ -192,6 +192,10 @@ var exactManifestNames = map[string]bool{
 	// .NET / F# — Paket (paket.dependencies manifest + paket.lock lockfile)
 	"paket.dependencies": true,
 	"paket.lock":         true,
+	// Haskell — Stack project config (extra-deps) + hpack manifest (#5373).
+	// The *.cabal Cabal package description is suffix-dispatched below.
+	"stack.yaml":   true,
+	"package.yaml": true,
 }
 
 // IsManifest returns true when filePath names a supported manifest file.
@@ -220,6 +224,11 @@ func IsManifest(filePath string) bool {
 	// *.nimble — Nim nimble package manifest (the package name is the file's
 	// base name, e.g. jester.nimble, so it is matched by extension; #5367).
 	if strings.HasSuffix(basename, ".nimble") {
+		return true
+	}
+	// *.cabal — Haskell Cabal package description (the package name is the
+	// file's base name, e.g. mylib.cabal, so it is matched by extension; #5373).
+	if strings.HasSuffix(basename, ".cabal") {
 		return true
 	}
 	return false
@@ -271,6 +280,9 @@ func detectPackageManager(filePath string) string {
 		// .NET / F# — Paket
 		"paket.dependencies": "paket",
 		"paket.lock":         "paket",
+		// Haskell — Stack (extra-deps) + hpack (package.yaml)
+		"stack.yaml":   "stack",
+		"package.yaml": "hpack",
 	}
 	basename := filepath.Base(filePath)
 	if v, ok := pm[basename]; ok {
@@ -291,6 +303,10 @@ func detectPackageManager(filePath string) string {
 	// *.nimble → nimble (Nim package manifest)
 	if strings.HasSuffix(basename, ".nimble") {
 		return "nimble"
+	}
+	// *.cabal → cabal (Haskell package description)
+	if strings.HasSuffix(basename, ".cabal") {
+		return "cabal"
 	}
 	return "unknown"
 }
@@ -1911,6 +1927,10 @@ var parsers = map[string]parserFn{
 	// .NET / F# — Paket
 	"paket.dependencies": parsePaketDependencies,
 	"paket.lock":         parsePaketLock,
+	// Haskell — Stack project config + hpack manifest (*.cabal is suffix-
+	// dispatched below).
+	"stack.yaml":   parseStackYaml,
+	"package.yaml": parsePackageYaml,
 }
 
 func dispatchParser(filePath, source string) (string, []dep) {
@@ -1934,6 +1954,10 @@ func dispatchParser(filePath, source string) (string, []dep) {
 	// *.nimble — Nim nimble package manifest.
 	if strings.HasSuffix(basename, ".nimble") {
 		return "nimble", parseNimble(source)
+	}
+	// *.cabal — Haskell Cabal package description.
+	if strings.HasSuffix(basename, ".cabal") {
+		return "cabal", parseCabal(source)
 	}
 	// Makefile — only an erlang.mk build when it includes erlang.mk / declares
 	// PROJECT (requireSignal=true); a plain Makefile is a no-op.

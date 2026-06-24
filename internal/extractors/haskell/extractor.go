@@ -133,7 +133,11 @@ func (e *Extractor) Extract(_ context.Context, file extractor.FileInput) ([]type
 	if len(file.Content) == 0 {
 		return nil, nil
 	}
-	out := extractHaskell(string(file.Content), file.Path)
+	src := string(file.Content)
+	out := extractHaskell(src, file.Path)
+	// #5373: framework-aware records alongside the structural base.
+	out = append(out, extractPersistentEntities(src, file.Path)...)
+	out = append(out, extractHspecSuite(src, file.Path)...)
 	extractor.TagRelationshipsLanguage(out, "haskell")
 	extractor.TagEntitiesLanguage(out, "haskell")
 	return out, nil
