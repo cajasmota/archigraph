@@ -209,7 +209,7 @@ Back to [summary](../summary.md). Bucket: **Frameworks**.
 | [C#](../by-language/csharp.md) | [Blazor Server](../detail/lang.csharp.framework.blazor-server.md) | ✅ 2/2 | 🟢 1/1 | 🟢 24/24 | 🟢 8/8 | |
 | [C#](../by-language/csharp.md) | [Blazor Server / WebAssembly](../detail/lang.csharp.framework.blazor.md) | ✅ 2/2 | 🟢 1/1 | 🟢 24/24 | 🟢 8/8 | |
 | [C#](../by-language/csharp.md) | [Blazor WebAssembly](../detail/lang.csharp.framework.blazor-wasm.md) | ✅ 2/2 | 🟢 1/1 | 🟢 24/24 | 🟢 8/8 | |
-| [dart](../by-language/dart.md) | [Flutter](../detail/lang.dart.framework.flutter.md) | 🟢 3/3 | 🟢 1/1 | 🟡 14/24 | 🟡 5/8 | |
+| [dart](../by-language/dart.md) | [Flutter](../detail/lang.dart.framework.flutter.md) | 🟢 3/3 | 🟢 1/1 | 🟡 14/24 | 🟡 6/8 | |
 | [F#](../by-language/fsharp.md) | [Fable Elmish/Feliz (F# frontend)](../detail/lang.fsharp.framework.elmish.md) | 🔴 0/3 | 🔴 0/1 | 🔴 0/24 | 🟡 6/14 | |
 | [java](../by-language/java.md) | [Google Web Toolkit (GWT)](../detail/lang.java.framework.gwt.md) | 🟢 2/2 | 🔴 0/1 | 🟡 21/22 | 🔴 0/3 | |
 | [java](../by-language/java.md) | [Vaadin (UI-as-server)](../detail/lang.java.framework.vaadin.md) | 🟢 2/2 | 🔴 0/1 | 🟡 21/22 | 🔴 0/3 | |

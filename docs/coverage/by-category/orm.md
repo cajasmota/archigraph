@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # orm
 
-**Total**: 177 records · **C/C++**: 10 · **clojure**: 5 · **crystal**: 5 · **C#**: 16 · **elixir**: 10 · **go**: 17 · **java**: 15 · **JS/TS**: 20 · **kotlin**: 7 · **nim**: 4 · **php**: 14 · **python**: 18 · **ruby**: 14 · **rust**: 15 · **scala**: 7
+**Total**: 183 records · **C/C++**: 10 · **clojure**: 5 · **crystal**: 5 · **C#**: 16 · **dart**: 6 · **elixir**: 10 · **go**: 17 · **java**: 15 · **JS/TS**: 20 · **kotlin**: 7 · **nim**: 4 · **php**: 14 · **python**: 18 · **ruby**: 14 · **rust**: 15 · **scala**: 7
 
 Back to [summary](../summary.md). Bucket: **ORMs**.
 
@@ -47,6 +47,12 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [C#](../by-language/csharp.md) | [Neo4j.Driver (C#)](../detail/lang.csharp.driver.neo4j.md) | 🟡 1/4 | |
 | [C#](../by-language/csharp.md) | [Npgsql (PostgreSQL)](../detail/lang.csharp.driver.npgsql.md) | 🔴 0/4 | |
 | [C#](../by-language/csharp.md) | [StackExchange.Redis](../detail/lang.csharp.driver.redis.md) | 🟡 1/4 | |
+| [dart](../by-language/dart.md) | [Hive (Dart key-value DB)](../detail/lang.dart.orm.hive.md) | 🟡 2/9 | |
+| [dart](../by-language/dart.md) | [Isar (Dart NoSQL embedded DB)](../detail/lang.dart.orm.isar.md) | 🟡 2/9 | |
+| [dart](../by-language/dart.md) | [ObjectBox (Dart NoSQL DB)](../detail/lang.dart.orm.objectbox.md) | 🟡 2/9 | |
+| [dart](../by-language/dart.md) | [drift (Dart SQLite ORM)](../detail/lang.dart.orm.drift.md) | 🟡 4/9 | |
+| [dart](../by-language/dart.md) | [floor (Room-style Dart ORM)](../detail/lang.dart.orm.floor.md) | 🟡 2/9 | |
+| [dart](../by-language/dart.md) | [sqflite (Dart raw SQLite)](../detail/lang.dart.orm.sqflite.md) | 🟡 2/7 | |
 | [elixir](../by-language/elixir.md) | [Ecto](../detail/lang.elixir.orm.ecto.md) | 🟡 7/10 | |
 | [elixir](../by-language/elixir.md) | [ExAws DynamoDB](../detail/lang.elixir.driver.dynamodb.md) | 🟡 1/4 | |
 | [elixir](../by-language/elixir.md) | [MyXQL](../detail/lang.elixir.driver.myxql.md) | 🔴 0/4 | |

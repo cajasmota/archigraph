@@ -11,7 +11,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Lockfile parsing | 🔴 `missing` | — | 3828 | — | No lockfile/manifest parsing yet for this package manager; tracked in #3828. |
+| Lockfile parsing | ✅ `full` | `2026-06-24` | 5361 | `internal/extractors/cross/manifest/extractor_test.go` | pubspec.lock lockfile parsing (parsePubspecLock): the resolved dependency tree under packages: with exact versions, dev classification from the dependency: line (direct dev), and transitive deps the manifest never names (marked indirect=true); the trailing sdks: block is excluded. Emitted dependency_kind=locked. Proven by TestPubspecLock_Resolved (drift 2.14.1 direct main, build_runner direct dev, meta transitive/indirect, sdks dart excluded). |
 | Manifest parsing | ✅ `full` | `2026-05-28` | — | `internal/extractors/cross/manifest/extractor.go` | — |
 
 ## Provenance

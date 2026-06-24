@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # dart
 
-**Frameworks**: 3 · **Tools**: 1 · **ORMs**: 0 · **Other**: 1
+**Frameworks**: 3 · **Tools**: 1 · **ORMs**: 6 · **Other**: 1
 
 Back to [summary](../summary.md).
 
@@ -33,7 +33,7 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Type System | Testing | Substrate | Other capabilities | Notes |
 |---|---|---|---|---|---|
-| [Flutter](../detail/lang.dart.framework.flutter.md) | 🟢 3/3 | 🟢 1/1 | 🟡 14/24 | 🟡 5/8 | |
+| [Flutter](../detail/lang.dart.framework.flutter.md) | 🟢 3/3 | 🟢 1/1 | 🟡 14/24 | 🟡 6/8 | |
 
 
 ### Mobile
@@ -47,7 +47,22 @@ Examples: `🟢 20/20` = fully supported, some capabilities heuristic · `🟡 1
 
 | Name | Dependency graph | Dependency usage status | Lockfile parsing | Manifest parsing | Target extraction | Notes |
 |---|---|---|---|---|---|---|
-| [pubspec.yaml](../detail/pkg.pubspec.md) | — | — | 🔴 | ✅ | — | |
+| [pubspec.yaml](../detail/pkg.pubspec.md) | — | — | ✅ | ✅ | — | |
+
+## ORMs
+
+
+### ORM / Data Mapper
+
+| Name | Other capabilities | Notes |
+|---|---|---|
+| [Hive (Dart key-value DB)](../detail/lang.dart.orm.hive.md) | 🟡 2/9 | |
+| [Isar (Dart NoSQL embedded DB)](../detail/lang.dart.orm.isar.md) | 🟡 2/9 | |
+| [ObjectBox (Dart NoSQL DB)](../detail/lang.dart.orm.objectbox.md) | 🟡 2/9 | |
+| [drift (Dart SQLite ORM)](../detail/lang.dart.orm.drift.md) | 🟡 4/9 | |
+| [floor (Room-style Dart ORM)](../detail/lang.dart.orm.floor.md) | 🟡 2/9 | |
+| [sqflite (Dart raw SQLite)](../detail/lang.dart.orm.sqflite.md) | 🟡 2/7 | |
+
 
 ## Other
 

@@ -88,6 +88,14 @@ var (
 	reFlutterClassDecl = regexp.MustCompile(
 		`(?m)class\s+([A-Z][A-Za-z0-9_]*)\b`,
 	)
+	// Widget instance-field declaration — a Flutter widget prop. Captures the
+	// `final <Type> <name>;` immutable field idiom that is the canonical
+	// Flutter prop shape (constructor `required this.<name>` params bind to
+	// these). Group 1 = type, group 2 = field name. `static`/`const` (compile-
+	// time constants, not per-instance props) are excluded by requiring the
+	// `final` keyword without a leading `static`.
+	reFlutterWidgetProp = regexp.MustCompile(
+		`(?m)^[ \t]+final\s+([A-Za-z_][\w<>,.()? ]*?[\w>)?])\s+(\w+)\s*;`)
 )
 
 // normalizeRoute canonicalizes path parameters so `/profile/:id` and
@@ -209,6 +217,11 @@ func (e *flutterExtractor) Extract(ctx context.Context, file extractor.FileInput
 		pending = append(pending, pendingEdge{host: host, rel: rel})
 	}
 
+	// widgetNames records every class promoted to a SCOPE.UIComponent so the
+	// prop-extraction pass (Data Flow/prop_extraction, #5361) scopes itself to
+	// widget classes only — a plain model/service field is not a widget prop.
+	widgetNames := map[string]bool{}
+
 	// 1. StatelessWidget -> SCOPE.UIComponent
 	for _, m := range reFlutterStatelessWidget.FindAllStringSubmatchIndex(src, -1) {
 		name := src[m[2]:m[3]]
@@ -216,6 +229,7 @@ func (e *flutterExtractor) Extract(ctx context.Context, file extractor.FileInput
 		setProps(&ent, "framework", "flutter", "provenance", "INFERRED_FROM_FLUTTER_WIDGET",
 			"widget_type", "stateless")
 		add(ent)
+		widgetNames[name] = true
 	}
 
 	// 2. StatefulWidget -> SCOPE.UIComponent
@@ -225,6 +239,7 @@ func (e *flutterExtractor) Extract(ctx context.Context, file extractor.FileInput
 		setProps(&ent, "framework", "flutter", "provenance", "INFERRED_FROM_FLUTTER_WIDGET",
 			"widget_type", "stateful")
 		add(ent)
+		widgetNames[name] = true
 	}
 
 	// 2b. Riverpod/hooks widget bases -> SCOPE.UIComponent
@@ -235,6 +250,48 @@ func (e *flutterExtractor) Extract(ctx context.Context, file extractor.FileInput
 		setProps(&ent, "framework", "flutter", "provenance", "INFERRED_FROM_FLUTTER_WIDGET",
 			"widget_type", "consumer", "widget_base", base)
 		add(ent)
+		widgetNames[name] = true
+	}
+
+	// 2c. Widget prop / tree depth (#5361) — Data Flow/prop_extraction. For
+	// each widget class, parse its `final <Type> <name>;` instance fields (the
+	// canonical Flutter prop idiom, bound by `required this.<name>` ctor
+	// params) and emit one SCOPE.Pattern(prop_extraction) per prop plus a
+	// HAS_PROPS edge from the widget component. Scoped to widget classes only
+	// (widgetNames) so model/service fields are not mis-tagged as props; the
+	// drift IntColumn getters and other ORM fields are not `final ... ;` so
+	// they never match here.
+	for _, s := range spans {
+		if !widgetNames[s.name] {
+			continue
+		}
+		if s.open >= s.close || s.close > len(src) {
+			continue
+		}
+		body := src[s.open:s.close]
+		propSeen := map[string]bool{}
+		for _, pm := range reFlutterWidgetProp.FindAllStringSubmatchIndex(body, -1) {
+			propType := strings.TrimSpace(body[pm[2]:pm[3]])
+			propName := body[pm[4]:pm[5]]
+			if propName == "" || propSeen[propName] {
+				continue
+			}
+			propSeen[propName] = true
+			pName := "prop:" + s.name + ":" + propName
+			pent := makeEntity(pName, "SCOPE.Pattern", "prop_extraction", file.Path,
+				file.Language, lineOf(src, s.open+pm[0]))
+			setProps(&pent, "framework", "flutter",
+				"provenance", "INFERRED_FROM_FLUTTER_WIDGET_PROP",
+				"widget", s.name, "prop_name", propName, "prop_type", propType)
+			add(pent)
+			attachEdge(s.name, types.RelationshipRecord{
+				ToID: pName,
+				Kind: string(types.RelationshipKindHasProps),
+				Properties: map[string]string{
+					"framework": "flutter", "prop_name": propName, "prop_type": propType,
+				},
+			})
+		}
 	}
 
 	// 3. BLoC classes -> SCOPE.Pattern
