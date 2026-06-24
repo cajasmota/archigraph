@@ -22,7 +22,10 @@
 // for the substrate, with full lexical accuracy deferred to Phase 4.
 package substrate
 
-import "regexp"
+import (
+	"regexp"
+	"strings"
+)
 
 func init() { RegisterEffectSniffer("jsts", sniffEffectsJSTS) }
 
@@ -268,6 +271,125 @@ func appendPrismaModelMatches(out []EffectMatch, content string, headers []funcH
 	return out
 }
 
+// --- #5491 Kysely type-safe query-builder data-access (db/kysely/trx gate + table) ---
+//
+// Kysely is a type-safe SQL query builder. A query is built by a chain whose
+// ROOT method on the Kysely instance determines read vs write, and which
+// terminates in `.execute()` / `.executeTakeFirst()` / `.executeTakeFirstOrThrow()`
+// / `.stream()`. The chain-root methods (`selectFrom`, `insertInto`,
+// `updateTable`, `deleteFrom`, `replaceInto`) are distinctive to Kysely, so we
+// gate the credit on them (plus a `db`/`kysely`/`trx` receiver) — an unrelated
+// `.execute()` with no Kysely chain root earns no credit. The table name (the
+// string-literal arg to the chain root) is captured in the sink tag
+// (`kysely.read:user` / `kysely.write:post`) and the effect is attributed to the
+// enclosing function, mirroring the #5490 Prisma model-bearing uplift.
+//
+// Verb → effect mapping (chain ROOT method):
+//   - db_read : selectFrom
+//   - db_write: insertInto / updateTable / deleteFrom / replaceInto
+//
+// Raw SQL — `sql`…`.execute(db)` / `db.executeQuery(...)` — is classified by the
+// leading SQL keyword (SELECT → read; INSERT/UPDATE/DELETE/REPLACE → write); an
+// undeterminable raw query earns a generic db effect (read, sink `kysely.raw`).
+//
+// The receiver gate is `(?:this\.)?(?:db|kysely|trx)\.` — `trx` covers the
+// transaction handle (`db.transaction().execute(async (trx) => trx.insertInto(...))`).
+
+// jstsKyselyReadRootRe matches a Kysely read chain root on a gated receiver,
+// capturing the table name (group 1). `selectFrom("user")` is the read root.
+var jstsKyselyReadRootRe = regexp.MustCompile(
+	`(?:this\s*\.\s*)?(?:db|kysely|trx)\s*\.\s*selectFrom\s*\(\s*["'` + "`" + `]([^"'` + "`" + `]+)["'` + "`" + `]`,
+)
+
+// jstsKyselyWriteRootRe matches a Kysely write chain root on a gated receiver,
+// capturing the table name (group 1). insertInto/updateTable/deleteFrom/replaceInto.
+var jstsKyselyWriteRootRe = regexp.MustCompile(
+	`(?:this\s*\.\s*)?(?:db|kysely|trx)\s*\.\s*(?:insertInto|updateTable|deleteFrom|replaceInto)\s*\(\s*["'` + "`" + `]([^"'` + "`" + `]+)["'` + "`" + `]`,
+)
+
+// jstsKyselyRawRe matches a raw `sql`…`` tagged template terminated by
+// `.execute(...)` (the Kysely raw escape hatch), capturing the SQL body
+// (group 1) so the leading keyword can classify read vs write.
+var jstsKyselyRawRe = regexp.MustCompile(
+	`\bsql\s*` + "`" + `([^` + "`" + `]*)` + "`" + `(?:\s*\.\s*[A-Za-z_$][\w$]*\s*\([^)]*\))*?\s*\.\s*execute(?:TakeFirst(?:OrThrow)?)?\s*\(`,
+)
+
+// jstsKyselyExecuteQueryRe matches `(db|kysely|trx).executeQuery(...)` — a
+// compiled-query execution; classified generic db_read (no SQL body in reach).
+var jstsKyselyExecuteQueryRe = regexp.MustCompile(
+	`(?:this\s*\.\s*)?(?:db|kysely|trx)\s*\.\s*executeQuery\s*\(`,
+)
+
+// kyselyRawSQLLeadingVerb returns the effect implied by the leading keyword of a
+// raw SQL body, and whether it was determinable. SELECT → read; INSERT / UPDATE /
+// DELETE / REPLACE → write; anything else → read (generic) + false.
+func kyselyRawSQLLeadingVerb(body string) (Effect, bool) {
+	s := strings.TrimSpace(body)
+	// Skip a leading line/block comment-free fast path: take the first word.
+	i := 0
+	for i < len(s) && (s[i] == ' ' || s[i] == '\t' || s[i] == '\n' || s[i] == '\r' || s[i] == '(') {
+		i++
+	}
+	j := i
+	for j < len(s) && ((s[j] >= 'a' && s[j] <= 'z') || (s[j] >= 'A' && s[j] <= 'Z')) {
+		j++
+	}
+	switch strings.ToUpper(s[i:j]) {
+	case "SELECT", "WITH":
+		return EffectDBRead, true
+	case "INSERT", "UPDATE", "DELETE", "REPLACE":
+		return EffectDBWrite, true
+	}
+	return EffectDBRead, false
+}
+
+// appendKyselyRootMatches credits each gated Kysely chain-root call to its
+// enclosing function with a table-bearing sink tag (`kysely.read:user`).
+func appendKyselyRootMatches(out []EffectMatch, content string, headers []funcHeader, re *regexp.Regexp, eff Effect) []EffectMatch {
+	verb := "read"
+	if eff == EffectDBWrite {
+		verb = "write"
+	}
+	for _, m := range re.FindAllStringSubmatchIndex(content, -1) {
+		line := lineOfOffset(content, m[0])
+		table := content[m[2]:m[3]]
+		out = append(out, EffectMatch{
+			Function:   nearestHeader(headers, line),
+			Line:       line,
+			Effect:     eff,
+			Sink:       "kysely." + verb + ":" + table,
+			Confidence: 0.9,
+		})
+	}
+	return out
+}
+
+// appendKyselyRawMatches credits each raw `sql`…`.execute()` to its enclosing
+// function, classifying read vs write by the leading SQL keyword. An
+// undeterminable body earns a generic db_read with sink `kysely.raw`.
+func appendKyselyRawMatches(out []EffectMatch, content string, headers []funcHeader) []EffectMatch {
+	for _, m := range jstsKyselyRawRe.FindAllStringSubmatchIndex(content, -1) {
+		line := lineOfOffset(content, m[0])
+		eff, ok := kyselyRawSQLLeadingVerb(content[m[2]:m[3]])
+		sink := "kysely.raw"
+		if ok {
+			if eff == EffectDBWrite {
+				sink = "kysely.raw:write"
+			} else {
+				sink = "kysely.raw:read"
+			}
+		}
+		out = append(out, EffectMatch{
+			Function:   nearestHeader(headers, line),
+			Line:       line,
+			Effect:     eff,
+			Sink:       sink,
+			Confidence: 0.85,
+		})
+	}
+	return out
+}
+
 // jstsMutationRe matches `this.<field> = ...` — assignment to a receiver
 // field. We require an assignment operator on the same line and reject
 // `this.<field> ==` (comparison) by anchoring on `=` followed by a
@@ -292,6 +414,12 @@ func sniffEffectsJSTS(content string) []EffectMatch {
 	// with a model-bearing sink tag so the data-access flow is queryable by model.
 	out = appendPrismaModelMatches(out, content, headers, jstsPrismaModelReadRe, EffectDBRead)
 	out = appendPrismaModelMatches(out, content, headers, jstsPrismaModelWriteRe, EffectDBWrite)
+	// #5491 Kysely query-builder data-access: receiver-gated chain-root calls
+	// credited with a table-bearing sink tag (kysely.read:user / kysely.write:post).
+	out = appendKyselyRootMatches(out, content, headers, jstsKyselyReadRootRe, EffectDBRead)
+	out = appendKyselyRootMatches(out, content, headers, jstsKyselyWriteRootRe, EffectDBWrite)
+	out = appendKyselyRawMatches(out, content, headers)
+	out = appendJSTSMatches(out, content, headers, jstsKyselyExecuteQueryRe, EffectDBRead, "kysely.executeQuery", 0.7)
 	out = append(out, jstsBuilderDataAccessMatches(content, headers)...)
 	out = appendJSTSMatches(out, content, headers, jstsFSReadRe, EffectFSRead, "fs.read", 1.0)
 	out = appendJSTSMatches(out, content, headers, jstsFSWriteRe, EffectFSWrite, "fs.write", 1.0)

@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # orm
 
-**Total**: 176 records · **C/C++**: 10 · **clojure**: 5 · **crystal**: 5 · **C#**: 16 · **elixir**: 10 · **go**: 17 · **java**: 15 · **JS/TS**: 19 · **kotlin**: 7 · **nim**: 4 · **php**: 14 · **python**: 18 · **ruby**: 14 · **rust**: 15 · **scala**: 7
+**Total**: 177 records · **C/C++**: 10 · **clojure**: 5 · **crystal**: 5 · **C#**: 16 · **elixir**: 10 · **go**: 17 · **java**: 15 · **JS/TS**: 20 · **kotlin**: 7 · **nim**: 4 · **php**: 14 · **python**: 18 · **ruby**: 14 · **rust**: 15 · **scala**: 7
 
 Back to [summary](../summary.md). Bucket: **ORMs**.
 
@@ -93,6 +93,7 @@ Back to [summary](../summary.md). Bucket: **ORMs**.
 | [JS/TS](../by-language/jsts.md) | [AWS SDK DynamoDB (JS)](../detail/lang.jsts.driver.dynamodb.md) | 🟡 1/4 | |
 | [JS/TS](../by-language/jsts.md) | [Drizzle](../detail/lang.jsts.orm.drizzle.md) | 🟡 7/10 | |
 | [JS/TS](../by-language/jsts.md) | [Knex (query builder)](../detail/lang.jsts.orm.knex.md) | 🟡 8/9 | |
+| [JS/TS](../by-language/jsts.md) | [Kysely (type-safe query builder)](../detail/lang.jsts.orm.kysely.md) | 🟡 1/7 | |
 | [JS/TS](../by-language/jsts.md) | [MikroORM](../detail/lang.jsts.orm.mikro-orm.md) | 🟡 8/11 | |
 | [JS/TS](../by-language/jsts.md) | [MongoDB Node.js driver](../detail/lang.jsts.driver.mongodb.md) | 🟡 1/4 | |
 | [JS/TS](../by-language/jsts.md) | [Mongoose](../detail/lang.jsts.orm.mongoose.md) | 🟡 7/10 | |

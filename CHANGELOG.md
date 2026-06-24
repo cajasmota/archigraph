@@ -9,6 +9,23 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 ## [Unreleased]
 
 ### Added
+- **Kysely query-builder data-access → db_read/db_write effects with table attribution (#5491):**
+  Kysely, the type-safe SQL query builder (previously 0 coverage), is now
+  credited with receiver-gated, table-bearing db effects, mirroring the Prisma
+  model-bearing model (#5490). The verb is the chain ROOT method on the
+  `db`/`kysely`/`trx` instance: `db.selectFrom("user")…` is a `db_read`;
+  `db.insertInto("post")`, `db.updateTable(...)`, `db.deleteFrom(...)`, and
+  `db.replaceInto(...)` are `db_write`. Each chain (which terminates in
+  `.execute()` / `.executeTakeFirst()` / `.executeTakeFirstOrThrow()` /
+  `.stream()`) emits the effect attributed to its enclosing function with a
+  table-bearing sink tag (`kysely.read:user`, `kysely.write:post`), so the
+  data-access flow is queryable by table. Raw `` sql`…`.execute(db) `` is
+  classified by the leading SQL keyword (`SELECT`/`WITH` → read;
+  `INSERT`/`UPDATE`/`DELETE`/`REPLACE` → write; undeterminable → a generic
+  `db_read`), and `(db|kysely|trx).executeQuery(…)` is a generic `db_read`. The
+  distinctive Kysely chain-root methods plus the `db`/`kysely`/`trx` receiver
+  gate (`trx` = the transaction-callback handle) keep an unrelated `.execute()`
+  from being misread. Part of the framework-stack coverage epic (#5479).
 - **Prisma model-layer data-access → db_read/db_write effects with model attribution (#5490):**
   the data-access layer — model functions in `*.server.ts` (and `*.server.tsx`)
   modules that wrap the Prisma client — is now credited with a receiver-gated,
