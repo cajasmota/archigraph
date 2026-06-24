@@ -2384,6 +2384,22 @@ var frameworkOrder = []frameworkEntry{
 		},
 		detect: detectElmTest,
 	},
+	// Zig — `zig test` (#5377). Top-level `test "name" { … }` / `test ident { … }`
+	// blocks compiled by `zig test` / `zig build test`. Zig tests live in ANY
+	// `.zig` file (commonly the production source itself), so the entry is
+	// FILENAME-gated on the `.zig` extension and the detector SELF-CONFIRMS — a
+	// `.zig` file with no `test` block yields zero cases and is dropped downstream
+	// (exactly like the rust_test / fsharp-expecto entries). It is deliberately
+	// NOT import-token gated: a bare `test` token would over-match the substring
+	// import matcher against unrelated header paths (e.g. C++ `gtest/gtest.h`
+	// contains "test"), the precedent the elm-test entry documents.
+	{
+		name: "zig-test",
+		filenameHints: []*regexp.Regexp{
+			regexp.MustCompile(`\.zig$`),
+		},
+		detect: detectZigTest,
+	},
 	// ---------------------------------------------------------------------
 	// C/C++ — gtest, catch2, doctest, boost.test, cppunit, cpputest (#3495).
 	//
