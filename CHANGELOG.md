@@ -8,6 +8,19 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 
 ## [Unreleased]
 
+### Added
+- **Index-progress list sorts by status — active rows on top, done sinks (#5495):**
+  on the dashboard index/group view the per-repo/module progress rows used to
+  render in a static repo/module order, so with a large (e.g. 30-module) group
+  you couldn't see what was actively working — completed and not-yet-started rows
+  were interleaved with the live ones. The list is now sorted by a status rank:
+  actively-indexing rows stay pinned at the **top**, queued (registered but
+  not-yet-started) rows sit just below them, and completed/failed rows sink to
+  the **bottom** as they finish. The sort is stable within each status band — the
+  original repo-then-module order is preserved — so rows don't jump around as
+  unrelated repos advance, and a single-repo / all-same-status list renders
+  exactly as before.
+
 ### Fixed
 - **Install now ships the bundled skills, not just the MCP (#5503):** on a
   released-tarball install (the common path on macOS) the `grafel` binary lands

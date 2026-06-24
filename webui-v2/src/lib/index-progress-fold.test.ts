@@ -11,6 +11,7 @@ import {
   rowsTerminal,
   seedRows,
   sortRows,
+  statusRank,
 } from "./index-progress-fold";
 import type { ProgressEvent, ProgressRow } from "@/data/types";
 
@@ -490,13 +491,56 @@ describe("seedRows — show every repo before any event (#5340)", () => {
       "ivivo",
       ["backend", "frontend"],
     );
-    expect(rows.map((r) => r.repoSlug)).toEqual(["backend", "frontend"]);
+    // Both repos are present; the still-queued frontend now sorts ABOVE the
+    // completed backend (active/queued on top, done sinks — #5495).
+    expect(new Set(rows.map((r) => r.repoSlug))).toEqual(new Set(["backend", "frontend"]));
+    expect(rows.map((r) => r.repoSlug)).toEqual(["frontend", "backend"]);
     const fe = rows.find((r) => r.repoSlug === "frontend")!;
     expect(fe.phase).toBe("scanning"); // still seeded
   });
 
   it("skips empty slugs", () => {
     expect(sortRows(seedRows(["", "backend"]).values()).map((r) => r.repoSlug)).toEqual(["backend"]);
+  });
+});
+
+describe("sortRows / statusRank — active on top, done sinks (#5495)", () => {
+  it("ranks indexing(0) < queued(1) < done/error(2)", () => {
+    expect(statusRank(row({ phase: "extracting_ast", ts: 5 }))).toBe(0);
+    expect(statusRank(row({ phase: "scanning", ts: 0 }))).toBe(1); // seeded/queued
+    expect(statusRank(row({ phase: "done", ts: 9 }))).toBe(2);
+    expect(statusRank(row({ phase: "error", ts: 9 }))).toBe(2);
+  });
+
+  it("a still-scanning row that has emitted (ts > 0) counts as actively indexing", () => {
+    expect(statusRank(row({ phase: "scanning", ts: 3 }))).toBe(0);
+  });
+
+  it("sorts active rows above queued above completed, regardless of name", () => {
+    const rows = sortRows([
+      row({ repoSlug: "zeta", phase: "done", ts: 9 }), // completed
+      row({ repoSlug: "alpha", phase: "scanning", ts: 0 }), // queued (seeded)
+      row({ repoSlug: "mu", phase: "extracting_ast", ts: 4 }), // indexing
+    ]);
+    expect(rows.map((r) => r.repoSlug)).toEqual(["mu", "alpha", "zeta"]);
+  });
+
+  it("is stable by name WITHIN a status band", () => {
+    const rows = sortRows([
+      row({ repoSlug: "frontend", phase: "extracting_ast", ts: 4 }),
+      row({ repoSlug: "backend", phase: "resolving_refs", ts: 4 }),
+      row({ repoSlug: "api", phase: "done", ts: 9 }),
+    ]);
+    // backend, frontend are both indexing → name order; api (done) sinks last.
+    expect(rows.map((r) => r.repoSlug)).toEqual(["backend", "frontend", "api"]);
+  });
+
+  it("single-repo / all-same-status list is unchanged (name order preserved)", () => {
+    const rows = sortRows([
+      row({ repoSlug: "backend", phase: "done", ts: 9 }),
+      row({ repoSlug: "api", phase: "done", ts: 9 }),
+    ]);
+    expect(rows.map((r) => r.repoSlug)).toEqual(["api", "backend"]);
   });
 });
 

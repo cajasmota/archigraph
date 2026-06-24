@@ -330,9 +330,42 @@ export function overallPhaseLabel(
   return repoLabel;
 }
 
-/** Stable sort for rendering: by repo, then module label. */
+/**
+ * Status rank for sort ordering — lower sorts HIGHER (nearer the top) so the
+ * rows the user cares about are always in view (#5495):
+ *
+ *   0  indexing  — actively working (non-terminal AND it has emitted at least
+ *                  one real event, i.e. ts > 0)
+ *   1  queued    — registered but not started yet (a seeded row still at its
+ *                  initial "scanning"/ts === 0 state)
+ *   2  done/error — terminal; sinks to the bottom as it finishes
+ *
+ * As a row crosses into a terminal phase its rank rises from 0→2 and it drops
+ * below every still-active/queued row, so with a 30-module group the rows that
+ * are actively indexing stay pinned at the top while completed rows pile up at
+ * the bottom. Single-repo / all-same-status lists are unaffected (every row
+ * shares one rank, so the stable secondary key — repo then module — is what
+ * orders them, exactly as before).
+ */
+export function statusRank(row: Pick<ProgressRow, "phase" | "ts">): number {
+  if (row.phase === "done" || row.phase === "error") return 2;
+  // A seeded, not-yet-started row sits at "scanning" with ts === 0 → queued.
+  if (row.ts <= 0) return 1;
+  return 0; // a real event has advanced it → actively indexing.
+}
+
+/**
+ * Stable sort for rendering: status first (active → queued → done, #5495), then
+ * the original repo/module order WITHIN each status band so rows don't jump
+ * around as unrelated repos advance. The status key is the only change from the
+ * historical pure repo/module sort; within one status band the order is
+ * identical to before, so the small/single-repo case is unaffected.
+ */
 export function sortRows(rows: Iterable<ProgressRow>): ProgressRow[] {
   return [...rows].sort((a, b) => {
+    const ra = statusRank(a);
+    const rb = statusRank(b);
+    if (ra !== rb) return ra - rb;
     if (a.repoSlug !== b.repoSlug) return a.repoSlug.localeCompare(b.repoSlug);
     return (a.module ?? "").localeCompare(b.module ?? "");
   });
