@@ -289,6 +289,24 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
   exactly as before.
 
 ### Fixed
+- **Windows: cross-repo string pass no longer aborts on the synthetic
+  `<config>` SourceFile (#5523):** the cross-repo string pass scanned each
+  entity's SourceFile against the filesystem and `os.Stat`'d the synthetic
+  sentinel `<config>` (`extractor.ConfigKeySourceFile`, emitted for every
+  `config_key` / `SCOPE.Config` entity). On POSIX `<config>` is a legal filename
+  so the stat returned `fs.ErrNotExist`, which the scanner already swallowed; on
+  Windows the characters `<`/`>` are illegal so the stat failed with
+  `ERROR_INVALID_NAME` (123, *"The filename, directory name, or volume label
+  syntax is incorrect"*), which was **not** tolerated — aborting the entire
+  string-pass stage and leaving **cross-repo edges = 0** for any group whose
+  repos read a literal config key (very common). Synthetic SourceFile sentinels
+  are now skipped before any filesystem access via a shared
+  `extractor.IsSyntheticSourceFile` helper (covers `<config>`, `<exception>`,
+  `<external-service>`, `<translation-key>`, `<template>`, and any future
+  `<…>`-shaped sentinel), and `scanFile` additionally tolerates
+  `ERROR_INVALID_NAME` / `ENOTDIR` / invalid-path stat errors as a skip rather
+  than a fatal abort (belt-and-suspenders; genuine I/O errors still propagate).
+  Per-repo graphs were unaffected; only the cross-repo link passes failed.
 - **Install now ships the bundled skills, not just the MCP (#5503):** on a
   released-tarball install (the common path on macOS) the `grafel` binary lands
   on its own with no `skills/` directory beside it, so `grafel install` found no

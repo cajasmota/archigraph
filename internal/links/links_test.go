@@ -5,8 +5,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 
+	"github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/graph"
 	"github.com/cajasmota/grafel/internal/graph/fbwriter"
 )
@@ -369,6 +371,89 @@ func TestStringPass_HTTPPath(t *testing.T) {
 	}
 	if !found {
 		t.Fatalf("expected string match for /api/v1/orders/{id}, got %+v", doc.Links)
+	}
+}
+
+// TestStringPass_SkipsSyntheticConfigSourceFile guards #5523: a group whose
+// entities include a config_key with the synthetic SourceFile "<config>"
+// alongside real-file entities must still complete the string pass and emit the
+// cross-repo edges from the real files. On Windows os.Stat("<config>") fails
+// with ERROR_INVALID_NAME (123) — an un-tolerated error that previously aborted
+// the pass and left cross-repo edges = 0. The synthetic entry must be skipped
+// before any filesystem access.
+func TestStringPass_SkipsSyntheticConfigSourceFile(t *testing.T) {
+	root := fixtureRoot(t)
+	mkRepo := func(name, src string) {
+		dir := filepath.Join(root, name, "src")
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		f := filepath.Join(dir, "h.go")
+		if err := os.WriteFile(f, []byte(src), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		writeFixture(t, root, fixtureGraph{
+			Repo: name,
+			Entities: []map[string]any{
+				{"id": name + "_e", "name": "Handler", "kind": "function", "source_file": "src/h.go"},
+				// Synthetic config-key entity: SourceFile "<config>" has no
+				// backing file. Stat'ing it must never abort the pass.
+				{"id": name + "_cfg", "name": "config:API_URL", "kind": "config_key", "source_file": extractor.ConfigKeySourceFile},
+			},
+		})
+	}
+	// Both repos read the same literal HTTP path → cross-repo string edge.
+	mkRepo("alpha", "package main\nvar p = \"/api/v1/orders/{id}\"\n")
+	mkRepo("beta", "package main\nvar p = \"/api/v1/orders/{id}\"\n")
+
+	home := filepath.Join(root, "ag-home")
+	if _, err := RunAllPasses("g5523", root, home); err != nil {
+		t.Fatalf("pass aborted (synthetic <config> not skipped): %v", err)
+	}
+	doc, err := readDoc(filepath.Join(home, "groups", "g5523-links.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found bool
+	for _, l := range doc.Links {
+		if l.Method == MethodString && l.Identifier != nil && *l.Identifier == "/api/v1/orders/{id}" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected cross-repo string edge despite synthetic <config> entity, got %+v", doc.Links)
+	}
+}
+
+// TestScanFile_ToleratesSyntheticSourceFile asserts scanFile treats a synthetic
+// sentinel as a skip (nil, nil) rather than touching the filesystem — the unit
+// guard for #5523 that holds on every platform (on Windows the stat would
+// otherwise fail with ERROR_INVALID_NAME).
+func TestScanFile_ToleratesSyntheticSourceFile(t *testing.T) {
+	exs, err := scanFile(extractor.ConfigKeySourceFile, extractor.ConfigKeySourceFile, "")
+	if err != nil {
+		t.Fatalf("scanFile(<config>) should be a silent skip, got err: %v", err)
+	}
+	if len(exs) != 0 {
+		t.Fatalf("scanFile(<config>) should yield no extractions, got %d", len(exs))
+	}
+}
+
+// TestIsUnstattablePathErr verifies the defensive errno tolerance: an
+// ERROR_INVALID_NAME-style errno (123) and ENOTDIR are treated as skips, while
+// a genuine permission error is not.
+func TestIsUnstattablePathErr(t *testing.T) {
+	if !isUnstattablePathErr(syscall.Errno(123)) {
+		t.Error("ERROR_INVALID_NAME (123) should be tolerated as un-stattable")
+	}
+	if !isUnstattablePathErr(syscall.ENOTDIR) {
+		t.Error("ENOTDIR should be tolerated as un-stattable")
+	}
+	if isUnstattablePathErr(syscall.EACCES) {
+		t.Error("EACCES (permission denied) is a genuine error, must NOT be tolerated")
+	}
+	if isUnstattablePathErr(nil) {
+		t.Error("nil error must not be reported as un-stattable")
 	}
 }
 

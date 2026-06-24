@@ -12,6 +12,9 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"syscall"
+
+	"github.com/cajasmota/grafel/internal/extractor"
 )
 
 // extractionCategory identifies a string-pattern bucket.
@@ -219,13 +222,54 @@ type scanCacheEntry struct {
 	Values []Extraction `json:"values"`
 }
 
+// isUnstattablePathErr reports whether a stat error means the path is
+// syntactically impossible / cannot exist on this platform (rather than a
+// genuine I/O failure on a real path). Such errors must be tolerated as a skip
+// so one bad synthetic entry can't abort the whole pass. Specifically:
+//
+//   - Windows ERROR_INVALID_NAME (123): "<…>" sentinels contain characters that
+//     are illegal in Windows filenames; GetFileAttributesEx fails before any
+//     real lookup. POSIX never returns this for "<config>" (it's a legal name,
+//     yielding fs.ErrNotExist), so this is a no-op on Linux/macOS.
+//   - ENOTDIR: a path component is not a directory — the path cannot resolve.
+//   - fs.ErrInvalid: a malformed argument.
+//
+// Genuine errors (permission denied on a real file, etc.) are NOT swallowed.
+func isUnstattablePathErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, fs.ErrInvalid) || errors.Is(err, syscall.ENOTDIR) {
+		return true
+	}
+	var errno syscall.Errno
+	if errors.As(err, &errno) {
+		// 123 == ERROR_INVALID_NAME on Windows ("The filename, directory name,
+		// or volume label syntax is incorrect."). Compared numerically so this
+		// builds and is harmless on every platform.
+		if errno == syscall.Errno(123) {
+			return true
+		}
+	}
+	return false
+}
+
 // scanFile reads a single file, classifies its string literals, and
 // caches the result. cacheDir is the per-repo directory; pass "" to
 // disable caching.
 func scanFile(absPath, relPath, cacheDir string) ([]Extraction, error) {
+	// Defense in depth: synthetic sentinels are skipped before scanRepo is
+	// reached, but guard the stat itself too. A path that cannot exist on this
+	// platform (e.g. a "<…>" sentinel on Windows yields ERROR_INVALID_NAME, or
+	// a non-directory component yields ENOTDIR) must be treated as a skip, not
+	// a fatal abort — a single un-stattable synthetic entry must never zero out
+	// cross-repo edges (#5523). Genuine I/O errors still propagate.
+	if extractor.IsSyntheticSourceFile(relPath) || extractor.IsSyntheticSourceFile(absPath) {
+		return nil, nil
+	}
 	fi, err := os.Stat(absPath)
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
+		if errors.Is(err, fs.ErrNotExist) || isUnstattablePathErr(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -361,6 +405,13 @@ func runStringPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pa
 		var files []string
 		for _, e := range g.Entities {
 			if e.SourceFile == "" {
+				continue
+			}
+			// Synthetic SourceFile sentinels (<config>, <exception>, …) are not
+			// real paths; stat'ing them is a no-op on POSIX but a hard error on
+			// Windows (ERROR_INVALID_NAME), which would abort the whole pass and
+			// zero out cross-repo edges (#5523). Skip them before any FS access.
+			if extractor.IsSyntheticSourceFile(e.SourceFile) {
 				continue
 			}
 			if _, ok := entityForFile[e.SourceFile]; !ok {
