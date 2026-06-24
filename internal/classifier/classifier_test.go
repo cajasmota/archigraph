@@ -1288,6 +1288,28 @@ func TestClassify_OcelotJSON(t *testing.T) {
 	}
 }
 
+// TestClassify_BicepConfigJSON: bicepconfig.json routes to language="bicep" so
+// the bicep extractor parses its moduleAliases.br / moduleAliases.ts registry
+// aliases. #5372.
+func TestClassify_BicepConfigJSON(t *testing.T) {
+	c := newTestClassifier(t)
+	for _, p := range []string{
+		"bicepconfig.json",
+		"infra/bicepconfig.json",
+		"src/Infra/BicepConfig.json", // case-insensitive basename
+	} {
+		t.Run(p, func(t *testing.T) {
+			r := c.Classify(context.Background(), p)
+			if r.Skip {
+				t.Errorf("%s should not be skipped: %q", p, r.SkipReason)
+			}
+			if r.Language != "bicep" {
+				t.Errorf("expected Language=bicep, got %q", r.Language)
+			}
+		})
+	}
+}
+
 func TestClassify_GenericJSONNotIndexed(t *testing.T) {
 	c := newTestClassifier(t)
 	// These must NOT be picked up — they would balloon indexing scope and

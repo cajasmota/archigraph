@@ -41,6 +41,8 @@ package bicep
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"path"
 	"regexp"
 	"strings"
 
@@ -106,6 +108,19 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 
 	src := string(file.Content)
 	path := file.Path
+
+	// bicepconfig.json — Bicep's JSON config file, not a .bicep template. Parse
+	// its moduleAliases.br / moduleAliases.ts registry aliases instead of the
+	// resource/module/param DSL.
+	if isBicepConfig(path) {
+		records := extractBicepConfig(src, path)
+		span.SetAttributes(
+			attribute.String("language", lang),
+			attribute.Int("file_line_count", lineCount),
+			attribute.Int("entity_count", len(records)),
+		)
+		return records, nil
+	}
 
 	// Pre-scan: collect the set of symbolic names declared as resources or
 	// modules in this file so reference extraction only emits DEPENDS_ON edges
@@ -239,6 +254,19 @@ func extractModules(src, path string, symbolic map[string]bool) []types.EntityRe
 			meta["loop"] = "true"
 		}
 
+		reg := classifyModuleRegistry(modPath)
+		if reg.isRegistry {
+			meta["module_registry"] = reg.registry // "acr" | "mcr" | "template-spec"
+			meta["registry_scheme"] = reg.scheme   // "br" | "ts"
+			meta["registry_ref"] = reg.ref         // path/name without scheme + tag
+			if reg.tag != "" {
+				meta["registry_tag"] = reg.tag
+			}
+			if reg.alias != "" {
+				meta["registry_alias"] = reg.alias
+			}
+		}
+
 		rec := types.EntityRecord{
 			Name:          modName,
 			Kind:          "SCOPE.Component",
@@ -252,10 +280,21 @@ func extractModules(src, path string, symbolic map[string]bool) []types.EntityRe
 			Metadata:      meta,
 		}
 
-		// IMPORTS edge to the referenced .bicep module path.
+		// IMPORTS edge to the referenced module. A local module resolves to the
+		// sibling .bicep file node; a registry module (br:/ts:/br/…/ts/…) is an
+		// external artifact pulled from an ACR / MCR / template-spec registry, so
+		// it is keyed under an external module namespace rather than a (bogus)
+		// local-file component node.
+		importTo := "scope:component:file:bicep:" + modPath
+		if reg.isRegistry {
+			importTo = "scope:component:external:bicep:" + reg.scheme + ":" + reg.ref
+			if reg.tag != "" {
+				importTo += ":" + reg.tag
+			}
+		}
 		rec.Relationships = append(rec.Relationships, types.RelationshipRecord{
 			FromID: path,
-			ToID:   "scope:component:file:bicep:" + modPath,
+			ToID:   importTo,
 			Kind:   "IMPORTS",
 		})
 		rec.Relationships = append(rec.Relationships, dependencyEdges(body, path, modName, symbolic)...)
@@ -470,6 +509,84 @@ func splitDependsOn(inner string) []string {
 	return out
 }
 
+// moduleRegistryRef is the parsed form of a Bicep registry/template-spec module
+// reference (`br:`/`ts:` schemes, with or without a bicepconfig moduleAlias).
+type moduleRegistryRef struct {
+	isRegistry bool
+	scheme     string // "br" | "ts"
+	registry   string // "acr" | "mcr" | "template-spec"
+	alias      string // bicepconfig moduleAlias name (br/<alias>:… form), if any
+	ref        string // registry path/name with scheme + tag stripped
+	tag        string // version tag after the final ':'
+}
+
+// classifyModuleRegistry recognises a Bicep module-registry reference. Bicep
+// supports two registry schemes for `module` sources:
+//
+//	br:<registry>/<path>:<tag>            — full ACR OCI reference
+//	br/<alias>:<path>:<tag>               — ACR ref via a bicepconfig moduleAlias
+//	ts:<sub>/<rg>/<name>:<ver>            — full template-spec reference
+//	ts/<alias>:<name>:<ver>               — template-spec via a moduleAlias
+//
+// The public Microsoft module registry (mcr.microsoft.com / the `public` alias)
+// is reported as registry="mcr"; other `br` refs as "acr"; `ts` refs as
+// "template-spec". A plain local path (`./mod.bicep`) returns isRegistry=false.
+func classifyModuleRegistry(modPath string) moduleRegistryRef {
+	scheme, rest, aliased, ok := splitRegistryScheme(modPath)
+	if !ok {
+		return moduleRegistryRef{}
+	}
+	r := moduleRegistryRef{isRegistry: true, scheme: scheme}
+
+	// rest is "<alias>:<path>:<tag>" when aliased, else "<registry>/<path>:<tag>".
+	if aliased {
+		// alias is the first colon-delimited segment.
+		if i := strings.IndexByte(rest, ':'); i >= 0 {
+			r.alias = rest[:i]
+			rest = rest[i+1:]
+		} else {
+			r.alias = rest
+			rest = ""
+		}
+	}
+
+	// Split the trailing ":<tag>" (the version). A path segment may itself
+	// contain no colon, so the final ':' delimits the tag.
+	if i := strings.LastIndexByte(rest, ':'); i >= 0 {
+		r.ref = rest[:i]
+		r.tag = rest[i+1:]
+	} else {
+		r.ref = rest
+	}
+
+	switch scheme {
+	case "ts":
+		r.registry = "template-spec"
+	default: // "br"
+		if r.alias == "public" || strings.HasPrefix(r.ref, "mcr.microsoft.com") {
+			r.registry = "mcr"
+		} else {
+			r.registry = "acr"
+		}
+	}
+	return r
+}
+
+// splitRegistryScheme detaches a `br:`/`ts:`/`br/`/`ts/` scheme prefix from a
+// module path. The `:` form is the full reference, the `/` form is the
+// bicepconfig moduleAlias form. Returns ok=false for any other path.
+func splitRegistryScheme(modPath string) (scheme, rest string, aliased, ok bool) {
+	for _, s := range []string{"br", "ts"} {
+		if strings.HasPrefix(modPath, s+":") {
+			return s, modPath[len(s)+1:], false, true
+		}
+		if strings.HasPrefix(modPath, s+"/") {
+			return s, modPath[len(s)+1:], true, true
+		}
+	}
+	return "", "", false, false
+}
+
 // splitAzureType splits 'Microsoft.Storage/storageAccounts@2022-09-01' into the
 // resource-provider type ("Microsoft.Storage/storageAccounts") and api version.
 func splitAzureType(full string) (rpType, apiVersion string) {
@@ -500,6 +617,114 @@ func nextDeclBoundary(src string, start, max int) int {
 		}
 	}
 	return start + earliest
+}
+
+// isBicepConfig reports whether path is a Bicep configuration file
+// (bicepconfig.json), case-insensitively on the basename.
+func isBicepConfig(p string) bool {
+	return strings.EqualFold(path.Base(p), "bicepconfig.json")
+}
+
+// bicepConfig is the subset of bicepconfig.json this extractor reads: the
+// moduleAliases map keyed by scheme ("br" / "ts"), each a map of alias name to
+// its registry/subscription target.
+type bicepConfig struct {
+	ModuleAliases map[string]map[string]struct {
+		Registry      string `json:"registry"`
+		ModulePath    string `json:"modulePath"`
+		Subscription  string `json:"subscription"`
+		ResourceGroup string `json:"resourceGroup"`
+	} `json:"moduleAliases"`
+}
+
+// extractBicepConfig emits one config entity for bicepconfig.json plus one
+// SCOPE.Schema/module-alias entity per declared moduleAlias, so registry-aliased
+// module references (br/<alias>:… / ts/<alias>:…) resolve to their target
+// registry / template-spec scope. Malformed JSON yields just the config entity.
+func extractBicepConfig(src, p string) []types.EntityRecord {
+	cfg := types.EntityRecord{
+		Name:          "bicepconfig",
+		Kind:          "SCOPE.Config",
+		Subtype:       "bicepconfig",
+		SourceFile:    p,
+		StartLine:     1,
+		EndLine:       strings.Count(src, "\n") + 1,
+		Language:      lang,
+		QualityScore:  0.85,
+		QualifiedName: p,
+		Metadata: map[string]interface{}{
+			"subtype":  "bicepconfig",
+			"iac_tool": "bicep",
+			"label":    "bicepconfig.json",
+		},
+	}
+
+	var parsed bicepConfig
+	if err := json.Unmarshal([]byte(src), &parsed); err != nil {
+		return []types.EntityRecord{cfg}
+	}
+
+	out := []types.EntityRecord{cfg}
+	// Deterministic order: scheme (br, ts), then alias name.
+	for _, scheme := range []string{"br", "ts"} {
+		aliases := parsed.ModuleAliases[scheme]
+		names := make([]string, 0, len(aliases))
+		for name := range aliases {
+			names = append(names, name)
+		}
+		sortStrings(names)
+		for _, name := range names {
+			a := aliases[name]
+			registry := "acr"
+			if scheme == "ts" {
+				registry = "template-spec"
+			} else if name == "public" || strings.HasPrefix(a.Registry, "mcr.microsoft.com") {
+				registry = "mcr"
+			}
+			meta := map[string]interface{}{
+				"subtype":         "module-alias",
+				"iac_tool":        "bicep",
+				"label":           name,
+				"registry_scheme": scheme,
+				"module_registry": registry,
+			}
+			if a.Registry != "" {
+				meta["registry"] = a.Registry
+			}
+			if a.ModulePath != "" {
+				meta["module_path"] = a.ModulePath
+			}
+			if a.Subscription != "" {
+				meta["subscription"] = a.Subscription
+			}
+			if a.ResourceGroup != "" {
+				meta["resource_group"] = a.ResourceGroup
+			}
+			out = append(out, types.EntityRecord{
+				Name:          scheme + "/" + name,
+				Kind:          "SCOPE.Schema",
+				Subtype:       "module-alias",
+				SourceFile:    p,
+				StartLine:     1,
+				EndLine:       1,
+				Language:      lang,
+				QualityScore:  0.85,
+				QualifiedName: scheme + "/" + name,
+				Metadata:      meta,
+			})
+		}
+	}
+	return out
+}
+
+// sortStrings sorts a string slice ascending (small local helper to avoid an
+// extra import in a file that otherwise has no sort dependency).
+func sortStrings(s []string) {
+	for i := 1; i < len(s); i++ {
+		for j := i; j > 0 && s[j-1] > s[j]; j-- {
+			s[j-1], s[j] = s[j], s[j-1]
+		}
+	}
 }
 
 // lineOf returns the 1-indexed line number of byte offset off in src.

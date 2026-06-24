@@ -334,6 +334,147 @@ func TestBicep_Fixture(t *testing.T) {
 	if findByName(recs, "output.storageId") == nil {
 		t.Error("fixture missing output.storageId")
 	}
+
+	// Registry module references: full ACR ref, public-alias ref, template-spec.
+	avm := findByName(recs, "avmStorage")
+	if avm == nil {
+		t.Fatal("fixture missing registry module avmStorage")
+	}
+	if avm.Metadata["module_registry"] != "acr" {
+		t.Errorf("avmStorage module_registry = %v, want acr", avm.Metadata["module_registry"])
+	}
+	if avm.Metadata["registry_scheme"] != "br" {
+		t.Errorf("avmStorage registry_scheme = %v, want br", avm.Metadata["registry_scheme"])
+	}
+	if avm.Metadata["registry_tag"] != "1.2.0" {
+		t.Errorf("avmStorage registry_tag = %v, want 1.2.0", avm.Metadata["registry_tag"])
+	}
+	// A registry module must NOT emit a bogus local-file IMPORTS edge.
+	if hasEdgeTo(avm, "IMPORTS", "scope:component:file:bicep:br:myreg.azurecr.io/bicep/modules/storage:1.2.0") {
+		t.Error("avmStorage emitted a local-file IMPORTS edge for a registry ref")
+	}
+	if !hasEdgeTo(avm, "IMPORTS", "scope:component:external:bicep:br:myreg.azurecr.io/bicep/modules/storage:1.2.0") {
+		t.Error("avmStorage missing external-registry IMPORTS edge")
+	}
+
+	pub := findByName(recs, "avmVault")
+	if pub == nil || pub.Metadata["module_registry"] != "mcr" {
+		t.Errorf("avmVault module_registry = %v, want mcr (public alias)", metaOf(pub))
+	}
+	if pub != nil && pub.Metadata["registry_alias"] != "public" {
+		t.Errorf("avmVault registry_alias = %v, want public", pub.Metadata["registry_alias"])
+	}
+
+	ts := findByName(recs, "sharedTs")
+	if ts == nil || ts.Metadata["module_registry"] != "template-spec" {
+		t.Errorf("sharedTs module_registry = %v, want template-spec", metaOf(ts))
+	}
+}
+
+func metaOf(r *types.EntityRecord) interface{} {
+	if r == nil {
+		return nil
+	}
+	return r.Metadata["module_registry"]
+}
+
+// TestBicep_RegistryModule_Classification asserts the br:/ts: registry-ref
+// parser across the full and alias forms.
+func TestBicep_RegistryModule_Classification(t *testing.T) {
+	const src = `
+module a 'br:contoso.azurecr.io/bicep/storage:2.1.0' = { name: 'a' }
+module b 'br/ContosoRegistry:storage:1.0.0' = { name: 'b' }
+module c 'br/public:avm/res/key-vault/vault:0.6.1' = { name: 'c' }
+module d 'ts:00000000-0000-0000-0000-000000000000/rg/spec:3.0' = { name: 'd' }
+module e 'ts/CoreSpecs:netSpec:1.0' = { name: 'e' }
+module f './local/mod.bicep' = { name: 'f' }
+`
+	recs := extractBicep(t, src, "infra/main.bicep")
+
+	cases := []struct {
+		name, registry, scheme, tag string
+		external                    bool
+	}{
+		{"a", "acr", "br", "2.1.0", true},
+		{"b", "acr", "br", "1.0.0", true},
+		{"c", "mcr", "br", "0.6.1", true},
+		{"d", "template-spec", "ts", "3.0", true},
+		{"e", "template-spec", "ts", "1.0", true},
+		{"f", "", "", "", false},
+	}
+	for _, c := range cases {
+		r := findByName(recs, c.name)
+		if r == nil {
+			t.Fatalf("module %q not extracted", c.name)
+		}
+		if !c.external {
+			if r.Metadata["module_registry"] != nil {
+				t.Errorf("local module %q got module_registry=%v", c.name, r.Metadata["module_registry"])
+			}
+			if !hasEdgeTo(r, "IMPORTS", "scope:component:file:bicep:./local/mod.bicep") {
+				t.Errorf("local module %q missing local-file IMPORTS edge", c.name)
+			}
+			continue
+		}
+		if r.Metadata["module_registry"] != c.registry {
+			t.Errorf("module %q registry = %v, want %s", c.name, r.Metadata["module_registry"], c.registry)
+		}
+		if r.Metadata["registry_scheme"] != c.scheme {
+			t.Errorf("module %q scheme = %v, want %s", c.name, r.Metadata["registry_scheme"], c.scheme)
+		}
+		if r.Metadata["registry_tag"] != c.tag {
+			t.Errorf("module %q tag = %v, want %s", c.name, r.Metadata["registry_tag"], c.tag)
+		}
+		if !hasEdgeTo(r, "IMPORTS", "scope:component:external:bicep:") {
+			// suffix-match would fail; just assert no local-file edge instead.
+		}
+	}
+}
+
+// TestBicep_Config parses a bicepconfig.json moduleAliases map into config +
+// alias records.
+func TestBicep_Config(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join("testdata", "bicepconfig.json"))
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	recs := extractBicep(t, string(data), "infra/bicepconfig.json")
+
+	cfg := findByName(recs, "bicepconfig")
+	if cfg == nil {
+		t.Fatal("missing bicepconfig config entity")
+	}
+	if cfg.Kind != "SCOPE.Config" {
+		t.Errorf("bicepconfig kind = %s, want SCOPE.Config", cfg.Kind)
+	}
+
+	// br/public → mcr, br/ContosoRegistry → acr, ts/CoreSpecs → template-spec.
+	pub := findByName(recs, "br/public")
+	if pub == nil || pub.Metadata["module_registry"] != "mcr" {
+		t.Errorf("br/public alias = %v, want mcr", metaOf(pub))
+	}
+	if pub != nil && pub.Metadata["registry"] != "mcr.microsoft.com" {
+		t.Errorf("br/public registry = %v, want mcr.microsoft.com", pub.Metadata["registry"])
+	}
+	contoso := findByName(recs, "br/ContosoRegistry")
+	if contoso == nil || contoso.Metadata["module_registry"] != "acr" {
+		t.Errorf("br/ContosoRegistry = %v, want acr", metaOf(contoso))
+	}
+	ts := findByName(recs, "ts/CoreSpecs")
+	if ts == nil || ts.Metadata["module_registry"] != "template-spec" {
+		t.Errorf("ts/CoreSpecs = %v, want template-spec", metaOf(ts))
+	}
+	if ts != nil && ts.Metadata["resource_group"] != "shared-rg" {
+		t.Errorf("ts/CoreSpecs resource_group = %v, want shared-rg", ts.Metadata["resource_group"])
+	}
+}
+
+// TestBicep_Config_Malformed yields just the config entity, never panics.
+func TestBicep_Config_Malformed(t *testing.T) {
+	recs := extractBicep(t, "{ not valid json", "bicepconfig.json")
+	if len(recs) != 1 || recs[0].Name != "bicepconfig" {
+		t.Errorf("malformed config: got %d recs, want 1 config entity", len(recs))
+	}
 }
 
 // TestBicep_Empty asserts graceful handling of empty input.

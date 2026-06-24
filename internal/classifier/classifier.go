@@ -741,6 +741,13 @@ func detectLanguage(norm string) string {
 		if b := path.Base(lower); b == "ocelot.json" || apiGwOcelotJSONRe.MatchString(b) {
 			return "json"
 		}
+		// Azure Bicep configuration file. bicepconfig.json declares the
+		// moduleAliases.br / moduleAliases.ts registry aliases used by
+		// `br/<alias>:…` / `ts/<alias>:…` module references; route it to the
+		// bicep extractor so those aliases become resolvable config records.
+		if path.Base(lower) == "bicepconfig.json" {
+			return "bicep"
+		}
 		switch {
 		case dirAnchor("cdc"),
 			dirAnchor("debezium"),

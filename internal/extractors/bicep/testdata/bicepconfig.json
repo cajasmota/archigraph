@@ -1,0 +1,25 @@
+{
+  "moduleAliases": {
+    "br": {
+      "public": {
+        "registry": "mcr.microsoft.com",
+        "modulePath": "bicep"
+      },
+      "ContosoRegistry": {
+        "registry": "contoso.azurecr.io",
+        "modulePath": "bicep/modules"
+      }
+    },
+    "ts": {
+      "CoreSpecs": {
+        "subscription": "00000000-0000-0000-0000-000000000000",
+        "resourceGroup": "shared-rg"
+      }
+    }
+  },
+  "analyzers": {
+    "core": {
+      "enabled": true
+    }
+  }
+}
