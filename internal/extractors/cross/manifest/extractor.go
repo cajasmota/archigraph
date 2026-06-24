@@ -30,6 +30,8 @@
 //   - paket.dependencies   (paket — .NET/F# manifest_parsing, nuget directives)
 //   - paket.lock           (paket — .NET/F# lockfile_parsing, resolved NUGET tree)
 //   - *.ipkg               (idris2 — Idris manifest_parsing, depends/modules)
+//   - corral.json          (corral — Pony manifest_parsing, deps[].locator)
+//   - bundle.json          (corral — Pony legacy manifest, corral-signal gated)
 //
 // Entity kind: "SCOPE.Component"
 // Relationships emitted: DEPENDS_ON(kind=external_dependency)
@@ -216,6 +218,11 @@ var exactManifestNames = map[string]bool{
 	// the package manager is npm and rescript.json is NOT a lockfile (#5378).
 	"rescript.json": true,
 	"bsconfig.json": true,
+	// Pony — corral (corral.json manifest; legacy bundle.json). corral records
+	// its resolved transitive deps into the same `deps` array, so the manifest
+	// doubles as the resolved set — there is no separate lockfile format (#5384).
+	"corral.json": true,
+	"bundle.json": true,
 }
 
 // IsManifest returns true when filePath names a supported manifest file.
@@ -331,6 +338,9 @@ func detectPackageManager(filePath string) string {
 		// from package.json), so the package manager is npm (#5378).
 		"rescript.json": "npm",
 		"bsconfig.json": "npm",
+		// Pony — corral (corral.json + legacy bundle.json).
+		"corral.json": "corral",
+		"bundle.json": "corral",
 	}
 	basename := filepath.Base(filePath)
 	if v, ok := pm[basename]; ok {
@@ -2010,6 +2020,11 @@ var parsers = map[string]parserFn{
 	// reScriptConfigProperty.
 	"rescript.json": parseReScriptJSON,
 	"bsconfig.json": parseReScriptJSON,
+	// Pony — corral (corral.json manifest + legacy bundle.json). The `deps`
+	// array carries locator + version; corral folds resolved transitive deps
+	// into the same array, so there is no separate lockfile (#5384).
+	"corral.json": parseCorralJSON,
+	"bundle.json": parseCorralJSON,
 }
 
 func dispatchParser(filePath, source string) (string, []dep) {
@@ -2262,6 +2277,18 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 	}
 
 	pm, deps := dispatchParser(file.Path, string(file.Content))
+
+	// Pony legacy bundle.json is an ambiguous, generic basename (it collides with
+	// JS/webpack bundle artifacts, etc.). Only treat it as a corral manifest —
+	// and emit its project anchor — when it actually parses to corral deps; an
+	// unrelated bundle.json yields no deps and is a complete no-op (#5384).
+	if filepath.Base(file.Path) == "bundle.json" && len(deps) == 0 {
+		span.SetAttributes(
+			attribute.String("package_manager", "none"),
+			attribute.Int("total_found", 0),
+		)
+		return nil, nil
+	}
 
 	depCount := 0
 	devCount := 0

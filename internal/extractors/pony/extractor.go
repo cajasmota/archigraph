@@ -126,7 +126,12 @@ func (e *Extractor) Extract(_ context.Context, file extractor.FileInput) ([]type
 	if len(file.Content) == 0 {
 		return nil, nil
 	}
-	out := extractPony(string(file.Content), file.Path)
+	src := string(file.Content)
+	out := extractPony(src, file.Path)
+	// Actor-model topology enrichment (#5384): tag actors/behaviours and stamp
+	// recovered behaviour message-sends onto their CALLS edges. No-op when the
+	// file declares no actors.
+	enrichActorTopology(src, out)
 	extractor.TagRelationshipsLanguage(out, "pony")
 	extractor.TagEntitiesLanguage(out, "pony")
 	return out, nil
