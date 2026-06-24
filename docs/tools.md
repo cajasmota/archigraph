@@ -5,7 +5,7 @@ use. For each tool grafel can write up to three kinds of artifact:
 
 - **MCP entry** — registers the grafel MCP server in the tool's config so the
   agent can call the `grafel_*` tools (e.g. `grafel_find`, `grafel_inspect`,
-  `grafel_traces`). One global entry per tool; the single daemon routes by the
+  `grafel_trace`). One global entry per tool; the single daemon routes by the
   caller's working directory.
 - **Rules file** — a marker-wrapped "prefer the grafel MCP over grep" guidance
   block written into the tool's per-repo rules file.

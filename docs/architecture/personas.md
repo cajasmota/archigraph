@@ -110,7 +110,7 @@ answer that — don't deliver a 7-section structural audit.
 ## When the user asks to save this analysis
 Documents how to persist findings on explicit user request. Default path:
 `~/.grafel/groups/<group>/findings/<persona>-<short-slug>-<YYYY-MM-DD>.md`.
-Confirm path with user if ambiguous. Also offers `grafel_save_finding`
+Confirm path with user if ambiguous. Also offers `grafel_findings` (`action=save`)
 as the canonical graph-persistence path when the MCP exposes it.
 ```
 
@@ -124,7 +124,7 @@ Findings save **only on explicit user request**. The trigger phrases are: "save 
 
 1. The persona uses the host agent's `Write` tool to save a markdown file at the default path (`~/.grafel/groups/<group>/findings/<persona>-<short-slug>-<YYYY-MM-DD>.md`).
 2. If the path is ambiguous (e.g. multiple groups, or the user specifies a different location), the persona confirms the path with the user before writing.
-3. If `grafel_save_finding` is available in the host MCP, the persona SHOULD also call it — this is the canonical path for graph-registered findings that appear in dashboard panels. The `Write` call and the MCP call are not mutually exclusive.
+3. If `grafel_findings` (`action=save`) is available in the host MCP, the persona SHOULD also call it — this is the canonical path for graph-registered findings that appear in dashboard panels. The `Write` call and the MCP call are not mutually exclusive.
 4. The persona does **not** auto-save at confidence thresholds. There is no background materialisation. This was the v1/v2 model and is retired.
 
 ---
@@ -180,7 +180,7 @@ The skill is the single entry point. Flow:
 ```
 User: /grafel-consult
   └─ grafel-consult skill
-       ├─ pre-flight: grafel_whoami, tech-docs presence check
+       ├─ pre-flight: grafel_orient (view=me), tech-docs presence check
        ├─ enumerate catalog (read personas/*.md frontmatter)
        ├─ ask user: "which consultant would you like to hire?"
        │   (or interpret natural-language "I need an architecture review" → architect)
@@ -383,18 +383,18 @@ Twelve personas ship. The catalog count must match across this doc, `SKILL.md`, 
 
 | # | Name | Lens | Primary graph queries | Status |
 |---|---|---|---|---|
-| 1 | `architect` | Module layering, coupling, cyclic deps, god modules, boundary violations | `grafel_clusters`, `grafel_expand` (IMPORTS/CALLS), `grafel_stats` | Shipped |
-| 2 | `security-auditor` | Auth gaps, PII exposure, injection risks, secrets, attack surface | `grafel_traces` (auth entry points), `grafel_expand`, `grafel_find` | Shipped |
-| 3 | `business-analyst` | Capability coverage, feature gaps, business rule completeness, user-journey gaps | `grafel_traces`, `grafel_find` (route entities), `grafel_clusters` | Shipped |
-| 4 | `performance-reviewer` | Hot paths, N+1 queries, sync blocking, unbounded queries, over-fetching | `grafel_expand`, `grafel_traces`, `grafel_find` (DB call patterns) | Shipped |
-| 5 | `refactor-critic` | Complexity hotspots, duplication, dead code, long call chains, tech-debt | `grafel_stats`, `grafel_expand` (zero-caller nodes), `grafel_clusters` | Shipped |
+| 1 | `architect` | Module layering, coupling, cyclic deps, god modules, boundary violations | `grafel_orient` (`view=clusters`), `grafel_related` (IMPORTS/CALLS), `grafel_orient` (`view=overview`) | Shipped |
+| 2 | `security-auditor` | Auth gaps, PII exposure, injection risks, secrets, attack surface | `grafel_trace` (auth entry points), `grafel_related`, `grafel_find` | Shipped |
+| 3 | `business-analyst` | Capability coverage, feature gaps, business rule completeness, user-journey gaps | `grafel_trace`, `grafel_find` (route entities), `grafel_orient` (`view=clusters`) | Shipped |
+| 4 | `performance-reviewer` | Hot paths, N+1 queries, sync blocking, unbounded queries, over-fetching | `grafel_related`, `grafel_trace`, `grafel_find` (DB call patterns) | Shipped |
+| 5 | `refactor-critic` | Complexity hotspots, duplication, dead code, long call chains, tech-debt | `grafel_orient` (`view=overview`), `grafel_related` (zero-caller nodes), `grafel_orient` (`view=clusters`) | Shipped |
 | 6 | `api-designer` | Endpoint naming, REST/RPC convention consistency, versioning, OpenAPI gaps | `grafel_find` (http_endpoint), `grafel_inspect`, `grafel_cross_links` | Shipped |
-| 7 | `data-engineer` | Schema quality, migration hygiene, ORM patterns, missing indexes, FK integrity | `grafel_find` (schema/model), `grafel_expand`, `grafel_traces` | Shipped |
-| 8 | `qa-reviewer` | Test coverage by module, missing test types, untested critical paths | `grafel_expand` (TESTS edges), `grafel_find`, `grafel_traces` | Shipped |
-| 9 | `solutions-architect` | Cross-service boundaries, inter-repo contracts, coupling, blast-radius | `grafel_cross_links`, `grafel_expand`, `grafel_traces` | Shipped (with limitations) — signal requires cross_links data populated; limited for single-repo groups |
-| 10 | `devops-reviewer` | CI/CD config, GitHub Actions pinning, build hygiene, graph-visible infra config | `grafel_status`, `grafel_find`, `grafel_subgraph` | Shipped (with limitations) — does NOT index Terraform/k8s; CI/YAML slice only |
-| 11 | `compliance-officer` | PII field detection, audit-trail gaps, sensitive data flow surface scan | `grafel_find` (field names), `grafel_inspect`, `grafel_expand` (READS_FIELD/WRITES_FIELD) | Shipped (with limitations) — name-match heuristics only; no data-classification layer; high false-positive rate |
-| 12 | `dx-engineer` | Test desert modules, circular imports, god entry-points, module size outliers | `grafel_clusters`, `grafel_expand` (TESTS/IMPORTS), `grafel_stats` | Shipped (with limitations) — test/import-graph signals only; no docs/README or build-time review |
+| 7 | `data-engineer` | Schema quality, migration hygiene, ORM patterns, missing indexes, FK integrity | `grafel_find` (schema/model), `grafel_related`, `grafel_trace` | Shipped |
+| 8 | `qa-reviewer` | Test coverage by module, missing test types, untested critical paths | `grafel_related` (TESTS edges), `grafel_find`, `grafel_trace` | Shipped |
+| 9 | `solutions-architect` | Cross-service boundaries, inter-repo contracts, coupling, blast-radius | `grafel_cross_links`, `grafel_related`, `grafel_trace` | Shipped (with limitations) — signal requires cross_links data populated; limited for single-repo groups |
+| 10 | `devops-reviewer` | CI/CD config, GitHub Actions pinning, build hygiene, graph-visible infra config | `grafel_index_status`, `grafel_find`, `grafel_subgraph` | Shipped (with limitations) — does NOT index Terraform/k8s; CI/YAML slice only |
+| 11 | `compliance-officer` | PII field detection, audit-trail gaps, sensitive data flow surface scan | `grafel_find` (field names), `grafel_inspect`, `grafel_related` (READS_FIELD/WRITES_FIELD) | Shipped (with limitations) — name-match heuristics only; no data-classification layer; high false-positive rate |
+| 12 | `dx-engineer` | Test desert modules, circular imports, god entry-points, module size outliers | `grafel_orient` (`view=clusters`), `grafel_related` (TESTS/IMPORTS), `grafel_orient` (`view=overview`) | Shipped (with limitations) — test/import-graph signals only; no docs/README or build-time review |
 
 ---
 
@@ -443,8 +443,8 @@ The persona's ANALYSIS questions (which are unique per lens) remain in the perso
 | Candidate shared skill | Would extract | Composable? |
 |---|---|---|
 | `grafel-graph-read` | Status → inspect → expand (shipped, #2506) | Yes |
-| `grafel-graph-write` | `grafel_save_finding` affordance contract (shipped, #2507) | Yes — same "When the user asks to save" section appears in all 8 |
-| `grafel-graph-search` | `grafel_find` + `grafel_traces` pattern | Possible — most personas use both |
+| `grafel-graph-write` | `grafel_findings` (`action=save`) affordance contract (shipped, #2507) | Yes — same "When the user asks to save" section appears in all 8 |
+| `grafel-graph-search` | `grafel_find` + `grafel_trace` pattern | Possible — most personas use both |
 
 A skill is worth extracting when: (a) the same prose appears in 3+ persona files, (b) the prose has clear boundaries (a named section), and (c) changing it in one place should change it everywhere.
 
@@ -454,7 +454,7 @@ A skill is worth extracting when: (a) the same prose appears in 3+ persona files
 
 ### 10.1 What is emitted
 
-Each persona calls `grafel_persona_event` at two lifecycle points:
+Each persona calls `grafel_event` (`kind=persona`) at two lifecycle points:
 
 | Lifecycle point | `event_type` | Required fields | Optional fields |
 |---|---|---|---|
@@ -483,7 +483,7 @@ Files rotate by UTC calendar date. No compaction or deletion is performed by gra
 
 ### 10.3 Privacy promise
 
-**LOCAL ONLY.** `grafel_persona_event` writes exclusively to the local filesystem (`~/.grafel/events/`). No data is transmitted to any remote endpoint, no aggregation service is contacted, and no identifier beyond the persona name is captured. The `metadata` field is optional and caller-controlled — personas do not populate it with user data. This promise is enforced by the handler implementation in `internal/mcp/persona_telemetry.go` — there is no HTTP client, no gRPC call, and no queue write in that file.
+**LOCAL ONLY.** `grafel_event` (`kind=persona`) writes exclusively to the local filesystem (`~/.grafel/events/`). No data is transmitted to any remote endpoint, no aggregation service is contacted, and no identifier beyond the persona name is captured. The `metadata` field is optional and caller-controlled — personas do not populate it with user data. This promise is enforced by the handler implementation in `internal/mcp/persona_telemetry.go` — there is no HTTP client, no gRPC call, and no queue write in that file.
 
 ### 10.4 Viewing events
 
@@ -551,12 +551,12 @@ notes: |
 
 ### 11.5 Cross-persona notes field
 
-The `notes` field in the session YAML is a free-form string any persona may append to during a conversation. This is the intended mechanism for mid-conversation scratch notes that don't yet warrant a formal finding (which would go through `grafel_save_finding`). Notes are preserved across resumes.
+The `notes` field in the session YAML is a free-form string any persona may append to during a conversation. This is the intended mechanism for mid-conversation scratch notes that don't yet warrant a formal finding (which would go through `grafel_findings` (`action=save`)). Notes are preserved across resumes.
 
 ### 11.6 Anti-patterns
 
 - **Do not auto-save on every turn.** Save on explicit request or Consult-Out only. Constant writes create noise and inflate the session file unnecessarily.
-- **Do not store PII or sensitive findings in `notes`.** The session file is plaintext on the local filesystem. Sensitive findings should go through `grafel_save_finding` or the user's own secure note-taking.
+- **Do not store PII or sensitive findings in `notes`.** The session file is plaintext on the local filesystem. Sensitive findings should go through `grafel_findings` (`action=save`) or the user's own secure note-taking.
 - **Do not read another session's YAML without user approval.** Each session file belongs to one conversation context. Cross-session reading would conflate unrelated consultation threads.
 
 ---
@@ -580,7 +580,7 @@ The `notes` field in the session YAML is a free-form string any persona may appe
 | Codex / generic-markdown wrappers | Low user demand; defer until requested |
 | Persona-emitted findings → graph (opt-in) | **Shipped in #2472** — "When the user asks to save this analysis" section added to all 8 persona bodies; Section 2.4 defines the contract |
 | Consult-Out depth > 1 (peer of peer) | **Shipped in #2473** — multi-hop with depth cap (3), cycle detection, and context carry-over. Section 5.4–5.7 define the full protocol. |
-| Telemetry on persona usage / Consult-Out frequency | **Shipped in #2474** — `grafel_persona_event` MCP tool; Section 10 defines the contract and privacy promise |
+| Telemetry on persona usage / Consult-Out frequency | **Shipped in #2474** — `grafel_event` (`kind=persona`) MCP tool; Section 10 defines the contract and privacy promise |
 | Per-persona model selection strategy | **Shipped in #2475** — `model:` frontmatter on all 8 personas with opinionated recommendations; Section 2.3 defines the mapping and override contract |
 | Cross-platform renderer CLI | Defer until 3+ platforms stable |
 | Solutions-architect / devops / compliance / dx personas | **Shipped in #2451-#2454** — built without original gates met, per user directive. Each documents signal-quality limitations in its persona body. Closing the gate gaps is tracked separately in the personas issue queue. |

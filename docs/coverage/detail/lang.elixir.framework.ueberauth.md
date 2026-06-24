@@ -11,7 +11,7 @@ Auto-generated. Back to [summary](../summary.md).
 
 | Capability | Status | Verified at | Issue | Cites | Notes |
 |------------|--------|-------------|-------|-------|-------|
-| Auth policy | 🟢 `partial` | `2026-05-31` | — | `internal/custom/elixir/ueberauth.go`<br>`internal/custom/elixir/ueberauth_test.go` | plug Ueberauth entrypoint + configured Ueberauth.Strategy.* OAuth providers + handle_request!/handle_callback! handlers emitted as auth entities (auth=true, auth_provider=<provider>, auth_method=oauth2) consumed by grafel_auth_coverage. |
+| Auth policy | 🟢 `partial` | `2026-05-31` | — | `internal/custom/elixir/ueberauth.go`<br>`internal/custom/elixir/ueberauth_test.go` | plug Ueberauth entrypoint + configured Ueberauth.Strategy.* OAuth providers + handle_request!/handle_callback! handlers emitted as auth entities (auth=true, auth_provider=<provider>, auth_method=oauth2) consumed by grafel_security (kind=auth_coverage). |
 | Secret detection | 🔴 `missing` | — | 3828 | — | No extraction yet for this capability on this auth/security record; tracked in #3828 (may be reclassified not_applicable pending owner sign-off). |
 | SQL injection | — `not_applicable` | — | — | — | — |
 

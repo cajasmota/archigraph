@@ -73,6 +73,6 @@ The on-disk `graph.fb` FlatBuffers schema carries a `version` integer field
 
 ## MCP wire_version
 
-`grafel_whoami` returns a `wire_version` field (e.g. `"0.1.0"`). Agents
+`grafel_orient` (`view=me`) returns a `wire_version` field (e.g. `"0.1.0"`). Agents
 can use this to detect incompatible daemon versions. The value is a constant
 in `internal/mcp/tools.go` and must be bumped on every MINOR release.
