@@ -192,8 +192,8 @@ func TestNormalizeSeedEntityID_GrafelPrefix(t *testing.T) {
 }
 
 func TestNormalizeSeedEntityID_ArbitraryGroupPrefix(t *testing.T) {
-	// Any <group>:: prefix should be stripped — upvate-core form.
-	got, err := docgen.NormalizeSeedEntityID("upvate-core::7a349f6cd77984c9")
+	// Any <group>:: prefix should be stripped — acme-core form.
+	got, err := docgen.NormalizeSeedEntityID("acme-core::7a349f6cd77984c9")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

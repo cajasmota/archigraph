@@ -23,11 +23,11 @@ func makeTextResult(text string) *mcpapi.CallToolResult {
 
 func TestCountIDOccurrences_PrefixedOnly(t *testing.T) {
 	// Only the prefixed form <repo>::<hex> is interned; bare hex IDs are NOT.
-	text := `{"id":"upvate-core::c84f9b9c0c3a7b18","callers":[{"id":"upvate-core::c84f9b9c0c3a7b18"},{"id":"1234567890abcdef"},{"id":"1234567890abcdef"}]}`
+	text := `{"id":"acme-core::c84f9b9c0c3a7b18","callers":[{"id":"acme-core::c84f9b9c0c3a7b18"},{"id":"1234567890abcdef"},{"id":"1234567890abcdef"}]}`
 	counts := countIDOccurrences(text)
 
-	if counts["upvate-core::c84f9b9c0c3a7b18"] != 2 {
-		t.Errorf("expected 2 for prefixed id, got %d", counts["upvate-core::c84f9b9c0c3a7b18"])
+	if counts["acme-core::c84f9b9c0c3a7b18"] != 2 {
+		t.Errorf("expected 2 for prefixed id, got %d", counts["acme-core::c84f9b9c0c3a7b18"])
 	}
 	// Bare hex IDs are intentionally NOT matched to avoid round-trip breakage.
 	if counts["1234567890abcdef"] != 0 {
@@ -123,8 +123,8 @@ func TestApplyIDInterning_SingleOccurrence_NoTable(t *testing.T) {
 
 func TestApplyIDInterning_InternAndTableInjected(t *testing.T) {
 	t.Setenv("MCP_NO_ID_INTERNING", "")
-	id1 := "upvate-core::c84f9b9c0c3a7b18"
-	id2 := "upvate-core::deadbeef01234567"
+	id1 := "acme-core::c84f9b9c0c3a7b18"
+	id2 := "acme-core::deadbeef01234567"
 	payload := map[string]any{
 		"root": id1,
 		"callers": []any{
@@ -298,9 +298,9 @@ func TestApplyIDInterning_EmptyContent(t *testing.T) {
 // than the original.
 func TestApplyIDInterning_ByteReduction(t *testing.T) {
 	t.Setenv("MCP_NO_ID_INTERNING", "")
-	const baseID = "upvate-core::c84f9b9c0c3a7b18"
-	const callerID = "upvate-core::deadbeef01234567"
-	const calleeID = "upvate-core::aabbccdd11223344"
+	const baseID = "acme-core::c84f9b9c0c3a7b18"
+	const callerID = "acme-core::deadbeef01234567"
+	const calleeID = "acme-core::aabbccdd11223344"
 
 	// Simulate an expand depth=2 response: root node appears everywhere.
 	nodes := make([]any, 50)
@@ -351,7 +351,7 @@ func TestIDPattern_MatchesPrefixedForm(t *testing.T) {
 		input string
 		want  bool
 	}{
-		{`"upvate-core::c84f9b9c0c3a7b18"`, true},
+		{`"acme-core::c84f9b9c0c3a7b18"`, true},
 		{`"svc.name::aabbccddeeff0011"`, true},
 		{`"my-repo_v2::1234567890abcdef"`, true},
 		{`"notanid::ZZZZZZZZZZZZZZZZ"`, false}, // uppercase hex is not matched

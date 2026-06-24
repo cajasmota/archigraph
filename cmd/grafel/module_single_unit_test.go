@@ -38,9 +38,9 @@ func distinctProgressModules(events []progress.Event) map[string]bool {
 // entity's Properties["module"] is that single label (NOT _root/src/components).
 func TestIndex_PlainRepoSingleModule(t *testing.T) {
 	dir := t.TempDir()
-	// Mirror upvate_core_frontend: one root package.json, source in bare
+	// Mirror acme_core_frontend: one root package.json, source in bare
 	// top-level dirs, plus the dot-dir and docs that wrongly surfaced before.
-	writeFile(t, filepath.Join(dir, "package.json"), `{"name":"upvate-frontend"}`)
+	writeFile(t, filepath.Join(dir, "package.json"), `{"name":"acme-frontend"}`)
 	writeFile(t, filepath.Join(dir, "index.ts"), "export const root = 1\n")
 	writeFile(t, filepath.Join(dir, "src/app.ts"), "export const app = 1\n")
 	writeFile(t, filepath.Join(dir, "src/util/helpers.ts"), "export const h = 1\n")
@@ -50,9 +50,9 @@ func TestIndex_PlainRepoSingleModule(t *testing.T) {
 	writeFile(t, filepath.Join(dir, ".windsurf/skills/skill.ts"), "export const sk = 1\n")
 
 	col := &progress.SliceCollector{}
-	idx := newTestIndexer(t, "upvate-frontend", nil, "")
+	idx := newTestIndexer(t, "acme-frontend", nil, "")
 	idx.publisher = col
-	idx.repoSlug = "upvate-frontend"
+	idx.repoSlug = "acme-frontend"
 
 	doc, err := idx.Run(context.Background(), dir)
 	if err != nil {
@@ -65,8 +65,8 @@ func TestIndex_PlainRepoSingleModule(t *testing.T) {
 	// single per-repo label and never a directory rollup.
 	progMods := distinctProgressModules(col.Events)
 	for m := range progMods {
-		if m != "upvate-frontend" {
-			t.Errorf("plain repo progress emitted unexpected module %q (want only upvate-frontend)", m)
+		if m != "acme-frontend" {
+			t.Errorf("plain repo progress emitted unexpected module %q (want only acme-frontend)", m)
 		}
 	}
 	for _, bad := range []string{"_root", "src", "components", "docs", ".windsurf/skills", "src/util"} {
@@ -86,8 +86,8 @@ func TestIndex_PlainRepoSingleModule(t *testing.T) {
 	if len(entMods) != 1 {
 		t.Fatalf("plain repo entity modules: want 1 distinct label, got %d: %v", len(entMods), entMods)
 	}
-	if _, ok := entMods["upvate-frontend"]; !ok {
-		t.Fatalf("plain repo entity module label = %v, want upvate-frontend", entMods)
+	if _, ok := entMods["acme-frontend"]; !ok {
+		t.Fatalf("plain repo entity module label = %v, want acme-frontend", entMods)
 	}
 }
 

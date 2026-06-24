@@ -2259,7 +2259,7 @@ func (s *Server) handleListCommunities(ctx context.Context, req mcpapi.CallToolR
 	// across all repos in the group, so a community can span >1 repo. The
 	// per-entity CommunityID was already stamped onto every entity by
 	// applyGroupAlgoOverlay (#5354), so we recover each community's membership
-	// (and its repo span, #5397 — incl. core-mobile) by scanning the loaded
+	// (and its repo span, #5397 — incl. acme-mobile) by scanning the loaded
 	// entities. Absence-tolerant: an empty overlay falls back to the per-repo
 	// path below unchanged.
 	if len(lg.Communities) > 0 {
@@ -2892,7 +2892,7 @@ func (s *Server) handleGraphStats(ctx context.Context, req mcpapi.CallToolReques
 	// #5397/#5401: when the group-algo overlay is applied (lg.Communities set),
 	// the per-repo Louvain summary (r.Doc.Communities) is empty — the per-repo
 	// pass was removed in A3 — so reporting len(r.Doc.Communities) understates
-	// (core-mobile showed 0). Recover each repo's community count from the
+	// (acme-mobile showed 0). Recover each repo's community count from the
 	// overlay-stamped per-entity CommunityID instead, matching what
 	// grafel_clusters surfaces. -1/-2 sentinels (ungrouped) are not counted.
 	overlayCommByRepo := map[string]int{}

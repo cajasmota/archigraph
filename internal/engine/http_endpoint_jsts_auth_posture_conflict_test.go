@@ -1,7 +1,7 @@
 // http_endpoint_jsts_auth_posture_conflict_test.go — regression for the
 // contradictory auth-posture dual badge (#auth-posture-conflict).
 //
-// On core-backend-v3, `DELETE /v1/checklists/{checklistId}` rendered BOTH a red
+// On acme-backend-v3, `DELETE /v1/checklists/{checklistId}` rendered BOTH a red
 // "NO-AUTH · sensitive" badge AND a green "Auth · Bearer" badge. The method
 // carries no own auth decorator — it inherits the CONTROLLER-level
 // `@RequirePage(PermissionPage.Checklists)` guard. The engine resolver already
@@ -18,7 +18,7 @@ package engine
 import "testing"
 
 // checklistControllerV3 is a byte-faithful copy of the decorator structure of
-// core-backend-v3 src/modules/checklists/api/checklist.controller.ts (bodies
+// acme-backend-v3 src/modules/checklists/api/checklist.controller.ts (bodies
 // elided — only the routing/auth decorators are load-bearing for this pass).
 const checklistControllerV3 = `
 import { Public, RequirePage } from '../../../common/auth/decorators/auth.decorators';

@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// Test2809VerifyRealSidecar reads the live upvate sidecar (if present on
+// Test2809VerifyRealSidecar reads the live acme sidecar (if present on
 // the test machine) and asserts the envelope/schema split expected by
 // issue #2809. The test is skipped when the sidecar is absent so CI stays
 // green.
@@ -39,12 +39,12 @@ func Test2809VerifyClassifyDrift(t *testing.T) {
 	}
 }
 
-// Test2809LiveSidecar checks the real upvate sidecar if present.
+// Test2809LiveSidecar checks the real acme sidecar if present.
 func Test2809LiveSidecar(t *testing.T) {
-	sidecarPath := filepath.Join(os.Getenv("HOME"), ".grafel", "groups", "upvate-links-payload-drift.json")
+	sidecarPath := filepath.Join(os.Getenv("HOME"), ".grafel", "groups", "acme-links-payload-drift.json")
 	buf, err := os.ReadFile(sidecarPath)
 	if err != nil {
-		t.Skipf("upvate sidecar not found (%v) — skipping live check", err)
+		t.Skipf("acme sidecar not found (%v) — skipping live check", err)
 	}
 	var doc payloadDriftDocument
 	if err := json.Unmarshal(buf, &doc); err != nil {

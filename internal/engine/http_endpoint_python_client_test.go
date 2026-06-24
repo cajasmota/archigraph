@@ -690,7 +690,7 @@ async def enrich(sku: str) -> dict:
 // `requests.get("/api/v1/foo")` call site emits an http_endpoint consumer
 // synthetic with the correct canonical path and a FETCHES edge from the
 // enclosing function. This is the minimal case that was under-extracted in
-// upvate-core (#2585 bench iter 3: 15 detected vs 473 endpoint definitions).
+// acme-core (#2585 bench iter 3: 15 detected vs 473 endpoint definitions).
 func TestPyExtractor_RequestsGetCall_EmitsHTTPCall(t *testing.T) {
 	src := `
 import requests

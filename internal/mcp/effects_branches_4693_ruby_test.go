@@ -30,7 +30,7 @@ import (
 func rubyBranchScopeTestServer(t *testing.T) *Server {
 	t.Helper()
 	doc := &graph.Document{
-		Repo: "upvate-core",
+		Repo: "acme-core",
 		Entities: []graph.Entity{
 			{
 				ID: "op_create_contact_rb", Name: "ContractsController.create_contact",
@@ -59,7 +59,7 @@ func rubyBranchScopeTestServer(t *testing.T) *Server {
 		t.Fatalf("abs testdata: %v", err)
 	}
 	srv.State.mu.Lock()
-	srv.State.groups["test"].Repos["upvate-core"].Path = abs
+	srv.State.groups["test"].Repos["acme-core"].Path = abs
 	srv.State.mu.Unlock()
 	return srv
 }

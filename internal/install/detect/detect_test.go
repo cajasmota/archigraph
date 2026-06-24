@@ -302,7 +302,7 @@ func TestDetectMonorepoPlainFrontend(t *testing.T) {
 // with bare top-level source dirs and no manifests below the root.
 func TestDetectMonorepoPlainMobile(t *testing.T) {
 	dir := t.TempDir()
-	write(t, filepath.Join(dir, "go.mod"), "module core-mobile\n")
+	write(t, filepath.Join(dir, "go.mod"), "module acme-mobile\n")
 	write(t, filepath.Join(dir, "main.go"), "package main\n")
 	write(t, filepath.Join(dir, "src/app.go"), "package src\n")
 	write(t, filepath.Join(dir, "internal/store/store.go"), "package store\n")

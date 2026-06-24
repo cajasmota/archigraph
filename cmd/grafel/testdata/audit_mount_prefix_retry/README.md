@@ -44,7 +44,7 @@ targets: a producer endpoint WITHOUT `url_prefix` populated, paired with a
 sibling `url_mount_point` synthetic that provides the discovered prefix.
 This is the same shape produced by hand-written `urls.py` files that
 register a fully-qualified path side-by-side with an `include()` declaration
-— a pattern observed in the upvate codebase.
+— a pattern observed in the acme codebase.
 
 ## Source-level reference (for human readers)
 

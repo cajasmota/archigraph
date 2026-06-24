@@ -124,7 +124,7 @@ func (s *Server) repoPathToGroup() map[string]string {
 
 // repoMatches reports whether the repo path satisfies the caller's repo filter.
 // Matches if the filter equals the path, OR is a case-insensitive substring of
-// it (so "upvate_core" matches "/Users/x/Projects/upvate_core").
+// it (so "acme_core" matches "/Users/x/Projects/acme_core").
 func repoMatches(path, filter string) bool {
 	if path == filter {
 		return true

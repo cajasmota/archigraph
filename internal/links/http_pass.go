@@ -422,7 +422,7 @@ func paramOnlyMismatch(consumerPath, producerPath string) bool {
 // differently-named one); here the consumer has no param at all in the slot —
 // it sends a literal segment where the backend route declares a placeholder.
 //
-// Live example: a core-mobile call to `GET /recents/buildings` must match the
+// Live example: a acme-mobile call to `GET /recents/buildings` must match the
 // DRF detail route `GET /api/v1/recents/{pk}` (recent_viewset.py). The caller
 // segment `buildings` is a literal that fills the `{pk}` slot once the API
 // prefix is stripped.
@@ -719,7 +719,7 @@ const runtimeEnumMinStaticSuffixSegments = 1
 
 // runtimeEnumMaxExpansion caps how many distinct literal-prefixed server routes
 // a single runtime-enum consumer may expand to (#4315). A render-time enum such
-// as companyType has a small, closed value set (2 in upvate:
+// as companyType has a small, closed value set (2 in acme:
 // contracting-companies / witnessing-companies); a candidate set larger than
 // this cap signals a generic shape that would fan out into false links, so the
 // consumer is left orphan instead.
@@ -1488,7 +1488,7 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 					// consumer path carries no API/version prefix of its own,
 					// retry by prepending each well-known prefix candidate to the
 					// consumer's normalized path and probing byPath. This handles
-					// the upvate pattern where the frontend extractor emits a raw
+					// the acme pattern where the frontend extractor emits a raw
 					// path (e.g. `/searchBuildings`) while the backend mounts the
 					// route at `/api/v1/searchBuildings`.
 					//
@@ -1584,7 +1584,7 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 					// byPath lookup AND the mount-prefix retry miss, attempt to
 					// match the consumer path against the byCaseNorm index after
 					// normalizing each segment to its canonical id (lowercase,
-					// hyphens/underscores stripped). This handles the upvate
+					// hyphens/underscores stripped). This handles the acme
 					// pattern where the frontend calls `/assignedContacts` and
 					// the backend defines `/api/v1/contracts/{pk}/assigned_contacts`,
 					// or `/equipment-types` ↔ `equipment_types`, etc.
@@ -1697,7 +1697,7 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 					// Literal-fills-param retry (#2808): the last cross-repo
 					// stage. When every prior strategy missed AND the consumer
 					// sends a CONCRETE segment where the producer route declares
-					// a path-parameter placeholder (e.g. core-mobile's
+					// a path-parameter placeholder (e.g. acme-mobile's
 					// `GET /recents/buildings` ↔ DRF `GET /api/v1/recents/{pk}`),
 					// resolve it by treating the literal as the value occupying
 					// the param slot. Probing producers directly (rather than an
@@ -2158,7 +2158,7 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 
 	// #2808 — literal-fills-param orphan-retry sweep. The LAST resolution
 	// stage. A consumer that sends a CONCRETE segment where the backend route
-	// declares a path-parameter placeholder (core-mobile's
+	// declares a path-parameter placeholder (acme-mobile's
 	// `GET/DELETE /recents/buildings` ↔ DRF `GET/DELETE /api/v1/recents/{pk}`)
 	// shares no normalization key with its producer, so the byPath / byCaseNorm
 	// / byNormPattern sweeps all miss it. Probe every producer in another repo
@@ -2290,7 +2290,7 @@ func runHTTPPass(graphs []repoGraph, paths Paths, rejects map[string]bool) (Pass
 	// The LAST *static* resolution stage, running after byPath, mount-prefix,
 	// case-style, url-pattern, param-normalized and literal-fill have all missed
 	// (and before the runtime-dynamic #2813 suffix sweep). It closes the
-	// upvate-bench gap where a client calls `GET /inspections/{id}` and the
+	// acme-bench gap where a client calls `GET /inspections/{id}` and the
 	// server serves `GET /api/v1/inspections/{pk}` — a PREFIX + PARAM-NAME
 	// mismatch, not a genuinely-missing endpoint — that the earlier stages did
 	// not co-bucket for this particular consumer.
@@ -2994,7 +2994,7 @@ var dynamicBaseURLRe = regexp.MustCompile(`^/\{[^}]*\}(?:/|$)`)
 //     string-template extraction.
 //   - "no_endpoint_match" — the path looks well-formed but no producer in
 //     any other repo serves it. The dominant case for
-//     upvate is calls to external services (third-
+//     acme is calls to external services (third-
 //     party APIs, Cognito JWKS, NYC OpenData, etc.).
 //
 // The classification is deliberately conservative: anything ambiguous falls

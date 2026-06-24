@@ -23,7 +23,7 @@ import (
 // ApplyTestsMultiHopViaHTTP (#2549) already produces, exactly mirroring the
 // NestJS/supertest distinction in #4351.
 //
-// Pipeline (all REAL passes, byte-copies of upvate_core sources):
+// Pipeline (all REAL passes, byte-copies of acme_core sources):
 //  1. ApplyDjangoDRFRoutes over byte-copied core/routers.py + the ScheduleViewset
 //     trim → the real http_endpoint entities (incl. POST /schedule/import).
 //  2. The real pytest extractor over byte-copied core/tests/test_schedule_import.py

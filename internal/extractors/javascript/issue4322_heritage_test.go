@@ -1,6 +1,6 @@
 // Package javascript — issue #4322 heritage-edge proving tests.
 //
-// These model the LIVE upvate-v3 orphan shapes (not synthetic primitives):
+// These model the LIVE acme-v3 orphan shapes (not synthetic primitives):
 // NestJS framework-interface implementors and TypeORM/base-entity subclasses
 // that were extracted as isolated SCOPE.Components because the JS/TS extractor
 // dropped every class heritage clause except the narrow Angular guard path.

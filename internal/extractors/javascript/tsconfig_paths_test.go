@@ -402,12 +402,12 @@ func TestTSExtractor_TsconfigBaseUrlAndPaths_PathsWins(t *testing.T) {
 // rooted at a real top-level source dir — `import { X } from 'src/modules/x'`
 // — must resolve to the internal target file under the repo root, NOT be
 // left unresolved (which previously surfaced as 91 `src`-rooted
-// external_unknown edges on upvate-v3).
+// external_unknown edges on acme-v3).
 func TestTSExtractor_TsconfigRootBaseUrl_ResolvesSrcImport(t *testing.T) {
 	resetAliasMapCache()
 	dir := t.TempDir()
 
-	// Root baseUrl, no paths{}. This is the exact upvate-v3 shape.
+	// Root baseUrl, no paths{}. This is the exact acme-v3 shape.
 	writeTsconfigAliasFile(t, dir, `{
 		"compilerOptions": {
 			"baseUrl": "."

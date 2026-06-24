@@ -127,7 +127,7 @@ func BenchmarkServeGraphDense100k(b *testing.B) {
 	benchmarkServeGraphDense(b, 100_000, 4)
 }
 
-// BenchmarkServeGraphDense20k mirrors the current ~upvate production scale.
+// BenchmarkServeGraphDense20k mirrors the current ~acme production scale.
 func BenchmarkServeGraphDense20k(b *testing.B) {
 	benchmarkServeGraphDense(b, 20_000, 4)
 }

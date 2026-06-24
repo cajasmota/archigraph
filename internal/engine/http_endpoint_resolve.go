@@ -143,7 +143,7 @@ func ResolveHTTPEndpointHandlers(merged []types.EntityRecord) ([]types.EntityRec
 // repoTag is non-empty the linker emits each TESTS edge with the matched
 // http_endpoint_definition's deterministic entity ID (graph.EntityID over the
 // def's Kind/Name/SourceFile) instead of an ambiguous `Kind:Name` stub — so a
-// route whose synthesized endpoint Name collides across modules (upvate-v3 has
+// route whose synthesized endpoint Name collides across modules (acme-v3 has
 // many same-named handlers/routes, e.g. `getCounts`) still credits the correct,
 // per-file endpoint as covered rather than dangling on an ambiguous name.
 func ResolveHTTPEndpointHandlersWithRepo(merged []types.EntityRecord, repoTag string) ([]types.EntityRecord, ResolveHTTPEndpointStats) {

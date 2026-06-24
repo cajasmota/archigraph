@@ -40,7 +40,7 @@ never appear in the business tier.
 | `permission_classes = [...]` | "Only authorised office staff can do this" |
 | `order.created` topic | "An order-placed notification fans out to fulfilment and billing" |
 | `if status == 'OVERDUE'` | "When an inspection passes its due date it becomes overdue" |
-| `core-mobile` repo | "the field inspection app" |
+| `acme-mobile` repo | "the field inspection app" |
 
 ## Provenance, kept out of the reader's way
 

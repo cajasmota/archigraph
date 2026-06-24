@@ -4,11 +4,11 @@ package dashboard
 // channel entities applyIaCTopologyChannels appends for IaC-declared messaging
 // resources (SCOPE.Queue broker=sqs for an aws_sqs_queue, SCOPE.MessageTopic
 // broker=sns for an aws_sns_topic) render in the messaging Topology surface
-// even with NO detected code publisher/subscriber — fixing the live upvate-v3
+// even with NO detected code publisher/subscriber — fixing the live acme-v3
 // "No async channels indexed" gap where the only queues were Terraform-declared.
 //
 // The entity shapes here mirror exactly what internal/engine/
-// applyIaCTopologyChannels emits for the real core-backend-v3
+// applyIaCTopologyChannels emits for the real acme-backend-v3
 // infra/terraform/modules/sqs-queue/main.tf (aws_sqs_queue.main + .dlq).
 
 import (
@@ -19,7 +19,7 @@ import (
 
 func TestCollectTopology_IaCDeclaredQueuesSurface(t *testing.T) {
 	doc := &graph.Document{
-		Repo: "core-backend-v3",
+		Repo: "acme-backend-v3",
 		Entities: []graph.Entity{
 			// As emitted by applyIaCTopologyChannels for aws_sqs_queue.dlq + .main.
 			{ID: "iac-dlq", Name: "sqs:dlq", Kind: "SCOPE.Queue",
@@ -33,7 +33,7 @@ func TestCollectTopology_IaCDeclaredQueuesSurface(t *testing.T) {
 	}
 	grp := &DashGroup{
 		Name:  "g",
-		Repos: map[string]*DashRepo{"core-backend-v3": {Slug: "core-backend-v3", Doc: doc}},
+		Repos: map[string]*DashRepo{"acme-backend-v3": {Slug: "acme-backend-v3", Doc: doc}},
 	}
 
 	topics, queues, _, _ := collectTopology(grp)

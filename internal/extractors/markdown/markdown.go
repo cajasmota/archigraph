@@ -63,7 +63,7 @@ const langName = "markdown"
 
 // emitHeadingsEnv is the env var that opts SCOPE.Heading emission back on.
 // Issue #2284: heading entities (one per ATX heading in every README, CHANGELOG,
-// and docs file) polluted the default code graph — on the UpVate bench corpus
+// and docs file) polluted the default code graph — on the Acme bench corpus
 // they accounted for ~240 entities, dominating `find` results and clustering.
 // They remain useful for docs-search workflows, so we keep the code path but
 // gate it behind an opt-in flag. Default: OFF.

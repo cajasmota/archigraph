@@ -14,8 +14,8 @@ import (
 func TestBuildEffectsPayload_SidecarWins(t *testing.T) {
 	e := &graph.Entity{ID: "9986b358cfb5dacd", Name: "ProposalViewSet.send_proposals", Kind: "SCOPE.Operation"}
 	sidecar := map[string]effectsSidecarEntry{
-		"upvate-core::9986b358cfb5dacd": {
-			EntityID:    "upvate-core::9986b358cfb5dacd",
+		"acme-core::9986b358cfb5dacd": {
+			EntityID:    "acme-core::9986b358cfb5dacd",
 			Effects:     []string{"db_read", "db_write", "fs_read", "fs_write"},
 			Confidences: map[string]float64{"db_read": 0.85, "db_write": 0.85, "fs_read": 0.9, "fs_write": 1.0},
 			Sinks:       map[string][]string{"db_write": {"orm.write"}},
@@ -23,7 +23,7 @@ func TestBuildEffectsPayload_SidecarWins(t *testing.T) {
 		},
 	}
 
-	out := buildEffectsPayload("upvate-core", e, sidecar)
+	out := buildEffectsPayload("acme-core", e, sidecar)
 
 	if got := out["effect_source"]; got != "direct" {
 		t.Fatalf("effect_source=%v; want direct (sidecar must override empty properties)", got)
@@ -42,7 +42,7 @@ func TestBuildEffectsPayload_SidecarWins(t *testing.T) {
 // with the documented low confidence.
 func TestBuildEffectsPayload_PureWhenAbsent(t *testing.T) {
 	e := &graph.Entity{ID: "deadbeef", Name: "add", Kind: "SCOPE.Function"}
-	out := buildEffectsPayload("upvate-core", e, map[string]effectsSidecarEntry{})
+	out := buildEffectsPayload("acme-core", e, map[string]effectsSidecarEntry{})
 	if got := out["effect_source"]; got != "pure" {
 		t.Fatalf("effect_source=%v; want pure", got)
 	}
@@ -65,7 +65,7 @@ func TestBuildEffectsPayload_PropertiesFallback(t *testing.T) {
 			links.EffectPropertyKeySource:     "transitive",
 		},
 	}
-	out := buildEffectsPayload("upvate-core", e, map[string]effectsSidecarEntry{})
+	out := buildEffectsPayload("acme-core", e, map[string]effectsSidecarEntry{})
 	if got := out["effect_source"]; got != "transitive" {
 		t.Fatalf("effect_source=%v; want transitive", got)
 	}

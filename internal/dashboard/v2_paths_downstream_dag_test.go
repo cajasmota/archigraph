@@ -11,7 +11,7 @@ import (
 )
 
 // makeDownstreamDAGFixture builds the gate fixture (#4349) modeling the real
-// upvate shape:
+// acme shape:
 //
 //	http_endpoint_definition (GET /inspections)
 //	  --IMPLEMENTS (reversed → handler-continuation)-->  Handler (controller)

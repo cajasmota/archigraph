@@ -1518,7 +1518,7 @@ func TestGraph_CrossRepoLinks_WrappedFileFormat(t *testing.T) {
 		t.Errorf("bare array: unexpected link %+v", links[0])
 	}
 
-	// Wrapped object format (written by the link pass, e.g. upvate-links.json).
+	// Wrapped object format (written by the link pass, e.g. acme-links.json).
 	wrappedJSON := `{"version":1,"links":[{"source":"c::3","target":"d::4","relation":"calls"}]}`
 	links, err = readCrossRepoLinks([]byte(wrappedJSON))
 	if err != nil {

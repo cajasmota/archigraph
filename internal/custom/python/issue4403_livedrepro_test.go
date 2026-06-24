@@ -24,7 +24,7 @@ import (
 // separate (non-settings) shape tracked by its own follow-up; the `@receiver`
 // decorator form is already handled in django.go (HANDLES_SIGNAL).
 //
-// The same real upvate_core settings.py fixture (testdata/issue4379) declares
+// The same real acme_core settings.py fixture (testdata/issue4379) declares
 // both TEMPLATES context_processors and an INSTALLED_APPS AppConfig
 // ("core.apps.CoreConfig"); core/apps.py supplies the real class so the edge
 // resolves.
@@ -32,7 +32,7 @@ import (
 // TestIssue4403_TemplatesContextProcessors asserts the four standard Django
 // context_processors are wired as global USES edges (di_role=context_processor).
 func TestIssue4403_TemplatesContextProcessors(t *testing.T) {
-	settings := loadRepro4379(t, "settings.py", "upvate_core/settings.py")
+	settings := loadRepro4379(t, "settings.py", "acme_core/settings.py")
 	settingsEnts := runMerged4379(t, settings)
 
 	want := []string{
@@ -60,7 +60,7 @@ func TestIssue4403_TemplatesContextProcessors(t *testing.T) {
 // is wired (di_role=app_config) and that bare package labels are NOT emitted as
 // edges (no in-repo target).
 func TestIssue4403_InstalledAppsAppConfig(t *testing.T) {
-	settings := loadRepro4379(t, "settings.py", "upvate_core/settings.py")
+	settings := loadRepro4379(t, "settings.py", "acme_core/settings.py")
 	settingsEnts := runMerged4379(t, settings)
 
 	// The dotted-path AppConfig is wired.
@@ -84,7 +84,7 @@ func TestIssue4403_InstalledAppsAppConfig(t *testing.T) {
 // real CoreConfig class entity once core/apps.py is in the graph and the
 // late-binding pass runs (same machinery #4379 uses for middleware).
 func TestIssue4403_AppConfigResolves(t *testing.T) {
-	settings := loadRepro4379(t, "settings.py", "upvate_core/settings.py")
+	settings := loadRepro4379(t, "settings.py", "acme_core/settings.py")
 	apps := loadRepro4379(t, "core/apps.py", "core/apps.py")
 
 	var all []types.EntityRecord

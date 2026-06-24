@@ -569,7 +569,7 @@ type groupRefEntry struct {
 // Response:
 //
 //	{
-//	  "group": "upvate",
+//	  "group": "acme",
 //	  "refs": [
 //	    {"name": "main", "is_canonical": true,  "last_indexed_at": "...", "entity_count": 12345, "is_hot": true},
 //	    {"name": "feat/foo", "is_canonical": false, "last_indexed_at": "...", "entity_count": 12400, "is_hot": false}

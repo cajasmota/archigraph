@@ -13,7 +13,7 @@ import (
 // `pipeline.extend([...])`, returned cross-file and consumed by `.aggregate()`.
 //
 // REAL FAILING TARGET (reproduced here):
-//   upvate-core core/services/building/queries.py:get_inspection_devices_pipeline
+//   acme-core core/services/building/queries.py:get_inspection_devices_pipeline
 //   (builder) imported via a MULTI-LINE parenthesised `from ... import (...)` by
 //   service.py and run as `inspections_cln.aggregate(get_inspection_devices_
 //   pipeline(params))`.

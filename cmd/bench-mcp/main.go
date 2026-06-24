@@ -7,7 +7,7 @@
 //
 // Usage:
 //
-//	go run ./cmd/bench-mcp -group upvate -runs 5 -out docs/verify2/mcp-speed-after.json
+//	go run ./cmd/bench-mcp -group acme -runs 5 -out docs/verify2/mcp-speed-after.json
 package main
 
 import (
@@ -51,7 +51,7 @@ type report struct {
 }
 
 func main() {
-	group := flag.String("group", "upvate", "group name to bench against")
+	group := flag.String("group", "acme", "group name to bench against")
 	runs := flag.Int("runs", 5, "runs per query")
 	out := flag.String("out", "", "output JSON path (default stdout)")
 	flag.Parse()
@@ -82,12 +82,12 @@ func main() {
 		{
 			Name: "find_callers: TokenAuthenticationMiddleware (label-resolve)",
 			Tool: "grafel_find_callers",
-			Args: map[string]any{"entity_id": "upvate-core::c84f9b9c0c3a7b18", "group": g, "depth": 2.0},
+			Args: map[string]any{"entity_id": "acme-core::c84f9b9c0c3a7b18", "group": g, "depth": 2.0},
 		},
 		{
 			Name: "find_callers: depth=3 (heavier BFS)",
 			Tool: "grafel_find_callers",
-			Args: map[string]any{"entity_id": "upvate-core::c84f9b9c0c3a7b18", "group": g, "depth": 3.0},
+			Args: map[string]any{"entity_id": "acme-core::c84f9b9c0c3a7b18", "group": g, "depth": 3.0},
 		},
 		{
 			Name: "traces: list",
@@ -97,17 +97,17 @@ func main() {
 		{
 			Name: "traces: follow (deep BFS)",
 			Tool: "grafel_traces",
-			Args: map[string]any{"action": "follow", "group": g, "entry_point_id": "upvate-core::14d45f8830972c90", "max_depth": 8.0, "branching_factor": 3.0},
+			Args: map[string]any{"action": "follow", "group": g, "entry_point_id": "acme-core::14d45f8830972c90", "max_depth": 8.0, "branching_factor": 3.0},
 		},
 		{
 			Name: "expand: depth=2 (neighbors)",
 			Tool: "grafel_expand",
-			Args: map[string]any{"node": "upvate-core::c84f9b9c0c3a7b18", "group": g, "depth": 2.0},
+			Args: map[string]any{"node": "acme-core::c84f9b9c0c3a7b18", "group": g, "depth": 2.0},
 		},
 		{
 			Name: "impact_radius: depth=2",
 			Tool: "grafel_impact_radius",
-			Args: map[string]any{"entity_id": "upvate-core::c84f9b9c0c3a7b18", "group": g, "depth": 2.0},
+			Args: map[string]any{"entity_id": "acme-core::c84f9b9c0c3a7b18", "group": g, "depth": 2.0},
 		},
 		{
 			Name: "endpoints: definitions path=proposal",

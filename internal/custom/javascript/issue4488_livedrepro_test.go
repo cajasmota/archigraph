@@ -14,7 +14,7 @@ import (
 
 // Issue #4488 LIVE-REPRO — response DTO shape resolution + void labeling.
 //
-// Byte-copies of REAL core-backend-v3 files are committed under
+// Byte-copies of REAL acme-backend-v3 files are committed under
 // testdata/issue4488:
 //
 //   - inspector.controller.ts — a NestJS controller mixing

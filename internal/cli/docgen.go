@@ -228,7 +228,7 @@ Available sections (--section, used by --tier=0 only):
 	cmd.Flags().StringVar(&seedEntity, "seed-entity", "",
 		"entity ID to render (required for all tiers). Accepts both raw hex (e.g. 7a349f6cd77984c9) "+
 			"and the prefixed form returned by grafel_find (e.g. grafel::7a349f6cd77984c9 "+
-			"or upvate-core::7a349f6cd77984c9). The <group>:: prefix is stripped automatically.")
+			"or acme-core::7a349f6cd77984c9). The <group>:: prefix is stripped automatically.")
 	cmd.Flags().StringVar(&section, "section", "",
 		fmt.Sprintf("section type to render (required for --tier=0); one of: %s", strings.Join(docgen.KnownSections, ", ")))
 	cmd.Flags().StringVar(&pageID, "page-id", "",

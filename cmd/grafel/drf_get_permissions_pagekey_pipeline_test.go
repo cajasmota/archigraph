@@ -25,7 +25,7 @@ import (
 // # The fixture
 //
 // testdata/drf_get_permissions_pagekey_fixture mirrors the real
-// upvate_core/core/views/jurisdiction_viewset.py shape: a router-registered
+// acme_core/core/views/jurisdiction_viewset.py shape: a router-registered
 // JurisdictionViewSet whose get_permissions() resolves
 //   - get_inspection_types → PERMISSION_PAGES["JURISDICTIONS"]
 //   - email                → PERMISSION_PAGES["EMAIL_TEMPLATES"]

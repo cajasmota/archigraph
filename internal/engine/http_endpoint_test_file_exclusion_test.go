@@ -1,6 +1,6 @@
 package engine
 
-// Tests for finding #4 (upvate-v2 stress-test): endpoint declarations inside
+// Tests for finding #4 (acme-v2 stress-test): endpoint declarations inside
 // test/spec/e2e-spec files must NOT be extracted as production routes.
 //
 // Root cause: applyHTTPEndpointSynthesis had no guard against test files.
@@ -89,12 +89,12 @@ func TestIsTestSourceFile(t *testing.T) {
 // Integration tests: synthesis pass must not emit endpoints from test files
 // ---------------------------------------------------------------------------
 
-// NestJS e2e-spec: the canonical upvate-v2 finding #4 case.
+// NestJS e2e-spec: the canonical acme-v2 finding #4 case.
 // A *.e2e-spec.ts file contains a full NestJS module setup with @Controller
 // and @Get/@Post decorators — synthesis must produce NO http_endpoint entities.
 func TestSynthesis_NestJSE2ESpec_NoEndpoints(t *testing.T) {
 	// This mirrors the shape of a real NestJS e2e spec file (e.g.
-	// src/buildings/buildings.e2e-spec.ts in upvate-v2).
+	// src/buildings/buildings.e2e-spec.ts in acme-v2).
 	src := `import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';

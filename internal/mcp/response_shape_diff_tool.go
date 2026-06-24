@@ -41,7 +41,7 @@
 //	  format:       "terse" | "full",   (optional — default terse)
 //	)
 //
-// Live cross-graph validation (oracle upvate vs v3 upvate-v3) is DEPLOY-GATED:
+// Live cross-graph validation (oracle acme vs v3 acme-v3) is DEPLOY-GATED:
 // it needs a live reindex of BOTH groups so the endpoints carry current branch /
 // DTO field-membership properties. The diff + composition logic is unit-tested in
 // internal/responseshapediff and exercised here by a stubbed 2-group store.

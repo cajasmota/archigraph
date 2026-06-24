@@ -1,6 +1,6 @@
 // Synthetic NestJS bootstrap exercising the app.useGlobal*() wiring path.
 // Representative of the documented NestJS global-binding idiom; not a byte-copy
-// (the real core-backend-v3 main.ts uses setGlobalPrefix, not useGlobal*).
+// (the real acme-backend-v3 main.ts uses setGlobalPrefix, not useGlobal*).
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';

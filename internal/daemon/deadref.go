@@ -8,7 +8,7 @@
 // `~/.grafel/store/<slug-hash>/refs/<ref-safe>/graph.fb` behind, and the tier
 // Manager keeps the matching in-memory slot. When the agent runs
 // `git branch -d X` or removes a worktree, that ref's bytes + resident graph
-// should be reclaimed — but nothing does it. On core-backend-v3 this grew to
+// should be reclaimed — but nothing does it. On acme-backend-v3 this grew to
 // 252 stored refs / 13GB.
 //
 // # Fix
@@ -35,7 +35,7 @@
 //     high-churn workload that creates+deletes many transient refs (e.g. the
 //     rewrite agent's `merge-NNNN` branches). Each is indexed, then deleted
 //     from git minutes later, but its fresh graph.fb keeps it grace-protected
-//     for 24h — so ~1GB of dead-ref graphs piled up on core-backend-v3 (#5440).
+//     for 24h — so ~1GB of dead-ref graphs piled up on acme-backend-v3 (#5440).
 //     RetentionCap bounds the number of dead-in-git refs the grace window may
 //     protect per repo: the N most-recently-indexed are kept, the rest are
 //     reaped immediately. Live/primary/HEAD/worktree refs never count toward

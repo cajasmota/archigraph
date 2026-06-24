@@ -56,7 +56,7 @@ func (e *errorHandlingDetector) Detect(filePath, language, src string) []types.E
 
 	case "python":
 		// Issue #2282 — per-line try_catch entities were dropped (no
-		// consumer; ~5.5% of UpVate graph). Python falls through with
+		// consumer; ~5.5% of Acme graph). Python falls through with
 		// no pattern emit here; the language still surfaces real
 		// SCOPE.Component / SCOPE.Operation nodes from the primary pass.
 

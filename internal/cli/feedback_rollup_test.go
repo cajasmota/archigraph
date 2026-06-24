@@ -30,15 +30,15 @@ func TestFeedbackRollup_Aggregates(t *testing.T) {
 	outDir := filepath.Join(tmp, "out")
 
 	writeEventsFile(t, eventsDir, "feedback-events-2026-05-30.jsonl", []string{
-		`{"ts":"2026-05-30T10:00:00Z","group":"upvate-core","library":"pymongo","capability":"data_access","outcome":"missing_capability"}`,
-		`{"ts":"2026-05-30T10:05:00Z","group":"upvate-core","library":"drf","capability":"routing","outcome":"helped"}`,
+		`{"ts":"2026-05-30T10:00:00Z","group":"acme-core","library":"pymongo","capability":"data_access","outcome":"missing_capability"}`,
+		`{"ts":"2026-05-30T10:05:00Z","group":"acme-core","library":"drf","capability":"routing","outcome":"helped"}`,
 		`{"ts":"2026-05-30T10:06:00Z","group":"new-backend","library":"typeorm","capability":"data_access","outcome":"partial"}`,
 		`{"ts":"2026-05-30T10:07:00Z","group":"new-backend","library":"class-validator","capability":"dto","outcome":"wrong"}`,
 		`not-json-skip-me`,
 	})
 	// An older file that should be excluded by --since.
 	writeEventsFile(t, eventsDir, "feedback-events-2026-05-01.jsonl", []string{
-		`{"ts":"2026-05-01T10:00:00Z","group":"upvate-core","capability":"auth","outcome":"wrong"}`,
+		`{"ts":"2026-05-01T10:00:00Z","group":"acme-core","capability":"auth","outcome":"wrong"}`,
 	})
 
 	cmd := &cobra.Command{}
@@ -64,8 +64,8 @@ func TestFeedbackRollup_Aggregates(t *testing.T) {
 	if r.ByOutcome["wrong"] != 1 || r.ByOutcome["missing_capability"] != 1 || r.ByOutcome["helped"] != 1 {
 		t.Errorf("by_outcome = %v", r.ByOutcome)
 	}
-	if r.ByGroup["upvate-core"]["missing_capability"] != 1 {
-		t.Errorf("group upvate-core missing = %v", r.ByGroup["upvate-core"])
+	if r.ByGroup["acme-core"]["missing_capability"] != 1 {
+		t.Errorf("group acme-core missing = %v", r.ByGroup["acme-core"])
 	}
 	// Fix queue: data_access (missing) + dto (wrong) + class-validator/typeorm? + pymongo.
 	if len(r.FixQueue) == 0 {

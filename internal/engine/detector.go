@@ -472,7 +472,7 @@ func (d *Detector) Detect(ctx context.Context, file extractor.FileInput) (*Detec
 	// files that the Django source_pattern already emits as `View`.  The
 	// result is two framework-typed nodes — View + Controller — for the
 	// same (Name, SourceFile), where the Controller carries zero edges
-	// (dead phantom, ~72 per Upvate bench).
+	// (dead phantom, ~72 per Acme bench).
 	//
 	// Resolution: after all rule-sets have run, drop any `Controller` entity
 	// whose (Name, SourceFile) pair is also covered by a `View` entity in

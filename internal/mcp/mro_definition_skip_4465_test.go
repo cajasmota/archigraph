@@ -1,7 +1,7 @@
 package mcp
 
 // mro_definition_skip_4465_test.go — #4465. The inheritance resolver must NOT
-// fire on TYPE DEFINITIONS. Live on upvate-v3, inspecting the TS class
+// fire on TYPE DEFINITIONS. Live on acme-v3, inspecting the TS class
 // `PermitListQueryDto` (SCOPE.Component, dotted qualified name matching its
 // file-module path, no EXTENDS edges) returned
 //   inheritance:{inherited:true, resolved:false, member:'PermitListQueryDto',

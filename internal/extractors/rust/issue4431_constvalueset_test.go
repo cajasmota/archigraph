@@ -208,7 +208,7 @@ func TestIssue4431_ModuleConstGroup(t *testing.T) {
 	want := map[string]string{
 		"MAX_PERMISSIONS": "256",
 		"DEFAULT_SCOPE":   "core",
-		"SERVICE_NAME":    "upvate",
+		"SERVICE_NAME":    "acme",
 	}
 	for k, v := range want {
 		got, ok := rustMemberValue(members, k)

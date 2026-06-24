@@ -15,7 +15,7 @@ import (
 
 // Issue #4328 LIVE-REPRO.
 //
-// Byte-copies of REAL core-backend-v3 files are committed under
+// Byte-copies of REAL acme-backend-v3 files are committed under
 // testdata/issue4328. We run the ACTUAL typeorm / validation-schema /
 // nestjs-mongoose extractors AND the ACTUAL resolve.BuildIndex symbol table
 // over them and assert that the DTO properties and entity fields they decorate

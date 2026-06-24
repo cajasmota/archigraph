@@ -168,7 +168,7 @@ func TestAuthPostureDiff_E2E_MissingArgs(t *testing.T) {
 	}
 }
 
-// Regression for #4550: the live upvate (DRF) ↔ upvate-v3 (NestJS) endpoint key
+// Regression for #4550: the live acme (DRF) ↔ acme-v3 (NestJS) endpoint key
 // sets joined ZERO under the old auth_posture_diff key, while stub_detector
 // joined 420/446 on the SAME data. Two divergences made the old key never match:
 //
@@ -183,7 +183,7 @@ func TestAuthPostureDiff_E2E_MissingArgs(t *testing.T) {
 // drift ({id} vs :id, dup handler names across resources). The shared join key
 // (endpoint_join.go) must produce a NON-TRIVIAL join. Under the old key this
 // asserted 0 (RED).
-func TestAuthPostureDiff_Regression4550_UpvateV3Join(t *testing.T) {
+func TestAuthPostureDiff_Regression4550_AcmeV3Join(t *testing.T) {
 	// DRF oracle: /api/v1 prefix, brace params, an effective_action per row.
 	oracle := []graph.Entity{
 		endpointEntity("o-list", "GET", "/api/v1/clients", map[string]string{

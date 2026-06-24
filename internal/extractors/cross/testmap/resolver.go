@@ -932,7 +932,7 @@ func resolveCalls(tf testFunction, prodFile, convSymbol string, importedSyms map
 		// path (internal/resolve/refs.go lookupStructural) tries
 		// byLocation[file][name] and a byMember[file] walk; either is
 		// dramatically more likely to hit than the "?" form's global
-		// byName lookup, especially for grafel + upvate where common
+		// byName lookup, especially for grafel + acme where common
 		// production names (e.g. "GetUser", "create_order") are not
 		// globally unique. When the convention couldn't infer a file
 		// (no fallback applies to the test path) prodFile stays empty

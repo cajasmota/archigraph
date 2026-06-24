@@ -188,7 +188,7 @@ export function isDegenerateLayout(positions: Float32Array): boolean {
   if (span < minHealthySpan) return true;
 
   // Fix #4844: the span check alone is a MAX-DIMENSION test, so it is fooled by a
-  // dense HAIRBALL on a large graph. On upvate-v3 (~14k rendered nodes) a collapsed
+  // dense HAIRBALL on a large graph. On acme-v3 (~14k rendered nodes) a collapsed
   // cache can still span a couple thousand units along its WIDEST axis — clearing
   // minHealthySpan (sqrt(14233)×6 ≈ 716) — while packing all 14k nodes into a small
   // box, rendering as the reported hairball. Reload PINNED that cache (the doSettle

@@ -6,7 +6,7 @@ package main
 //
 // Root cause identified: the testmap extractor's pytest frameworkEntry only
 // matched files with test_ prefix or _test suffix in their BASENAME.  Django
-// projects (including upvate) place test files under a tests/ directory without
+// projects (including acme) place test files under a tests/ directory without
 // that prefix (e.g. core/tests/schedule.py, api/tests/views.py).  selectFramework
 // therefore returned nil for those files, the extractor emitted 0 entities, and
 // test-coverage queries were blind to most of the codebase.
@@ -14,7 +14,7 @@ package main
 // The fix adds a pathHints field to frameworkEntry that matches the full
 // repo-relative path (not just the basename) and registers
 // `/tests?/.*\.py$` for pytest.  This test asserts the end-to-end effect
-// on a mini Django fixture that mirrors the upvate_core tests/ directory layout.
+// on a mini Django fixture that mirrors the acme_core tests/ directory layout.
 //
 // Companion unit tests live in:
 //
@@ -42,7 +42,7 @@ import (
 //  3. Serializer.Meta.model REFERENCES edge (fix #2584/#2578):
 //     ScheduleSerializer.Meta.model = Schedule must produce a REFERENCES edge.
 func TestRebuild_AllPassesProduceExpectedEdges(t *testing.T) {
-	// Use the django_tests_fixture which mirrors the upvate tests/ layout.
+	// Use the django_tests_fixture which mirrors the acme tests/ layout.
 	doc := runIndexerOn(t, "testdata/django_tests_fixture", "django_tests_fixture", nil)
 
 	// Build an ID→Entity index for resolving hex IDs in edge assertions.

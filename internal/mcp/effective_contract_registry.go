@@ -6,7 +6,7 @@ package mcp
 // grafel_effective_contract was DRF-only: computeEffectiveContract found a
 // ViewSet's drf_router_expanded routes and projected the engine-stamped
 // effective_* props (effective_contract.go / effective_contract_tool.go). For
-// any non-DRF stack — notably the NestJS upvate-v3 rewrite — it returned an
+// any non-DRF stack — notably the NestJS acme-v3 rewrite — it returned an
 // empty result, so the rewrite agent could not get a per-endpoint full contract
 // from the tool and fell back to scraping the dashboard.
 //

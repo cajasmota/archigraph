@@ -5113,7 +5113,7 @@ func TestPythonDBAPIDriverPlaceholder_EngineMatrix(t *testing.T) {
 // pythonDBAPIDriverPlaceholder used to iterate the file's import set in Go's
 // randomised map-iteration order and keep the FIRST concrete-engine placeholder
 // it saw. When a single file imports two concrete server engines (the
-// upvate_core core/views/sync_viewset.py case imports BOTH a MySQL driver and
+// acme_core core/views/sync_viewset.py case imports BOTH a MySQL driver and
 // psycopg2), the resolved ext:<driver> CALLS target flipped between mysql and
 // psycopg2 from one index run to the next — non-deterministic output that
 // surfaced as a spurious flat-vs-M5 resolver-index parity divergence (the two

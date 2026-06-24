@@ -4,7 +4,7 @@
 // branches.go added the language-neutral BranchFacet schema, the
 // BranchAnalyzerFn registry, and the flagship Python analyzer (an
 // indentation-scoped CFG walk). This file registers analyzers for the three
-// brace-delimited languages the upvate stack and the wider corpus lean on.
+// brace-delimited languages the acme stack and the wider corpus lean on.
 //
 // Where Python keys block scope on indentation, these languages delimit blocks
 // with `{`/`}`. The shared helper braceBlockBody walks forward from a header

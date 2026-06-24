@@ -151,7 +151,7 @@ var builtinMethodFragments = []string{
 // a flow whose sink is an intra-component React state or hook call rather
 // than a real downstream effect. Hits trigger a strong negative on the
 // Flows surface — these are the dominant noise source on a React-heavy
-// frontend codebase (see upvate audit, 2026-05-23, where >80% of
+// frontend codebase (see acme audit, 2026-05-23, where >80% of
 // short-chain flows terminate in one of these).
 //
 // The match is case-insensitive and is applied to the LAST segment after

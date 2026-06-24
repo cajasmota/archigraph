@@ -4,7 +4,7 @@
 // edges but never populated the `parameters` and `response_type` entity
 // properties that the dashboard Paths panel actually reads
 // (internal/dashboard/v2_paths.go → handleV2PathDetail). The live-repro on the
-// real upvate-v3 controllers confirmed:
+// real acme-v3 controllers confirmed:
 //
 //   - GET /filters (device.controller.ts `filters`): Parameters (0) despite two
 //     @Query('group_id')/@Query('building_id') params → @Query never surfaced.

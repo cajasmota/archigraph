@@ -103,7 +103,7 @@ var drfClassDefRe = regexp.MustCompile(
 // every @action whose url_path embedded Python named-group regex syntax.
 // The bug manifested as missing endpoint definitions for NoteViewSet's
 // `notes_by_group_and_entity`, `notes_by_entity`, and `entity_type_catalogs`,
-// which cascaded into 7 unresolved mobile orphans on upvate/core-mobile.
+// which cascaded into 7 unresolved mobile orphans on acme/acme-mobile.
 var drfActionOpenRe = regexp.MustCompile(`@action\s*\(`)
 
 // drfActionPostArgsRe matches the post-arguments tail of an @action: zero or

@@ -73,7 +73,7 @@ func TestFeedbackEventJSONLAppend(t *testing.T) {
 	srv := newFeedbackTestServer(t)
 	res := callTool(t, srv, "grafel_feedback_event", map[string]any{
 		"outcome":    "missing_capability",
-		"group":      "upvate-core",
+		"group":      "acme-core",
 		"phase":      "port:inspections",
 		"library":    "pymongo",
 		"capability": "data_access",
@@ -101,7 +101,7 @@ func TestFeedbackEventJSONLAppend(t *testing.T) {
 	if err := json.Unmarshal(sc.Bytes(), &evt); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
-	if evt.Outcome != "missing_capability" || evt.Group != "upvate-core" ||
+	if evt.Outcome != "missing_capability" || evt.Group != "acme-core" ||
 		evt.Library != "pymongo" || evt.Capability != "data_access" {
 		t.Errorf("event roundtrip mismatch: %+v", evt)
 	}

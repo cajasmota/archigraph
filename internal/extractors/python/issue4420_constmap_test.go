@@ -15,7 +15,7 @@ import (
 // re-parsing source.
 //
 // These tests run the REAL Python extract pipeline on a byte-copy of the live
-// oracle source (core/permissions_config.py from upvate_core) — not a
+// oracle source (core/permissions_config.py from acme_core) — not a
 // hand-written fixture — so a fixture that drifts from production cannot lie at
 // merge time.
 

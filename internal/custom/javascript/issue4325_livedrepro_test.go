@@ -13,7 +13,7 @@ import (
 	_ "github.com/cajasmota/grafel/internal/custom/javascript"
 )
 
-// Issue #4325 LIVE-REPRO. Byte-copies of the REAL upvate-v3 controllers are
+// Issue #4325 LIVE-REPRO. Byte-copies of the REAL acme-v3 controllers are
 // committed alongside this test as _repro_*.ts.txt. We run the actual
 // nestjs extractor over them and assert on the endpoint's surfaced params,
 // response_type, and edges — first proving the gap, then the fix.

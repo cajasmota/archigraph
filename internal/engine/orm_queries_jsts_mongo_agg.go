@@ -95,7 +95,7 @@ var mongoAggStageEntityKind = string(types.EntityKindDataAccess)
 // DISTINCT `$lookup` stages (with different `from`) into ONE node, and the
 // node-anchored JOINS_COLLECTION twins from both stages pile onto it —
 // producing the cross-stage mis-link / "isolated-looking" node observed live
-// on upvate-core building/service.py (four `inspections_cln.aggregate(...)`
+// on acme-core building/service.py (four `inspections_cln.aggregate(...)`
 // calls). The call line disambiguates the per-call-site stage so each node
 // owns exactly its own join.
 func mongoAggStageName(coll string, callLine, stageIdx int, op string) string {

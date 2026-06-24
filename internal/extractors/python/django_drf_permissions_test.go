@@ -142,7 +142,7 @@ func TestDRFPermissions_SettingsDefaultPermissionClasses(t *testing.T) {
 }
 
 func TestDRFPermissions_SettingsNoDefaultPermission(t *testing.T) {
-	// upvate-core's real shape: DEFAULT_AUTHENTICATION_CLASSES set, but no
+	// acme-core's real shape: DEFAULT_AUTHENTICATION_CLASSES set, but no
 	// DEFAULT_PERMISSION_CLASSES → DRF's built-in default (AllowAny) applies,
 	// so the harvested property must be absent.
 	src := `REST_FRAMEWORK = {

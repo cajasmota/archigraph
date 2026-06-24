@@ -683,7 +683,7 @@ func (s *Server) findCalleesStructured(_ context.Context, req mcpapi.CallToolReq
 			if e == nil {
 				// #4288: a semantic out-edge (JOINS_COLLECTION, GRAPH_RELATES,
 				// DEPENDS_ON_SERVICE, …) may point at a far-side id that has no
-				// backing indexed entity — the real upvate-core case is a
+				// backing indexed entity — the real acme-core case is a
 				// DataAccess node JOINS_COLLECTION-ing a class id (Class:Inspection)
 				// that was never stamped as an Entity. inspect's semantic_edges
 				// section emits that edge regardless of target resolution; neighbors

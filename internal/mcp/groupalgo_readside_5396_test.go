@@ -12,7 +12,7 @@ package mcp
 // Before #5396 the read-side consumers ignored that overlay:
 //   - handleListCommunities looped repos and read per-repo r.Doc.Communities, so
 //     a cross-repo community was never visible and a repo whose per-repo Louvain
-//     never persisted (core-mobile, #5397) silently produced zero communities.
+//     never persisted (acme-mobile, #5397) silently produced zero communities.
 //   - grafel_inspect only surfaced pagerank/community_id under verbose and never
 //     centrality, and ignored include=community,pagerank,centrality.
 //
@@ -45,7 +45,7 @@ func twoRepoOverlayServer(t *testing.T) *Server {
 		},
 	}
 	mobile := &graph.Document{
-		Repo: "core-mobile",
+		Repo: "acme-mobile",
 		Entities: []graph.Entity{
 			{ID: "mob_shared", Name: "ResponsiveView", Kind: "SCOPE.Component", SourceFile: "v.tsx", StartLine: 1,
 				CommunityID: ip(42), PageRank: f64p(0.004), Centrality: f64p(120.5)},
@@ -54,7 +54,7 @@ func twoRepoOverlayServer(t *testing.T) *Server {
 	srv := newTestServer(t, backend, mobile)
 
 	// Mirror what applyGroupAlgoOverlay would have set: the group community
-	// summary. core-mobile (#5397) carries members of community 42 even though
+	// summary. acme-mobile (#5397) carries members of community 42 even though
 	// it has no per-repo Doc.Communities of its own.
 	srv.State.mu.Lock()
 	lg := srv.State.groups["test"]
@@ -91,7 +91,7 @@ func clustersResult(t *testing.T, srv *Server, args map[string]any) []any {
 
 // TestClusters_ServesGroupOverlay_CrossRepoCommunity asserts handleListCommunities
 // returns a community whose members span both repos (#5396) and is NOT
-// force-tagged to a single repo — including core-mobile (#5397).
+// force-tagged to a single repo — including acme-mobile (#5397).
 func TestClusters_ServesGroupOverlay_CrossRepoCommunity(t *testing.T) {
 	srv := twoRepoOverlayServer(t)
 	items := clustersResult(t, srv, map[string]any{"min_size": 1})
@@ -121,8 +121,8 @@ func TestClusters_ServesGroupOverlay_CrossRepoCommunity(t *testing.T) {
 	for _, r := range reposAny {
 		seen[r.(string)] = true
 	}
-	if !seen["backend"] || !seen["core-mobile"] {
-		t.Errorf("community 42 members must span backend AND core-mobile (#5397), got %v", reposAny)
+	if !seen["backend"] || !seen["acme-mobile"] {
+		t.Errorf("community 42 members must span backend AND acme-mobile (#5397), got %v", reposAny)
 	}
 }
 
@@ -130,7 +130,7 @@ func TestClusters_ServesGroupOverlay_CrossRepoCommunity(t *testing.T) {
 // only one of a cross-repo community's repos still surfaces that community.
 func TestClusters_RepoFilter_KeepsCrossRepoCommunity(t *testing.T) {
 	srv := twoRepoOverlayServer(t)
-	items := clustersResult(t, srv, map[string]any{"min_size": 1, "repo_filter": []any{"core-mobile"}})
+	items := clustersResult(t, srv, map[string]any{"min_size": 1, "repo_filter": []any{"acme-mobile"}})
 
 	found42, found7 := false, false
 	for _, it := range items {
@@ -143,10 +143,10 @@ func TestClusters_RepoFilter_KeepsCrossRepoCommunity(t *testing.T) {
 		}
 	}
 	if !found42 {
-		t.Errorf("repo_filter=core-mobile dropped cross-repo community 42 (#5397)")
+		t.Errorf("repo_filter=acme-mobile dropped cross-repo community 42 (#5397)")
 	}
 	if found7 {
-		t.Errorf("repo_filter=core-mobile should NOT surface backend-only community 7")
+		t.Errorf("repo_filter=acme-mobile should NOT surface backend-only community 7")
 	}
 }
 

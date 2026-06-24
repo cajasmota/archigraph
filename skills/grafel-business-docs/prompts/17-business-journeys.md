@@ -83,7 +83,7 @@ capabilities). Pick the handful of journeys that matter to the business
 A NUMBERED list of plain-language steps: what the user does, sees, decides; what
 the system does for them — in business terms. Cross-repo legs become natural
 sentences ("the inspection syncs to the office when the device is back online"),
-never "`core-mobile` calls `upvate_core` `/api/v1/sync`".
+never "`acme-mobile` calls `acme_core` `/api/v1/sync`".
 
 Then "What can go wrong" (business exceptions: offline, rejected, missing data)
 and "Where it touches the business" (link to the capabilities and domain terms

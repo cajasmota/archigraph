@@ -8,7 +8,7 @@ import (
 // Paths panel reads) must carry the handler SIGNATURE: scalar @Query/@Param/
 // @Headers params (Parameters table) and the unwrapped return-type DTO
 // (Response shape). Before the fix synthesizeNestJS stamped only the route/verb,
-// so the live upvate-v3 dashboard showed Parameters (0)/None and Response (none).
+// so the live acme-v3 dashboard showed Parameters (0)/None and Response (none).
 
 // findEndpointProps returns the Properties of the first synthesized
 // http_endpoint whose route_path/verb match, or nil.

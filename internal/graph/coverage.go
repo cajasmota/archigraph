@@ -225,7 +225,7 @@ var testEntityKinds = map[string]bool{
 // file as an OFFLINE CONTRACT spec — a spec that asserts an endpoint's
 // request/response SHAPE against an oracle/fixture but does NOT invoke the
 // handler (no CALLS/execution edge). These are the dominant test mechanism on
-// contract-first backends (upvate-v3: test/contract/*.contract.spec.ts) and the
+// contract-first backends (acme-v3: test/contract/*.contract.spec.ts) and the
 // reason a large slice of endpoints read "untested" under pure reach-coverage
 // even though their shape is asserted (#4662, follow-on to #4671).
 var contractSpecPathSegments = []string{
@@ -323,7 +323,7 @@ func isTestFile(path string) bool {
 // NON-testable production code. These hold operational glue, schema mutations,
 // generated artefacts, and build/config plumbing — none of which a unit or
 // integration test meaningfully covers, yet all of which inflated the coverage
-// denominator (#4510: `scripts` alone contributed 0/86 on upvate-v3).
+// denominator (#4510: `scripts` alone contributed 0/86 on acme-v3).
 //
 // Matching is on slash-normalised, lower-cased "/seg/" substrings so the
 // predicate is language- and layout-agnostic (Go, Python, JS/TS, Java, …).
@@ -508,7 +508,7 @@ func isProductionEntity(e *Entity) bool {
 // CALLS edges to the production handlers they exercise were dropped by the
 // phase-2 CALLS attribution (which only walks entities classified as tests).
 // That suppressed coverage across the whole Python/Go/Java/Ruby surface (the
-// upvate-v3 18% symptom): a DRF handler reached only via a pytest suite's CALLS
+// acme-v3 18% symptom): a DRF handler reached only via a pytest suite's CALLS
 // edge stayed uncovered, and so did the http_endpoint it backs. A test_suite is
 // a single deliberate one-per-file node (not the per-symbol inflation #1410
 // guarded against), so counting it is granular-safe.
@@ -1156,7 +1156,7 @@ func ComputeCoverage(doc *Document) *CoverageReport {
 	// MockMvc, APITestCase, …). Once handlers are credited by phases 1-3,
 	// propagate one hop along IMPLEMENTS/ROUTES_TO/SERVES so a covered handler
 	// credits the endpoint it implements. Framework-agnostic. Without this,
-	// every endpoint reads uncovered and suppresses the coverage % (the upvate-v3
+	// every endpoint reads uncovered and suppresses the coverage % (the acme-v3
 	// symptom: 100% of the uncovered list is http_endpoint_definition).
 	if ep := creditEndpointsViaHandlers(entByID, doc.Relationships, prodIDs, covered); ep > 0 {
 		report.TotalTestsEdges += ep

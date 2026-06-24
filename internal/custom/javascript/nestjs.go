@@ -431,7 +431,7 @@ func (e *nestjsExtractor) Extract(ctx context.Context, file extreg.FileInput) ([
 			// their fields) stop floating as orphan degree-1 nodes. The @Body DTO
 			// already gets its ACCEPTS_INPUT above (reNestBodyParam), so this pass
 			// covers the @Query/@Param/@Headers whole-object DTOs that previously
-			// had NO inbound edge (the upvate-v3 PermitListQueryDto orphan-ring
+			// had NO inbound edge (the acme-v3 PermitListQueryDto orphan-ring
 			// root cause). Conservative: only whole-object DTOs (no quoted
 			// binding key — a `@Query('id')`/`@Param('id')` selects a single
 			// primitive field, not the DTO) whose unwrapped type resolves to a

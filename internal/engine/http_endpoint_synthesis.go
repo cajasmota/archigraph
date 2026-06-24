@@ -528,7 +528,7 @@ func applyHTTPEndpointSynthesis(args DetectorPassArgs) DetectorPassResult {
 			}
 
 			// Issue #1725 — http_endpoint_definition/_call were emitted with
-			// empty qualified_name in 100% of cases (638/638 on upvate-core).
+			// empty qualified_name in 100% of cases (638/638 on acme-core).
 			// The synthetic ID is already the canonical routable form
 			// (e.g. "http:POST:/api/v1/inspections/{pk}/create"); use it as
 			// the QN so downstream queries can join definitions, calls, and

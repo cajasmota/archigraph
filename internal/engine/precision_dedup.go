@@ -1,7 +1,7 @@
 package engine
 
 // precision_dedup.go — post-assembly precision pass (issue #3729, epic #3628
-// area #24). Reduces two classes of over-extraction surfaced by the upvate
+// area #24). Reduces two classes of over-extraction surfaced by the acme
 // graph-quality bench:
 //
 //  1. Multi-kind double-emit — one source symbol emitted as several kind-tagged
@@ -275,7 +275,7 @@ func symbolicID(kind, name string) string {
 // isStatementNoiseOperationName reports whether an Operation entity's Name is an
 // UNAMBIGUOUS statement/decorator fragment that should never have been emitted
 // as a standalone node (the langchain `@tool` / assignment-statement noise the
-// upvate bench flagged).
+// acme bench flagged).
 //
 // This classifier is deliberately NARROW. The codebase legitimately uses
 // non-identifier Operation names for call-idiom detection — e.g.

@@ -20,9 +20,9 @@ func sortedCopy(in []string) []string {
 // fix, extractIDs only looked at "entity_id"/"node_id", so grafel_inspect
 // results glowed nothing.
 func TestExtractIDsBareID(t *testing.T) {
-	res := mcpapi.NewToolResultText(`{"id":"upvate-core::abc123","label":"Foo","kind":"function"}`)
+	res := mcpapi.NewToolResultText(`{"id":"acme-core::abc123","label":"Foo","kind":"function"}`)
 	nodes, _ := extractIDs(res)
-	if want := []string{"upvate-core::abc123"}; !reflect.DeepEqual(nodes, want) {
+	if want := []string{"acme-core::abc123"}; !reflect.DeepEqual(nodes, want) {
 		t.Fatalf("extractIDs nodes = %v, want %v", nodes, want)
 	}
 }
@@ -94,8 +94,8 @@ func TestMarkdownToolIDsReachEvent(t *testing.T) {
 	// Install the collector exactly as wrap() does, then run a markdown
 	// "handler" that records ids the way the per-repo summary call site does.
 	ctx, collector := withIDCollector(context.Background())
-	recordNodeIDs(ctx, "upvate-core::abc", "upvate-core-frontend::def")
-	res := mcpapi.NewToolResultText("# group: upvate — per-repo top hits\n")
+	recordNodeIDs(ctx, "acme-core::abc", "acme-core-frontend::def")
+	res := mcpapi.NewToolResultText("# group: acme — per-repo top hits\n")
 
 	req := mcpapi.CallToolRequest{}
 	req.Params.Name = "grafel_find"
@@ -106,7 +106,7 @@ func TestMarkdownToolIDsReachEvent(t *testing.T) {
 	select {
 	case ev := <-ch:
 		got := sortedCopy(ev.ReturnedNodeIDs)
-		want := []string{"upvate-core-frontend::def", "upvate-core::abc"}
+		want := []string{"acme-core-frontend::def", "acme-core::abc"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("event node ids = %v, want %v", got, want)
 		}

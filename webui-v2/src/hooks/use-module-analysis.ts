@@ -4,7 +4,7 @@
    #1384 which shipped the algorithms + endpoint).
 
    Thin TanStack Query wrapper around api.getModuleAnalysis. The
-   payload is small (12 modules on upvate, ~30 on polyglot per repo)
+   payload is small (12 modules on acme, ~30 on polyglot per repo)
    so we keep it warm for the session and let the UI re-derive
    normalized shapes from the wire response.
    ============================================================ */

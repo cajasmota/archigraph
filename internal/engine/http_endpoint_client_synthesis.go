@@ -352,7 +352,7 @@ type arrowFnTemplate struct {
 //	4 = template-literal body (between backticks)
 //
 // Whitespace and a newline are tolerated between `=>` and the opening
-// backtick (very common in real-world formatters — the upvate-frontend
+// backtick (very common in real-world formatters — the acme-frontend
 // branchService.js fixture splits the body across two lines).
 //
 // The body cannot contain backticks; multi-line templates and tagged

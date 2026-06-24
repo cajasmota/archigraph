@@ -64,7 +64,7 @@ func getSourceResolutionDoc(t *testing.T) *graph.Document {
 		"",
 	}, "\n"))
 	return &graph.Document{
-		Repo: "upvate-core",
+		Repo: "acme-core",
 		Entities: []graph.Entity{
 			{
 				ID:            "ent_place_order_42",
@@ -110,7 +110,7 @@ func TestGetSource_ResolvesByBareLocalID_4272(t *testing.T) {
 
 func TestGetSource_ResolvesByPrefixedID_4272(t *testing.T) {
 	srv := newTestServer(t, getSourceResolutionDoc(t))
-	text := getSourceOK(t, srv, "upvate-core::ent_place_order_42")
+	text := getSourceOK(t, srv, "acme-core::ent_place_order_42")
 	if !strings.Contains(text, "MARKER_PLACE_ORDER_BODY") {
 		t.Errorf("(b) prefixed id: body not returned, got:\n%s", text)
 	}
@@ -131,7 +131,7 @@ func TestGetSource_ResolvesByQualifiedName_4272(t *testing.T) {
 // the cross-repo fallback ran LookupAll on the still-prefixed string.
 func TestGetSource_ResolvesByPrefixedQualifiedName_4272(t *testing.T) {
 	srv := newTestServer(t, getSourceResolutionDoc(t))
-	arg := "upvate-core::core.services.order_service.OrderService.place_order"
+	arg := "acme-core::core.services.order_service.OrderService.place_order"
 	text := getSourceOK(t, srv, arg)
 	if !strings.Contains(text, "MARKER_PLACE_ORDER_BODY") {
 		t.Errorf("(c-prefixed) prefixed qualified_name: body not returned, got:\n%s", text)

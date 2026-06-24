@@ -7,7 +7,7 @@
 // reparse → fresh doc.Entities carrying the per-repo sentinel community id, e.g.
 // -1) after the overlay was first applied. With the file-level memo the apply
 // early-returned and that reparsed repo's entities silently reverted to
-// community_id:-1 (core-mobile, #5401) — so grafel_inspect surfaced nothing
+// community_id:-1 (acme-mobile, #5401) — so grafel_inspect surfaced nothing
 // (#5400) and grafel_stats / clusters repo_filter reported 0 communities (#5397)
 // for it. The fix re-stamps a repo whenever ITS graph.fb was reparsed since the
 // last stamp, independent of the overlay file mtime.
@@ -56,7 +56,7 @@ func setupThreeRepoApplyGroup(t *testing.T) (st *State, overlayPath string, cur 
 	docBE := applyFixtureDoc("backend", "DeviceViewSet")
 	docFE := applyFixtureDoc("frontend", "callApi")
 	// The mobile doc carries the per-repo SENTINEL community id (-1): its per-repo
-	// Louvain never persisted (the real core-mobile situation, #5397). The overlay
+	// Louvain never persisted (the real acme-mobile situation, #5397). The overlay
 	// will reassign it to a real cross-repo community.
 	docMob := applyFixtureDoc("mobile", "coreMobileModule")
 	docMob.Entities[0].CommunityID = ip(-1)
@@ -71,11 +71,11 @@ func setupThreeRepoApplyGroup(t *testing.T) (st *State, overlayPath string, cur 
 		}
 	}
 
-	cfgPath, err := registry.ConfigPathFor("upvate")
+	cfgPath, err := registry.ConfigPathFor("acme")
 	if err != nil {
 		t.Fatalf("config path: %v", err)
 	}
-	cfg := &registry.GroupConfig{Name: "upvate", Repos: []registry.Repo{
+	cfg := &registry.GroupConfig{Name: "acme", Repos: []registry.Repo{
 		{Slug: "backend", Path: pathBE},
 		{Slug: "frontend", Path: pathFE},
 		{Slug: "mobile", Path: pathMob},
@@ -83,14 +83,14 @@ func setupThreeRepoApplyGroup(t *testing.T) (st *State, overlayPath string, cur 
 	if err := registry.SaveGroupConfig(cfgPath, cfg); err != nil {
 		t.Fatalf("save group config: %v", err)
 	}
-	if err := registry.AddGroup("upvate", cfgPath); err != nil {
+	if err := registry.AddGroup("acme", cfgPath); err != nil {
 		t.Fatalf("add group: %v", err)
 	}
 
 	inMem := &Registry{
 		Path: filepath.Join(home, "registry.json"),
 		Groups: map[string]RegistryGroup{
-			"upvate": {Repos: map[string]RegistryRepo{
+			"acme": {Repos: map[string]RegistryRepo{
 				"backend":  {Path: pathBE},
 				"frontend": {Path: pathFE},
 				"mobile":   {Path: pathMob},
@@ -106,11 +106,11 @@ func setupThreeRepoApplyGroup(t *testing.T) (st *State, overlayPath string, cur 
 	// registering Close here guarantees the unmap happens before the delete.
 	t.Cleanup(st.Close)
 
-	overlayPath, err = groupalgo.OverlayPath("upvate")
+	overlayPath, err = groupalgo.OverlayPath("acme")
 	if err != nil {
 		t.Fatalf("overlay path: %v", err)
 	}
-	cur, err = groupalgo.CurrentSourceMtimes("upvate")
+	cur, err = groupalgo.CurrentSourceMtimes("acme")
 	if err != nil {
 		t.Fatalf("current mtimes: %v", err)
 	}
@@ -126,10 +126,10 @@ func TestApplyOverlay_ReStampsReparsedMobileRepo(t *testing.T) {
 	st, overlayPath, cur, beID, feID, mobID, mobStateDir, mobDoc := setupThreeRepoApplyGroup(t)
 
 	// Overlay assigns the mobile module to a real cross-repo community (80),
-	// the backend god-node to 39, the frontend to 203 — mirroring the live upvate
+	// the backend god-node to 39, the frontend to 203 — mirroring the live acme
 	// overlay shape from the validation report.
 	ov := &groupalgo.Overlay{
-		Group:        "upvate",
+		Group:        "acme",
 		SourceMtimes: cur,
 		Results: map[string]groupalgo.EntityOverlay{
 			beID:  {CommunityID: 39, PageRank: 0.0065, Centrality: 10415.99, IsGodNode: true},
@@ -159,13 +159,13 @@ func TestApplyOverlay_ReStampsReparsedMobileRepo(t *testing.T) {
 		t.Fatalf("reload v1: %v", err)
 	}
 	// Sanity: mobile stamped to 80 on the first apply.
-	if mob := entityByID(st.Group("upvate"), mobID); mob == nil || mob.CommunityID == nil || *mob.CommunityID != 80 {
+	if mob := entityByID(st.Group("acme"), mobID); mob == nil || mob.CommunityID == nil || *mob.CommunityID != 80 {
 		t.Fatalf("v1: mobile not stamped to overlay community 80: %v", mob)
 	}
 
 	// --- Now reparse ONLY the mobile repo: rewrite its graph.fb with a later
 	// mtime, keeping the SENTINEL community id -1 (a fresh per-repo parse). The
-	// overlay file is UNCHANGED. This is exactly the live core-mobile race.
+	// overlay file is UNCHANGED. This is exactly the live acme-mobile race.
 	time.Sleep(10 * time.Millisecond)
 	mobDoc.Entities[0].CommunityID = ip(-1) // back to the per-repo sentinel
 	// Change the BYTES (add a new entity) so the #3377 content-hash skip does not
@@ -185,7 +185,7 @@ func TestApplyOverlay_ReStampsReparsedMobileRepo(t *testing.T) {
 	// it is not considered stale (the daemon's scheduler keeps the overlay fresh;
 	// the bug is the apply MEMO skipping the re-stamp, not staleness). Keep the
 	// overlay FILE mtime unchanged-ish so the group-level memo would have skipped.
-	cur2, err := groupalgo.CurrentSourceMtimes("upvate")
+	cur2, err := groupalgo.CurrentSourceMtimes("acme")
 	if err != nil {
 		t.Fatalf("current mtimes v2: %v", err)
 	}
@@ -202,7 +202,7 @@ func TestApplyOverlay_ReStampsReparsedMobileRepo(t *testing.T) {
 	if _, err := st.Reload(); err != nil {
 		t.Fatalf("reload v2: %v", err)
 	}
-	grp := st.Group("upvate")
+	grp := st.Group("acme")
 
 	// (#5401) mobile must STILL carry overlay community 80, not the sentinel -1.
 	mob := entityByID(grp, mobID)
@@ -254,7 +254,7 @@ func inspectAlgo(t *testing.T, st *State, prefixedID string) map[string]any {
 	srv := &Server{State: st}
 	req := mcpapi.CallToolRequest{}
 	req.Params.Arguments = map[string]any{
-		"group":     "upvate",
+		"group":     "acme",
 		"entity_id": prefixedID,
 		"include":   "community,pagerank,centrality",
 	}
@@ -274,7 +274,7 @@ func statsCommunitiesForRepo(t *testing.T, st *State, repo string) int {
 	t.Helper()
 	srv := &Server{State: st}
 	req := mcpapi.CallToolRequest{}
-	req.Params.Arguments = map[string]any{"group": "upvate"}
+	req.Params.Arguments = map[string]any{"group": "acme"}
 	res, err := srv.handleGraphStats(context.Background(), req)
 	if err != nil {
 		t.Fatalf("handleGraphStats error: %v", err)
@@ -316,14 +316,14 @@ func clustersHasCommunityForRepoFilter(t *testing.T, st *State, repo string, id 
 	return false
 }
 
-// clustersResult2 mirrors clustersResult but targets the "upvate" test group.
+// clustersResult2 mirrors clustersResult but targets the "acme" test group.
 func clustersResult2(t *testing.T, srv *Server, args map[string]any) []any {
 	t.Helper()
 	req := mcpapi.CallToolRequest{}
 	if args == nil {
 		args = map[string]any{}
 	}
-	args["group"] = "upvate"
+	args["group"] = "acme"
 	req.Params.Arguments = args
 	res, err := srv.handleListCommunities(context.Background(), req)
 	if err != nil {

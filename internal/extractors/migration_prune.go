@@ -10,7 +10,7 @@
 // env-var opt-in.
 //
 // Bench iter 8 (2026-05-27) found 43 SCOPE.Component entities for
-// `core/migrations/*.py` had reappeared in the upvate graph (#2706).
+// `core/migrations/*.py` had reappeared in the acme graph (#2706).
 // Root cause: `extractor.FileEntity` is called unconditionally at the top
 // of every per-language extractor's Extract() and emits a
 // SCOPE.Component(subtype="file") for every source file — including

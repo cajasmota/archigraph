@@ -1,7 +1,7 @@
 // Package javascript — unit tests for issue #4671 (local-variable receiver
 // typing → test→handler CALLS edge → coverage crediting).
 //
-// Live root cause (proven on upvate-v3): the TS call resolver typed
+// Live root cause (proven on acme-v3): the TS call resolver typed
 // `this.<field>.method()` (DI fields) and bare typed params, but NOT a
 // LOCAL variable bound from `new XController()` / NestJS `module.get(X)`.
 // Controller-unit specs are dominated by that local form —

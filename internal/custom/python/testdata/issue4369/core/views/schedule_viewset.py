@@ -1,4 +1,4 @@
-# Byte-derived trim of core/views/schedule_viewset.py from the upvate_core
+# Byte-derived trim of core/views/schedule_viewset.py from the acme_core
 # legacy Django backend, kept to the declarations the DRF route synthesizer
 # reads: the ScheduleViewset class header and the @action(url_path="import")
 # method whose route the test file exercises. Verbatim copies of the real

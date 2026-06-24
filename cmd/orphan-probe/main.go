@@ -7,7 +7,7 @@
 //
 // Usage:
 //
-//	go run ./cmd/orphan-probe [-groups upvate,polyglot-platform,...] [-top 20] [-json]
+//	go run ./cmd/orphan-probe [-groups acme,polyglot-platform,...] [-top 20] [-json]
 //
 // Flags:
 //

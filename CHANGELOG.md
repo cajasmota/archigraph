@@ -994,7 +994,7 @@ group-algo CPU/overlay fixes.
   but its 24h grace window had no backstop. A high-churn workload — the rewrite
   agent's `merge-NNNN` branches, created + deleted minutes apart but each indexed
   — left every deleted ref's fresh ~80MB `graph.fb` grace-protected for a full
-  24h. On `core-backend-v3` this piled up **~1GB of dead-ref graphs** (12
+  24h. On `acme-backend-v3` this piled up **~1GB of dead-ref graphs** (12
   `merge-NNNN` dirs alongside `main` while `git for-each-ref` showed only
   `main`), mmap'd into the daemon and inflating RSS to ~1.6GB. The sweeper now
   applies a **retention cap** (`DefaultRefRetentionCap` = 8) per repo: of the
@@ -1251,16 +1251,16 @@ group-algo CPU/overlay fixes.
   open — `t.Cleanup` is LIFO so registering the unmap after `t.TempDir` runs it
   first.
 - **Group-algo overlay now keeps surfacing on `inspect`/`orient`/`stats`/`clusters`
-  after a repo is reparsed — incl. `core-mobile` (Fixes #5400, #5401, #5397):**
+  after a repo is reparsed — incl. `acme-mobile` (Fixes #5400, #5401, #5397):**
   `applyGroupAlgoOverlay` memoized the per-entity stamp at the **group** level by
   the overlay FILE's mtime. But a repo's `graph.fb` can be rewritten (a reparse →
   fresh `doc.Entities` carrying the per-repo sentinel `community_id:-1`) AFTER the
   overlay was first applied. With the file-level memo, that reparsed repo was
   never re-stamped and silently reverted to `community_id:-1` — exactly the
-  `core-mobile` symptom (#5401): `grafel_orient` showed `community_id:-1` for its
+  `acme-mobile` symptom (#5401): `grafel_orient` showed `community_id:-1` for its
   entities, `grafel_inspect` surfaced no algo fields at all (#5400), and
-  `grafel_stats` + `grafel_clusters repo_filter=core-mobile` reported 0
-  communities (#5397) — even though the overlay placed core-mobile in community
+  `grafel_stats` + `grafel_clusters repo_filter=acme-mobile` reported 0
+  communities (#5397) — even though the overlay placed acme-mobile in community
   80. The stamp memo is now **per repo**: a repo is re-stamped whenever its
   `graph.fb` was reparsed since the last stamp (or the overlay file advanced), so
   the overlay community/pagerank/centrality survive a mid-session reparse of any
@@ -1275,7 +1275,7 @@ group-algo CPU/overlay fixes.
   now serves the **group** communities when the overlay is applied — so a
   community can surface members spanning >1 repo (reported via a `repos` list and
   a `cross_repo` flag instead of being force-tagged to a single repo), and
-  `core-mobile` entities (community 80) appear instead of a whole repo silently
+  `acme-mobile` entities (community 80) appear instead of a whole repo silently
   showing 0 communities (#5397). A `repo_filter` naming only one repo of a
   cross-repo community still surfaces that community. `grafel_inspect` now
   surfaces the overlay `community_id`/`pagerank`/`centrality` (and god-node /
@@ -1347,7 +1347,7 @@ group-algo CPU/overlay fixes.
   PageRank **rank churn**, the modularity delta, and a **cross-repo-rank
   non-decreasing assertion** — no entity that receives a cross-repo phantom CALLS
   edge may LOSE PageRank rank group-vs-repo (the core thesis; the process exits
-  non-zero and lists the regressions if it ever does), so CI / the upvate
+  non-zero and lists the regressions if it ever does), so CI / the acme
   baseline re-run can gate on it. Separately, `ComputeCentrality` gains a
   **sampled-pivot betweenness approximation** (deterministic seed, K random Brandes
   pivots scaled by V/K) gated by node count — exact below the threshold, sampled
@@ -1498,7 +1498,7 @@ group-algo CPU/overlay fixes.
   ([#5326](https://github.com/cajasmota/grafel/issues/5326)).
 - **Dashboard index wizard now shows one row per repo instead of a single group
   row (Refs #5340, #5326):** the "Index a new group" dialog's Index step could
-  collapse to a single row labelled with the GROUP name (e.g. "ivivo · Indexed")
+  collapse to a single row labelled with the GROUP name (e.g. "acme · Indexed")
   rather than one row per repo (backend + frontend). This is the web analog of
   the CLI fixes (#5343/#5348). Four changes, mirroring the Go wizard: (1) the
   group-scoped progress event (`repo_slug === group`, the cross-repo links/flows
@@ -1548,7 +1548,7 @@ group-algo CPU/overlay fixes.
   [#856](https://github.com/cajasmota/grafel/issues/856)).
 - **`grafel wizard` indexing view reliably shows one row per repo (#5340):** the
   TUI indexing screen could collapse to a single row labeled with the GROUP name
-  (e.g. "ivivo") reaching Done instead of one row per repo (backend, frontend).
+  (e.g. "acme") reaching Done instead of one row per repo (backend, frontend).
   Two causes are fixed: (1) the wizard now establishes the broker SSE
   subscription **before** triggering the Rebuild RPC, so the early per-repo
   extraction events aren't missed when the index runs fast (previously the
@@ -1618,8 +1618,8 @@ group-algo CPU/overlay fixes.
   warning (the group is registered and indexes later), not a failure
   ([#5338](https://github.com/cajasmota/grafel/issues/5338)).
 - **Wizard group-name default is the container folder, not a child repo
-  (#5338):** from `ivivo/` holding `backend/` + `frontend/`, the suggested group
-  name is now `ivivo` (the common-parent container folder) instead of an
+  (#5338):** from `acme/` holding `backend/` + `frontend/`, the suggested group
+  name is now `acme` (the common-parent container folder) instead of an
   arbitrary selected child repo's slug. A single selected repo still defaults to
   its own basename ([#5338](https://github.com/cajasmota/grafel/issues/5338)).
 - **Wizard TUI gains navigation hints, more height, and `[ ]`/`[✓]` checkboxes
@@ -1640,7 +1640,7 @@ group-algo CPU/overlay fixes.
   repositories**, **Index a monorepo**, **Add a repository to an existing
   group** — with the cursor pre-placed on a smart default derived from the
   current directory. This fixes container folders: a parent directory holding
-  multiple repos (e.g. `ivivo/` with `backend/` + `frontend/`) now resolves to
+  multiple repos (e.g. `acme/` with `backend/` + `frontend/`) now resolves to
   exactly those child repos instead of scanning the cwd's PARENT for unrelated
   siblings. CLI and dashboard share a single source of truth — the new
   `detect.ClassifyPath` classifier — so they agree on what a folder is (its own

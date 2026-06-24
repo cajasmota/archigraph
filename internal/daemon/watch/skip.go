@@ -94,7 +94,7 @@ var SkipDirs = map[string]struct{}{
 	".gradle":  {},
 	"captures": {},
 	// Mobile build outputs (#5392: an Android AAB/gradle build under
-	// core-mobile churned these dirs and tripped a continuous reindex
+	// acme-mobile churned these dirs and tripped a continuous reindex
 	// loop → 20GB heap thrash. AAB/ in particular is the project's
 	// Android App Bundle output dir).
 	"APK":      {},

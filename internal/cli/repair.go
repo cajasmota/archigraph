@@ -508,11 +508,11 @@ func finishIndexSummary(w, errW io.Writer, group, token string, o rebuildOutcome
 //
 // Format follows the spec from issue #989:
 //
-//	core-mobile: scanning 1134 files…
-//	core-mobile: extracted 4521 entities (482 functions, 312 classes, …)
-//	core-mobile: 12,318 relationships emitted
-//	core-mobile: P4 algorithms running (PageRank, Communities)…
-//	core-mobile: DONE 5.2s
+//	acme-mobile: scanning 1134 files…
+//	acme-mobile: extracted 4521 entities (482 functions, 312 classes, …)
+//	acme-mobile: 12,318 relationships emitted
+//	acme-mobile: P4 algorithms running (PageRank, Communities)…
+//	acme-mobile: DONE 5.2s
 //
 // In-progress phases (walking, extracting, finalizing) use a carriage-return
 // suffix when the writer is a TTY so the line updates in place. Terminal

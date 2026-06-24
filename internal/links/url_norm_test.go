@@ -162,7 +162,7 @@ func TestURLNorm_DjangoTypedParam_Matches(t *testing.T) {
 				"source_file": "src/api.ts",
 			},
 			{
-				// Client uses curly-brace syntax (mirrors upvate #2588 case).
+				// Client uses curly-brace syntax (mirrors acme #2588 case).
 				"id": "ep2", "name": "http:GET:/inspections/{id}", "kind": "http_endpoint",
 				"source_file": "src/api.ts",
 				"properties": map[string]any{

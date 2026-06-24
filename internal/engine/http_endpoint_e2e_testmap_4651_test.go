@@ -7,10 +7,10 @@ import (
 	"github.com/cajasmota/grafel/internal/types"
 )
 
-// Issue #4651 — upvate-v3 (NestJS) coverage lever: duplicate-name endpoint
+// Issue #4651 — acme-v3 (NestJS) coverage lever: duplicate-name endpoint
 // disambiguation.
 //
-// upvate-v3 has the same handler name across many modules (`create`, `update`,
+// acme-v3 has the same handler name across many modules (`create`, `update`,
 // `getCounts`, `list`, …). When two http_endpoint_definition entities
 // synthesize the SAME endpoint Name (because the route shape folds to the same
 // key — here a `getCounts` handler in BOTH the inspections and proposals
@@ -29,7 +29,7 @@ import (
 // (graph.EntityID over Kind+Name+SourceFile — distinct per source file even when
 // the Name collides), so each endpoint is credited to ITS OWN spec.
 
-const repo4651 = "cajasmota/upvate-v3"
+const repo4651 = "cajasmota/acme-v3"
 
 // dupDef is def() with an explicit controller source file so the two same-route
 // definitions get DISTINCT deterministic entity IDs (graph.EntityID folds in
@@ -47,7 +47,7 @@ func dupDef(verb, path, sourceFile string) types.EntityRecord {
 // that endpoint's unique entity ID.
 func TestIssue4651_DupNameEndpointsCreditedToOwnSpec(t *testing.T) {
 	// Two definitions with the SAME synthesized Name (http:GET:/api/v1/counts)
-	// but DIFFERENT controllers/modules — exactly the upvate-v3 collision.
+	// but DIFFERENT controllers/modules — exactly the acme-v3 collision.
 	inspDef := dupDef("GET", "/api/v1/counts", "src/inspections/inspections.controller.ts")
 	propDef := dupDef("GET", "/api/v1/counts", "src/proposals/proposals.controller.ts")
 	if inspDef.Name != propDef.Name {

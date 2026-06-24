@@ -1,7 +1,7 @@
 // Full-pipeline integration test for the Mongo `$lookup → JOINS_COLLECTION`
 // helper-indirection real shape (deploy-9 REFUTED item-1).
 //
-// The rewrite agent reported that on upvate-core the `$lookup.from` collection
+// The rewrite agent reported that on acme-core the `$lookup.from` collection
 // literals never reach JOINS_COLLECTION edges. The prior tests were
 // extraction-only on crafted fixtures and missed it twice because the REAL
 // access shape combines FOUR things together that no single crafted fixture
@@ -24,7 +24,7 @@
 //
 //   - testdata/mongo_helper_indirection      — a minimal hand-written fixture
 //     isolating the four conditions above with a nested correlated lookup.
-//   - testdata/mongo_helper_indirection_real — the VERBATIM upvate-core source
+//   - testdata/mongo_helper_indirection_real — the VERBATIM acme-core source
 //     (queries.py / service.py / mongo_helper.py / mongodb_collections.py) that
 //     was REFUTED, copied read-only so the regression is pinned to the exact
 //     bytes the rewrite agent saw.
@@ -95,14 +95,14 @@ func TestMongoLookupHelperIndirection_MinimalShape(t *testing.T) {
 	}
 }
 
-// TestMongoLookupHelperIndirection_RealUpvateSource indexes the VERBATIM
-// upvate-core building-service source that was reported REFUTED at deploy-9 and
+// TestMongoLookupHelperIndirection_RealAcmeSource indexes the VERBATIM
+// acme-core building-service source that was reported REFUTED at deploy-9 and
 // asserts that every DISTINCT `$lookup.from` collection in the real builder
 // (15 of them, spanning top-level and nested correlated lookups, multi-line
 // extend-assembled pipelines, and four builder functions) becomes a
 // JOINS_COLLECTION edge from Class:Inspection through to the final graph.json.
-func TestMongoLookupHelperIndirection_RealUpvateSource(t *testing.T) {
-	doc := runIndexerOn(t, "testdata/mongo_helper_indirection_real", "upvate_building", nil)
+func TestMongoLookupHelperIndirection_RealAcmeSource(t *testing.T) {
+	doc := runIndexerOn(t, "testdata/mongo_helper_indirection_real", "acme_building", nil)
 
 	const wantFrom = "Class:Inspection"
 	got := map[string]bool{}
@@ -153,7 +153,7 @@ func TestMongoLookupHelperIndirection_RealUpvateSource(t *testing.T) {
 		}
 		t.Logf("graph stats: entities=%d relationships=%d", len(doc.Entities), len(doc.Relationships))
 		t.Logf("relationship kinds in graph: %v", kindCounts)
-		t.Fatalf("deploy-9 item-1 (REAL source): expected JOINS_COLLECTION edges from the real upvate building service, got 0")
+		t.Fatalf("deploy-9 item-1 (REAL source): expected JOINS_COLLECTION edges from the real acme building service, got 0")
 	}
 	gotList := make([]string, 0, len(got))
 	for k := range got {

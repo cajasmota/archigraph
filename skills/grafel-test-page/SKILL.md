@@ -34,8 +34,8 @@ Parse from the invocation text. Only prompt the user when a required field is ge
 
 | Input | Required | Default | Notes |
 |---|---|---|---|
-| `group` | yes | — | e.g. `upvate`, `grafel`, `polyglot-platform` |
-| `entity` | yes | — | Prefixed ID (`upvate-core::<hex>`), raw 16-char hex, or free-text query |
+| `group` | yes | — | e.g. `acme`, `grafel`, `polyglot-platform` |
+| `entity` | yes | — | Prefixed ID (`acme-core::<hex>`), raw 16-char hex, or free-text query |
 | `tier` | no | `1` | `0` = single-section, `1` = single-page |
 | `section` | only when tier=0 | — | Section name from KnownSections (e.g. `overview`, `flows`) |
 | `output-dir` | no | `/tmp/docgen-test-<RFC3339-timestamp>/` | Where emit, bundle, result, and final page land |

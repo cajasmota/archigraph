@@ -266,7 +266,7 @@ func computeEffectiveContract(lg *LoadedGroup, target string) effectiveContractR
 	}
 
 	// FRAMEWORK REGISTRY (#4601): when the DRF projection + class-fallback
-	// synthesis produced nothing (a non-DRF stack — e.g. the NestJS upvate-v3
+	// synthesis produced nothing (a non-DRF stack — e.g. the NestJS acme-v3
 	// rewrite), try the pluggable per-framework contract resolvers. They compose
 	// the SAME effectiveContract structure (status set, request fields, per-branch
 	// response shapes, auth) from signals that already exist on the graph, so the

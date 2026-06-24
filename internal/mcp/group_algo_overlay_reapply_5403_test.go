@@ -30,7 +30,7 @@ func TestGroupReapplyOverlayOnMtimeAdvance(t *testing.T) {
 
 	// --- v1 overlay: mobile → community 80.
 	ovV1 := &groupalgo.Overlay{
-		Group:        "upvate",
+		Group:        "acme",
 		SourceMtimes: cur,
 		Results: map[string]groupalgo.EntityOverlay{
 			beID:  {CommunityID: 39, PageRank: 0.0065, Centrality: 10415.99, IsGodNode: true},
@@ -53,16 +53,16 @@ func TestGroupReapplyOverlayOnMtimeAdvance(t *testing.T) {
 	if _, err := st.Reload(); err != nil {
 		t.Fatalf("reload v1: %v", err)
 	}
-	if mob := entityByID(st.Group("upvate"), mobID); mob == nil || mob.CommunityID == nil || *mob.CommunityID != 80 {
+	if mob := entityByID(st.Group("acme"), mobID); mob == nil || mob.CommunityID == nil || *mob.CommunityID != 80 {
 		t.Fatalf("v1: mobile not stamped to overlay community 80: %v", mob)
 	}
 
 	// --- Cheap path: a second Group() lookup with an UNCHANGED overlay file must
 	// NOT change anything (and, importantly, not re-read/re-stamp — verified by
 	// the value staying put with mtime unmoved).
-	grpBefore := st.Group("upvate")
+	grpBefore := st.Group("acme")
 	algoMtBefore := grpBefore.algoMt
-	if mob := entityByID(st.Group("upvate"), mobID); mob == nil || *mob.CommunityID != 80 {
+	if mob := entityByID(st.Group("acme"), mobID); mob == nil || *mob.CommunityID != 80 {
 		t.Fatalf("cheap path: mobile community changed unexpectedly: %v", mob)
 	}
 	if !grpBefore.algoMt.Equal(algoMtBefore) {
@@ -74,7 +74,7 @@ func TestGroupReapplyOverlayOnMtimeAdvance(t *testing.T) {
 	// settled-daemon case (#5403): the scheduler/CLI rewrote the overlay on disk
 	// but never poked the cached group.
 	ovV2 := &groupalgo.Overlay{
-		Group:        "upvate",
+		Group:        "acme",
 		SourceMtimes: cur,
 		Results: map[string]groupalgo.EntityOverlay{
 			beID:  {CommunityID: 39, PageRank: 0.0065, Centrality: 10415.99, IsGodNode: true},
@@ -96,7 +96,7 @@ func TestGroupReapplyOverlayOnMtimeAdvance(t *testing.T) {
 
 	// A plain serve lookup must now reflect the NEW overlay (community 81) WITHOUT
 	// any Reload().
-	grp := st.Group("upvate")
+	grp := st.Group("acme")
 	mob := entityByID(grp, mobID)
 	if mob == nil {
 		t.Fatalf("mobile entity missing after overlay v2")
@@ -124,7 +124,7 @@ func TestGroupReapplyOverlayOnMtimeAdvance(t *testing.T) {
 	if err := os.Remove(overlayPath); err != nil {
 		t.Fatalf("remove overlay: %v", err)
 	}
-	grp2 := st.Group("upvate")
+	grp2 := st.Group("acme")
 	if grp2 == nil {
 		t.Fatalf("absent overlay: Group returned nil")
 	}

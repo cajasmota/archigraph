@@ -122,7 +122,7 @@ class Group(models.Model):
 // ---------------------------------------------------------------------------
 
 func TestPyExtractor_ReceiverDecorator_EmitsListensFor(t *testing.T) {
-	// upvate_core pattern: multiple stacked @receiver decorators on one def.
+	// acme_core pattern: multiple stacked @receiver decorators on one def.
 	files := map[string]string{
 		"core/signals/replicate_to_datalake.py": `from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -385,22 +385,22 @@ def on_building_saved(sender, instance, created, **kwargs):
 }
 
 // ---------------------------------------------------------------------------
-// #2589 — integration test: exact upvate_core replicate_to_datalake.py pattern
+// #2589 — integration test: exact acme_core replicate_to_datalake.py pattern
 // ---------------------------------------------------------------------------
 
-// TestReceiverDecorator_UpvateRealPattern exercises the EXACT content of
-// upvate_core/core/signals/replicate_to_datalake.py — 11 stacked @receiver
+// TestReceiverDecorator_AcmeRealPattern exercises the EXACT content of
+// acme_core/core/signals/replicate_to_datalake.py — 11 stacked @receiver
 // decorators all pointing at the same def replicate_signal.
 //
 // This test was added because unit tests for #2584 passed on simple 4-sender
-// fixtures but real upvate data produced zero HANDLES_SIGNAL edges: the
+// fixtures but real acme data produced zero HANDLES_SIGNAL edges: the
 // FromID was emitted as "Function:replicate_signal" (DispositionDynamic in
 // the resolver — not rewritten to hex), while the actual entity lives under
 // "SCOPE.Operation:replicate_signal". The fix changes all FromIDs to
 // "SCOPE.Operation:..." which the resolver correctly rewrites to hex IDs.
 // Closes #2589.
-func TestReceiverDecorator_UpvateRealPattern(t *testing.T) {
-	// Verbatim copy of the real upvate file (imports trimmed to one line for brevity).
+func TestReceiverDecorator_AcmeRealPattern(t *testing.T) {
+	// Verbatim copy of the real acme file (imports trimmed to one line for brevity).
 	files := map[string]string{
 		"core/signals/replicate_to_datalake.py": `import logging
 from django.dispatch import receiver

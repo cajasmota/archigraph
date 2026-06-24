@@ -274,12 +274,12 @@ func TestJoinModuleInstantiations_ContainmentAndEnv(t *testing.T) {
 // definition instantiated within a SINGLE env DOES keep a ParentID (the parent
 // instance is guaranteed to render alongside it on that env's tab), so the
 // simple one-env stack still nests via the direct parent_id path. This mirrors
-// the live upvate-v3 shape where the directory-join (resolveModuleSourceDir →
+// the live acme-v3 shape where the directory-join (resolveModuleSourceDir →
 // iacModuleOf) produces matching dirs (e.g. infra/terraform/modules/worker-
 // service) so the join fires; the regression was purely the cross-env ParentID
 // pointing at a filtered-out instance.
 func TestJoinModuleInstantiations_SingleEnvKeepsParentID(t *testing.T) {
-	// Module dir as iacModuleOf would derive it for a real upvate-v3 def file
+	// Module dir as iacModuleOf would derive it for a real acme-v3 def file
 	// infra/terraform/modules/worker-service/main.tf, and the matching
 	// definition_dir resolveModuleSourceDir derives from
 	// infra/terraform/envs/prod/main.tf + source ../../modules/worker-service.

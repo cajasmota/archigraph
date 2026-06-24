@@ -33,7 +33,7 @@ import (
 func branchScopeTestServer(t *testing.T) *Server {
 	t.Helper()
 	doc := &graph.Document{
-		Repo: "upvate-core",
+		Repo: "acme-core",
 		Entities: []graph.Entity{
 			{
 				ID: "op_create_contact", Name: "ContractViewSet.create_contact",
@@ -52,7 +52,7 @@ func branchScopeTestServer(t *testing.T) *Server {
 		t.Fatalf("abs testdata: %v", err)
 	}
 	srv.State.mu.Lock()
-	srv.State.groups["test"].Repos["upvate-core"].Path = abs
+	srv.State.groups["test"].Repos["acme-core"].Path = abs
 	srv.State.mu.Unlock()
 	return srv
 }

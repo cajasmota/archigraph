@@ -87,10 +87,10 @@ func TestRenderMarkdown(t *testing.T) {
 		{Question: "where is auth", GraphTokens: 100, FileReadTokens: 400, FileCount: 2},
 		{Question: "broken | pipe", GraphTokens: 0, FileReadTokens: 0, Note: "no matches"},
 	}
-	md := renderMarkdown("upvate", rows)
+	md := renderMarkdown("acme", rows)
 
 	for _, want := range []string{
-		"# Token-economy benchmark — upvate",
+		"# Token-economy benchmark — acme",
 		"| # | Question |",
 		"4.00x",          // per-row ratio
 		`broken \| pipe`, // pipe escaped

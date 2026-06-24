@@ -268,7 +268,7 @@ def handler():
 // TestRegression_1990_AllAdminSiteRegisterCallsWalked — W6R4 evidence: 8
 // admin.site.register() calls in core/admin.py emitted only 1 REFERENCES
 // edge. The extractor must walk EVERY register call, not stop after the
-// first. This fixture is the upvate-shaped one (imports + 8 register calls,
+// first. This fixture is the acme-shaped one (imports + 8 register calls,
 // no local ModelAdmin classes — they're imported from elsewhere).
 func TestRegression_1990_AllAdminSiteRegisterCallsWalked(t *testing.T) {
 	src := `from django.contrib import admin

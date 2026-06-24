@@ -14,7 +14,7 @@
 //
 // The root cause is that the extractor works file-by-file and has no access to
 // the routing graph that links `/api/v1/schedule/import` → the ViewSet. Only
-// 14 of 8,564 production entities on upvate had ANY incoming TESTS edge (0.16%
+// 14 of 8,564 production entities on acme had ANY incoming TESTS edge (0.16%
 // coverage) as a result.
 //
 // # Fix
@@ -344,7 +344,7 @@ func enclosingPyTestFunc(src string, pos int) string {
 //
 // Pass 2.8 (ApplyTestsMultiHopViaHTTP) needs ROUTES_TO in pass2Rels to build
 // its route index.  When the application separates router.register() calls and
-// include(router.urls) into different files (upvate pattern: routers.py +
+// include(router.urls) into different files (acme pattern: routers.py +
 // urls.py), applyDjangoRouteComposition never fires in same-file mode and the
 // composed ROUTES_TO edges are never added to pass2Rels — leaving the route
 // index empty and producing zero TESTS edges.

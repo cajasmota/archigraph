@@ -20,7 +20,7 @@
 //     hubs should gain importance, never lose it. Any regression is a failure
 //     and is listed here.
 //
-// The whole report marshals to JSON (DiffReport) so CI / the upvate baseline
+// The whole report marshals to JSON (DiffReport) so CI / the acme baseline
 // re-run can consume it.
 package groupalgo
 

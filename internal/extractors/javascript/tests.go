@@ -15,8 +15,8 @@
 //     callbacks passed to it(...)/test(...) — they don't exist as named
 //     Operation entities in byLocation[file], so the FromID never resolves
 //     and the edge is dropped. iter4 calibration confirmed this:
-//     upvate-core (Python, named test_* def) gained TESTS edges; upvate-
-//     frontend produced 1, upvate-mobile produced 0 across ~2500 entities.
+//     acme-core (Python, named test_* def) gained TESTS edges; acme-
+//     frontend produced 1, acme-mobile produced 0 across ~2500 entities.
 //
 //  2. Emitting the TESTS edge directly from the Operation entity that
 //     contains the call (the enclosing named function, hook, or class

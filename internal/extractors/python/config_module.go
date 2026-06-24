@@ -15,7 +15,7 @@
 //	celery.py     — Celery application and task-routing config
 //
 // Without these entities, bench Q1 ("Where is the Django settings class for
-// upvate-core?") returns WRONG because upvate_core/settings.py contains only
+// acme-core?") returns WRONG because acme_core/settings.py contains only
 // module-level assignments (no class, no def at all) and the extractor
 // previously emitted nothing but the file entity for it.
 //

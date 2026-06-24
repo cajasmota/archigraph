@@ -68,7 +68,7 @@ func TestConfigModule_SettingsPy(t *testing.T) {
 	}
 
 	fi := extractor.FileInput{
-		Path:     "upvate_core/settings.py",
+		Path:     "acme_core/settings.py",
 		Content:  src,
 		Language: "python",
 		TSTree:   tree,
@@ -104,8 +104,8 @@ func TestConfigModule_SettingsPy(t *testing.T) {
 	}
 
 	// QualifiedName should be module-qualified.
-	// filePathToModule("upvate_core/settings.py") → "upvate_core.settings"
-	wantQN := "upvate_core.settings.settings"
+	// filePathToModule("acme_core/settings.py") → "acme_core.settings"
+	wantQN := "acme_core.settings.settings"
 	if cfgEnt.QualifiedName != wantQN {
 		t.Errorf("QualifiedName = %q, want %q", cfgEnt.QualifiedName, wantQN)
 	}

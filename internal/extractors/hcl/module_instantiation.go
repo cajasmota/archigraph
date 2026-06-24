@@ -159,7 +159,7 @@ func isLocalModuleSource(source string) bool {
 }
 
 // envFromPath derives an environment name from an instance file's path. The
-// real upvate-v3 layout is envs/{dev,staging,prod}/main.tf, so the env is the
+// real acme-v3 layout is envs/{dev,staging,prod}/main.tf, so the env is the
 // path segment immediately following an "envs" / "environments" / "env"
 // directory. Returns "" when the path does not encode a recognisable env
 // (e.g. the file is itself a module definition), in which case the dashboard

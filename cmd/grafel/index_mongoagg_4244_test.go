@@ -11,7 +11,7 @@ import (
 )
 
 // TestMongoAggLookupNode_FromIDEqualsNodeID_4244 is the anti-false-pass test for
-// #4244. It indexes the REAL upvate-shaped fixture (mongo_helper_indirection_real
+// #4244. It indexes the REAL acme-shaped fixture (mongo_helper_indirection_real
 // — multiple `inspections.aggregate(...)` calls on the SAME collection at
 // DIFFERENT call-site lines, each `$lookup` with a distinct `from`, mirroring
 // building/service.py L18/L28/L38/L57) through the FULL production indexer,
@@ -122,7 +122,7 @@ func TestMongoAggLookupNode_FromIDEqualsNodeID_4244(t *testing.T) {
 	// across four separate aggregations; a regression that stops emitting stage
 	// entities (or froms) would zero this out.
 	if lookupStages < 10 {
-		t.Fatalf("expected >=10 $lookup stages with a static `from` on the upvate fixture, got %d", lookupStages)
+		t.Fatalf("expected >=10 $lookup stages with a static `from` on the acme fixture, got %d", lookupStages)
 	}
 }
 

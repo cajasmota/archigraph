@@ -13,7 +13,7 @@ import (
 	"github.com/cajasmota/grafel/internal/graph"
 )
 
-// drfRoleFixture mirrors the upvate shape: a synthetic http_endpoint_definition
+// drfRoleFixture mirrors the acme shape: a synthetic http_endpoint_definition
 // at routers.py:0 + the RoleViewSet.retrieve handler linked by IMPLEMENTS, plus
 // a real CALLS edge into a downstream helper and a model REFERENCES edge that
 // must surface as a Side-effect.

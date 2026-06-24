@@ -452,7 +452,7 @@ func TestForceRescan(t *testing.T) {
 // ---------------------------------------------------------------------------
 // #2645 regression tests: TS/TSX and other source file changes must trigger
 // the sink. These are the canonical regression tests for issue #2645 —
-// "daemon watcher isn't picking up TS/TSX file changes in core-mobile".
+// "daemon watcher isn't picking up TS/TSX file changes in acme-mobile".
 // ---------------------------------------------------------------------------
 
 // TestWatcher_TSFileChange_TriggersReindex verifies that editing a .tsx file
@@ -470,7 +470,7 @@ func TestWatcher_TSFileChange_TriggersReindex(t *testing.T) {
 	}
 
 	// Pre-create a .tsx fixture so subsequent writes are tracked-file edits
-	// (same scenario as editing an existing component in core-mobile).
+	// (same scenario as editing an existing component in acme-mobile).
 	initial := filepath.Join(src, "Component.tsx")
 	if err := os.WriteFile(initial, []byte("export default () => null;"), 0o644); err != nil {
 		t.Fatal(err)

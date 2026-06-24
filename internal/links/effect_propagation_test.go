@@ -102,7 +102,7 @@ class ContractViewSet:
         return ContractService(ContractRepo()).list_contracts()
 `)
 	graphs := []repoGraph{{
-		Repo:     "upvate-core",
+		Repo:     "acme-core",
 		FileRoot: root,
 		Entities: []entityNode{
 			{ID: "c1", Name: "ContractViewSet.list", Kind: "SCOPE.Operation", SourceFile: "controller.py"},
@@ -230,7 +230,7 @@ def persist_to_db(row):
     conn.commit()
 `)
 	graphs := []repoGraph{{
-		Repo:     "upvate-core",
+		Repo:     "acme-core",
 		FileRoot: root,
 		Entities: []entityNode{
 			// Method stored under its qualified name, as the real extractor emits.
@@ -286,7 +286,7 @@ def process_job(self, payload):
     s3.download_file(payload["bucket"], payload["key"], "/tmp/x.pdf")
 `)
 	graphs := []repoGraph{{
-		Repo:     "upvate-core",
+		Repo:     "acme-core",
 		FileRoot: root,
 		Entities: []entityNode{
 			// Decorator-wrapper node (the @shared_task line) and the
@@ -327,7 +327,7 @@ class BuildingViewSet:
         return b
 `)
 	graphs := []repoGraph{{
-		Repo:     "upvate-core",
+		Repo:     "acme-core",
 		FileRoot: root,
 		Entities: []entityNode{
 			{ID: "h1", Name: "create", Kind: "SCOPE.Function", SourceFile: "views.py"},
@@ -356,7 +356,7 @@ class BuildingViewSet:
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(buf), `"upvate-core::ep1"`) {
+	if !strings.Contains(string(buf), `"acme-core::ep1"`) {
 		t.Errorf("sidecar missing endpoint entry; got:\n%s", buf)
 	}
 	if !strings.Contains(string(buf), `"endpoint"`) {
@@ -374,7 +374,7 @@ class HealthView:
         return "ok"
 `)
 	graphs := []repoGraph{{
-		Repo:     "upvate-core",
+		Repo:     "acme-core",
 		FileRoot: root,
 		Entities: []entityNode{
 			{ID: "h1", Name: "get", Kind: "SCOPE.Function", SourceFile: "ping.py"},
@@ -410,7 +410,7 @@ def send_me_notifications():
     Notification.objects.create(user_id=1, body="hi")
 `)
 	graphs := []repoGraph{{
-		Repo:     "upvate-core",
+		Repo:     "acme-core",
 		FileRoot: root,
 		Entities: []entityNode{
 			// The Operation body, named with the bare function name.
@@ -460,7 +460,7 @@ def add_numbers():
     return 1 + 2
 `)
 	graphs := []repoGraph{{
-		Repo:     "upvate-core",
+		Repo:     "acme-core",
 		FileRoot: root,
 		Entities: []entityNode{
 			{ID: "op", Name: "add_numbers", Kind: "SCOPE.Operation", SourceFile: "tasks.py"},
@@ -509,7 +509,7 @@ def _do_clear():
     Inspection.objects.all().delete()
 `)
 	graphs := []repoGraph{{
-		Repo:     "upvate-core",
+		Repo:     "acme-core",
 		FileRoot: root,
 		Entities: []entityNode{
 			// The task body — bare function name, owns the CALLS edge to the helper.
@@ -582,7 +582,7 @@ def _pure_add():
     return 1 + 2
 `)
 	graphs := []repoGraph{{
-		Repo:     "upvate-core",
+		Repo:     "acme-core",
 		FileRoot: root,
 		Entities: []entityNode{
 			{ID: "op", Name: "compute_task", Kind: "SCOPE.Operation", SourceFile: "tasks.py"},

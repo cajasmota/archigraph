@@ -15,15 +15,15 @@ var osMkdirAll = os.MkdirAll
 // argument and without a .grafel/group.json marker (#1650).
 func TestResolveGroup_CWDFromRegistry(t *testing.T) {
 	tmp := t.TempDir()
-	repoPath := filepath.Join(tmp, "upvate_core")
+	repoPath := filepath.Join(tmp, "acme_core")
 	if err := mkdirp(repoPath); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
 	reg := &Registry{
 		Groups: map[string]RegistryGroup{
-			"upvate": {
+			"acme": {
 				Repos: map[string]RegistryRepo{
-					"upvate-core": {Path: repoPath},
+					"acme-core": {Path: repoPath},
 				},
 			},
 			"polyglot-platform": {
@@ -35,7 +35,7 @@ func TestResolveGroup_CWDFromRegistry(t *testing.T) {
 	}
 	st := NewState(reg)
 
-	// Bare cwd inside the registered repo path → resolve "upvate" via registry.
+	// Bare cwd inside the registered repo path → resolve "acme" via registry.
 	subdir := filepath.Join(repoPath, "src", "views")
 	if err := mkdirp(subdir); err != nil {
 		t.Fatalf("mkdir: %v", err)
@@ -44,8 +44,8 @@ func TestResolveGroup_CWDFromRegistry(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolveGroup: %v", err)
 	}
-	if g != "upvate" {
-		t.Errorf("group: want upvate, got %s", g)
+	if g != "acme" {
+		t.Errorf("group: want acme, got %s", g)
 	}
 	if src != "cwd_registry" {
 		t.Errorf("source: want cwd_registry, got %s", src)
@@ -248,20 +248,20 @@ func TestPathContains_CaseInsensitiveOnMacOSWindows(t *testing.T) {
 	}{
 		{
 			name:     "exact match same casing",
-			ancestor: "/Users/test/UpVate/upvate_core",
-			child:    "/Users/test/UpVate/upvate_core/src",
+			ancestor: "/Users/test/Acme/acme_core",
+			child:    "/Users/test/Acme/acme_core/src",
 			want:     true,
 		},
 		{
 			name:     "lowercase child cwd vs uppercase ancestor manifest",
-			ancestor: "/Users/test/UpVate/upvate_core",
-			child:    "/Users/test/upvate/upvate_core/src",
+			ancestor: "/Users/test/Acme/acme_core",
+			child:    "/Users/test/acme/acme_core/src",
 			want:     true,
 		},
 		{
 			name:     "exact equality with different casing",
-			ancestor: "/Users/test/UpVate/upvate_core",
-			child:    "/Users/test/upvate/upvate_core",
+			ancestor: "/Users/test/Acme/acme_core",
+			child:    "/Users/test/acme/acme_core",
 			want:     true,
 		},
 		{
@@ -300,7 +300,7 @@ func TestGroupFromRegistryWithCandidates_CaseInsensitive(t *testing.T) {
 	tmp := t.TempDir()
 
 	// Register repo with uppercase path.
-	upperRepoPath := filepath.Join(tmp, "UpVate", "upvate_core")
+	upperRepoPath := filepath.Join(tmp, "Acme", "acme_core")
 	if err := mkdirp(upperRepoPath); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
@@ -314,9 +314,9 @@ func TestGroupFromRegistryWithCandidates_CaseInsensitive(t *testing.T) {
 
 	reg := &Registry{
 		Groups: map[string]RegistryGroup{
-			"upvate": {
+			"acme": {
 				Repos: map[string]RegistryRepo{
-					"upvate-core": {Path: upperRepoPath},
+					"acme-core": {Path: upperRepoPath},
 				},
 			},
 			"other-group": {
@@ -330,12 +330,12 @@ func TestGroupFromRegistryWithCandidates_CaseInsensitive(t *testing.T) {
 
 	// Use cwd with lowercase path — on a case-insensitive filesystem, this is the
 	// same directory as the registered upperRepoPath, so the match should succeed.
-	lowerRepoPath := filepath.Join(tmp, "upvate", "upvate_core")
+	lowerRepoPath := filepath.Join(tmp, "acme", "acme_core")
 	cwd := filepath.Join(lowerRepoPath, "src", "views")
 
 	g, candidates := groupFromRegistryWithCandidates(st, cwd)
-	if g != "upvate" {
-		t.Errorf("groupFromRegistryWithCandidates: want group=upvate, got %s (candidates: %v)", g, candidates)
+	if g != "acme" {
+		t.Errorf("groupFromRegistryWithCandidates: want group=acme, got %s (candidates: %v)", g, candidates)
 	}
 }
 
@@ -483,15 +483,15 @@ func TestHasGitDirInTree_WalksUp(t *testing.T) {
 // behaviour for tool-listing is implemented in ListToolsForCWD.
 func TestResolveGroup_SingleGroup_RootCwd_ReturnsThatGroup(t *testing.T) {
 	tmp := t.TempDir()
-	repoPath := filepath.Join(tmp, "upvate_core")
+	repoPath := filepath.Join(tmp, "acme_core")
 	if err := mkdirp(repoPath); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
 	reg := &Registry{
 		Groups: map[string]RegistryGroup{
-			"upvate": {
+			"acme": {
 				Repos: map[string]RegistryRepo{
-					"upvate-core": {Path: repoPath},
+					"acme-core": {Path: repoPath},
 				},
 			},
 		},
@@ -503,8 +503,8 @@ func TestResolveGroup_SingleGroup_RootCwd_ReturnsThatGroup(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolveGroup(cwd=/): unexpected error: %v", err)
 	}
-	if g != "upvate" {
-		t.Errorf("resolveGroup(cwd=/): want Group=upvate, got %q", g)
+	if g != "acme" {
+		t.Errorf("resolveGroup(cwd=/): want Group=acme, got %q", g)
 	}
 	if src != "singleton" {
 		t.Errorf("resolveGroup(cwd=/): want Source=singleton, got %q", src)

@@ -403,7 +403,7 @@ function GraphCanvasInner(
   }, [nodes]);
 
   // Fix #1567-1: a group is MULTI-REPO when it spans 2+ distinct repos (e.g.
-  // upvate = 3 islands). In that case the cross-REPO island↔island links are the
+  // acme = 3 islands). In that case the cross-REPO island↔island links are the
   // structure the user wants to trace, so they become the EMPHASIZED tier and the
   // cross-MODULE-within-a-repo links drop to SUBTLE. In a single-repo monorepo
   // there are no cross-repo edges, so cross-MODULE stays the emphasized tier
@@ -648,14 +648,14 @@ function GraphCanvasInner(
     // tiers — faded / subtle / emphasized — then map each edge STATE onto a tier
     // depending on whether the group is multi-repo:
     //   • multi-repo:  cross-REPO (st 2) = emphasized, cross-MODULE (st 1) =
-    //                  subtle, intra-module (st 0) = faded. So in upvate the
+    //                  subtle, intra-module (st 0) = faded. So in acme the
     //                  island↔island bridges light up, NOT the in-repo wiring.
     //   • single-repo: no st-2 edges; cross-MODULE (st 1) = emphasized,
     //                  intra-module (st 0) = faded (the #1569 behavior).
     //
     // Fix #1599: the #1566/#1567 emphasis was tuned with ZERO real cross-repo
     // edges present, so the "make cross-repo pop" path was never exercised against
-    // live data. Now upvate serves 376 cross-repo edges out of 37k — but the old
+    // live data. Now acme serves 376 cross-repo edges out of 37k — but the old
     // tier gaps were so tight (faded≈0.36 / subtle≈0.51 / emph≈0.63) that those
     // 376 bridges were lost in the 37k-edge mesh. Because the cross-repo bridges
     // are RARE (376 of 37k), they can safely be near-opaque + bright WITHOUT
@@ -2198,7 +2198,7 @@ function GraphCanvasInner(
   // color/size buffers with a decaying amber pulse, then restores the base
   // buffers when the pulse ends. This is a pure transient overlay — it never
   // re-layouts, re-clusters, or moves a single node, so it stays performant on
-  // the 20k-node upvate graph (only the touched indices are rewritten each frame;
+  // the 20k-node acme graph (only the touched indices are rewritten each frame;
   // a typical MCP result touches a handful to a few dozen nodes).
   //
   // Edges: WebUI v2 edges have no synthetic id, so an edge glows when BOTH its

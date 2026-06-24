@@ -7,7 +7,7 @@ package python
 //
 // Before #1617 the Python extractor walked the full AST of migration files
 // and emitted one entity per operation (AddField, RemoveField, AlterField,
-// CreateModel, …) plus the Migration class itself. On the UpVate corpus that
+// CreateModel, …) plus the Migration class itself. On the Acme corpus that
 // produced ≈100 entities for 43 actual files (~2.3× over).
 //
 // #1617 pruned migration files entirely — keeping only the per-file

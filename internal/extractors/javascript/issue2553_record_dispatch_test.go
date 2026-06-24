@@ -114,7 +114,7 @@ func countDispatchCallEdges(ents []types.EntityRecord, fromName string) int {
 // edge per registered handler, tagged with via="dynamic_dispatch_map".
 //
 // Fixture mirrors the syncEngine.ts / syncResolvers.ts pattern from the
-// core-mobile offline-sync subsystem (issue #2553).
+// acme-mobile offline-sync subsystem (issue #2553).
 func TestTSExtractor_RecordDispatch_EmitsCallsEdges(t *testing.T) {
 	src := `
 import type { SyncAction } from './types';

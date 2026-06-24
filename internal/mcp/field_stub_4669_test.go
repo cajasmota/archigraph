@@ -13,7 +13,7 @@ import (
 // end-to-end with an on-disk handler source so the partial_stub_fields facet is
 // computed from actual source (fixtures lie at merge → drive the real handler).
 //
-// The marquee upvate cases the rewrite agent flagged:
+// The marquee acme cases the rewrite agent flagged:
 //   - get_extras: reads data but hardcodes cat1/cat5 fields → those flagged.
 //   - checklists: part_id:null → part_id flagged.
 

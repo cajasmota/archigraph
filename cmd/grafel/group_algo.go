@@ -60,7 +60,7 @@ func runGroupAlgo(args []string) int {
 
 	// --diff (#5349 A4): run the differential validator (per-repo-old vs
 	// group-new) and emit a machine-readable JSON report on stdout. It writes
-	// no overlay; CI / the upvate baseline re-run consume the JSON. The process
+	// no overlay; CI / the acme baseline re-run consume the JSON. The process
 	// exits non-zero if the core thesis assertion fails (a cross-repo entity
 	// LOST PageRank rank at group scope).
 	if diff {

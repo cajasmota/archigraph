@@ -12,7 +12,7 @@
 //	    def get_permissions(self):                  # dynamic override
 //	        return [IsAuthenticated(), ...]
 //
-// On a mature DRF codebase (upvate-core) this meant 0 % coverage / hundreds of
+// On a mature DRF codebase (acme-core) this meant 0 % coverage / hundreds of
 // false-positive "unprotected endpoint" findings — a security surface that
 // cried wolf.  This pass stamps the class-level authorisation surface onto the
 // ViewSet/APIView class entity so the auth_coverage detector can read it

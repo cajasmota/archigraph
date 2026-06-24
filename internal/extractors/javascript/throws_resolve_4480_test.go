@@ -28,11 +28,11 @@ import (
 //   AFTER (fix): exactly ONE exception node (the real class) carrying the
 //   THROWS edge; the synthetic SCOPE.ExceptionType node is dropped.
 //
-// Final live confirmation (one node in the core-backend-v3 flow view) needs a
+// Final live confirmation (one node in the acme-backend-v3 flow view) needs a
 // reindex = a user-authorised deploy and is DEFERRED. These tests prove the fix
 // in the extract→resolve→synthesise pipeline byte-for-byte.
 
-const repoTag4480 = "core-backend-v3"
+const repoTag4480 = "acme-backend-v3"
 
 // stampGraphIDs mirrors cmd/grafel.(*Indexer).stampEntityIDs: it assigns
 // every record the deterministic graph.EntityID the resolver and buildDocument
@@ -223,12 +223,12 @@ func TestThrows4480_LocalClass_AfterFix_GREEN(t *testing.T) {
 	}
 }
 
-// --- Case 2: imported external exception class (live upvate-v3 shape) ---------
+// --- Case 2: imported external exception class (live acme-v3 shape) ---------
 //
 // On the live graph the ticket observed `NotFoundException` as TWO nodes: the
 // synthetic SCOPE.ExceptionType AND the imported class materialised as a real
 // `ext:NotFoundException` external entity. We reproduce that exact shape by
-// running the real extractor on the byte-copied core-backend-v3 service (which
+// running the real extractor on the byte-copied acme-backend-v3 service (which
 // emits the synthetic node + the `new NotFoundException()` constructor CALLS
 // edge) and adding the imported-class external entity the live indexer carried,
 // then assert the fix collapses it to one node with THROWS on the real class.
@@ -240,7 +240,7 @@ func TestThrows4480_ImportedExternal_AfterFix_GREEN(t *testing.T) {
 	external.Synthesize(doc)
 
 	// Reproduce the live shape: the imported NotFoundException class present as
-	// a real external entity (kind SCOPE.External), as seen on upvate-v3.
+	// a real external entity (kind SCOPE.External), as seen on acme-v3.
 	doc.Entities = append(doc.Entities, graph.Entity{
 		ID:            "ext:NotFoundException",
 		Name:          "NotFoundException",
@@ -279,7 +279,7 @@ func TestThrows4480_ImportedExternal_AfterFix_GREEN(t *testing.T) {
 
 // --- Case 2b (#4555): dangling constructor CALLS unified onto the one node ---
 //
-// The TRUE live core-backend-v3 shape, reproduced with NO manual entity
+// The TRUE live acme-backend-v3 shape, reproduced with NO manual entity
 // injection. `throw new NotFoundException('Client not found')` produces, fully
 // independently, TWO graph artefacts after the real extractor + Synthesize:
 //

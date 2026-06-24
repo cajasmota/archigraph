@@ -141,7 +141,7 @@ export function linkPalette(isDark: boolean): LinkPalette {
   // sky / lavender-ish slate) so the user can TRACE them on inspection rather
   // than be overwhelmed. Still theme-aware (#1564) + dark-visible.
   // Fix #1599: with real cross-repo edges now present (and rare — 376 of 37k on
-  // upvate), the bridge color is the KEY signal and can be a vivid, fully-
+  // acme), the bridge color is the KEY signal and can be a vivid, fully-
   // saturated cyan in both themes without becoming spaghetti. The intra tiers are
   // pushed quieter (lower contrast vs the bg) so the bright bridges clearly own
   // the foreground. This is the chromatic half of the multi-repo emphasis (the

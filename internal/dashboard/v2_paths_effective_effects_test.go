@@ -3,7 +3,7 @@ package dashboard
 // v2_paths_effective_effects_test.go — #4489 live-validation for the endpoint
 // EFFECTIVE side-effect aggregation.
 //
-// The fixture mirrors the upvate thin-controller shape that triggered the bug:
+// The fixture mirrors the acme thin-controller shape that triggered the bug:
 //
 //	POST /api/v1/widgets  →  WidgetController.create   (handler, NO direct sink)
 //	                              └─CALLS→ WidgetService.create  (db_write)

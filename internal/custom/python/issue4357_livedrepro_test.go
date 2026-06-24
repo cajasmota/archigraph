@@ -85,7 +85,7 @@ func testsEdgeTargets(ents []types.EntityRecord) []string {
 }
 
 // TestIssue4357_UnittestTestCase_CollapsedSuite_AndTestsEdges runs the REAL
-// upvate_core Django unittest file (core/tests/test_schedule_import.py, byte-copied
+// acme_core Django unittest file (core/tests/test_schedule_import.py, byte-copied
 // into testdata) paired with its production module (core/helper/schedule_import_helper.py).
 func TestIssue4357_UnittestTestCase_CollapsedSuite_AndTestsEdges(t *testing.T) {
 	testFile := loadRepro4357(t, "test_schedule_import.py.txt", "core/tests/test_schedule_import.py")
@@ -161,7 +161,7 @@ func TestIssue4357_UnittestTestCase_CollapsedSuite_AndTestsEdges(t *testing.T) {
 }
 
 // TestIssue4357_PytestFunctionStyle_CollapsedSuite_AndTestsEdge covers the
-// pytest function + parametrize + fixture style (the upvate backend is unittest-
+// pytest function + parametrize + fixture style (the acme backend is unittest-
 // only, so this representative file exercises the pure-pytest path).
 func TestIssue4357_PytestFunctionStyle_CollapsedSuite_AndTestsEdge(t *testing.T) {
 	testFile := loadRepro4357(t, "test_orders_pytest.py.txt", "tests/test_orders.py")

@@ -11,7 +11,7 @@
 // class-level guard or `unknown`.
 //
 // These fixtures mirror the byte-level decorator structure of real
-// core-backend-v3 controllers (bodies elided — only the routing/auth decorators
+// acme-backend-v3 controllers (bodies elided — only the routing/auth decorators
 // and the decorated parameter shapes are load-bearing).
 package engine
 

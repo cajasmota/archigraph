@@ -53,7 +53,7 @@ import (
 const MethodEffectPropagation = "effect_propagation"
 
 // maxPropagationIterations bounds the fixed-point loop. Empirically 6
-// iterations cover the deepest call-chains observed on the upvate
+// iterations cover the deepest call-chains observed on the acme
 // monorepo (handler → service → repo → orm-wrapper → external);
 // anything beyond this is almost certainly a cyclic call structure and
 // merits diagnostic surfacing rather than silent extension.

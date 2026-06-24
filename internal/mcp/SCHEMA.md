@@ -593,7 +593,7 @@ carries the `repos` its members span and a `cross_repo` flag (`true` when
     "size": 47,
     "modularity": 0.412,
     "top_entities": ["OrderViewSet", "OrderSerializer", "OrderModel"],
-    "repos": ["api-backend", "core-mobile"],
+    "repos": ["api-backend", "acme-mobile"],
     "cross_repo": true
   }
 ]
@@ -665,8 +665,8 @@ Do **not** gate on the global `is_indexing`.
 {
   "repos": [
     {
-      "repo": "/Users/me/Projects/upvate_core",
-      "group": "upvate",
+      "repo": "/Users/me/Projects/acme_core",
+      "group": "acme",
       "state": "current",
       "indexed_ref": "a1b2c3d",
       "head_ref": "a1b2c3d",

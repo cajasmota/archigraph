@@ -498,7 +498,7 @@ func TestApplyTestsMultiHop_EmptyRoutes(t *testing.T) {
 // Verifies that SynthesiseRoutesToFromEndpoints converts http_endpoint entities
 // (emitted by ApplyDjangoDRFRoutes) into ROUTES_TO RelationshipRecords that
 // buildRoutesToIndex can consume, enabling Pass 2.8 to produce TESTS edges
-// on repositories like upvate that keep router.register() and include() in
+// on repositories like acme that keep router.register() and include() in
 // separate files.
 // ---------------------------------------------------------------------------
 
@@ -599,15 +599,15 @@ func TestSynthesiseRoutesToFromEndpoints_EmptyInput(t *testing.T) {
 	}
 }
 
-// TestMultiHop_UpvatePattern is an integration-style test that simulates the
-// full Pass 2.8 flow for a repository like upvate: router.register() and
+// TestMultiHop_AcmePattern is an integration-style test that simulates the
+// full Pass 2.8 flow for a repository like acme: router.register() and
 // include() in separate files, so pass2Rels has zero ROUTES_TO but
 // pass3Records contains http_endpoint entities from ApplyDjangoDRFRoutes.
 //
 // The test verifies that when SynthesiseRoutesToFromEndpoints output is merged
 // into the routesToRels argument, ApplyTestsMultiHopViaHTTP produces TESTS
 // edges for a Django TestCase class method calling self.client.post(...).
-func TestMultiHop_UpvatePattern(t *testing.T) {
+func TestMultiHop_AcmePattern(t *testing.T) {
 	// Simulate the http_endpoint entity emitted by ApplyDjangoDRFRoutes.
 	drfEndpointEntities := []types.EntityRecord{
 		{
@@ -624,7 +624,7 @@ func TestMultiHop_UpvatePattern(t *testing.T) {
 	}
 
 	// Simulate a Django TestCase test method calling self.client.post('/api/v1/import').
-	const upvateTestSrc = `import io
+	const acmeTestSrc = `import io
 from rest_framework.test import APIClient, APITestCase
 
 class ImportCSVTest(APITestCase):
@@ -639,12 +639,12 @@ class ImportCSVTest(APITestCase):
 
 	paths := []string{"core/tests/test_schedule_import.py"}
 	content := map[string][]byte{
-		"core/tests/test_schedule_import.py": []byte(upvateTestSrc),
+		"core/tests/test_schedule_import.py": []byte(acmeTestSrc),
 	}
 	reader := func(p string) []byte { return content[p] }
 
 	// Simulate what index.go Pass 2.8 now does: synthesise ROUTES_TO from
-	// endpoint entities and merge with pass2Rels (empty for upvate pattern).
+	// endpoint entities and merge with pass2Rels (empty for acme pattern).
 	synthesised := SynthesiseRoutesToFromEndpoints(drfEndpointEntities)
 	if len(synthesised) == 0 {
 		t.Fatal("SynthesiseRoutesToFromEndpoints returned empty — test setup is wrong")

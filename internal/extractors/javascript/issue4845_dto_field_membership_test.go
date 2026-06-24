@@ -1,6 +1,6 @@
 // Package javascript — issue #4845 NestJS/TS DTO field-membership tests.
 //
-// LIVE root cause (upvate-v3): a DTO class such as `CreateAlternateAddressBody`
+// LIVE root cause (acme-v3): a DTO class such as `CreateAlternateAddressBody`
 // RESOLVES to a SCOPE.Component/class entity (type_entity_id present), but the
 // dashboard shape endpoint returned `{subtype:"class", rows:[]}` — the class had
 // ZERO field children. The property fields WERE extracted (as SCOPE.Schema/field
@@ -54,7 +54,7 @@ func fieldEntityExists(ents []types.EntityRecord, className, field string) bool 
 // TestDTO_PlainAndDecoratedFieldsAreContained proves a NestJS DTO with plain,
 // readonly, optional, and @ApiProperty-decorated properties emits one
 // SCOPE.Schema/field entity per property AND a class→field CONTAINS edge for
-// each — the exact gap that left shape rows empty on upvate-v3.
+// each — the exact gap that left shape rows empty on acme-v3.
 func TestDTO_PlainAndDecoratedFieldsAreContained(t *testing.T) {
 	path := "src/address/dto/create-alternate-address-body.dto.ts"
 	src := []byte(`

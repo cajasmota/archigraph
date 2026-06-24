@@ -1005,7 +1005,7 @@ records:
               functions: [ApplyTestsMultiHopViaHTTP, buildRoutesToIndex, normaliseHTTPPath]
           tests:
             - file: internal/engine/tests_edges_test.go
-              functions: [TestTestsEdges_MultiHopViaHttpClient, TestMultiHop_UpvatePattern, TestSynthesiseRoutesToFromEndpoints_DRFPattern]
+              functions: [TestTestsEdges_MultiHopViaHttpClient, TestMultiHop_AcmePattern, TestSynthesiseRoutesToFromEndpoints_DRFPattern]
           issues_implemented: ["3051", "2987"]
           verified_at: "2026-05-29"
       Uncategorized:
@@ -16488,7 +16488,7 @@ records:
               functions: [ApplyTestsMultiHopViaHTTP, buildRoutesToIndex, normaliseHTTPPath]
           tests:
             - file: internal/engine/tests_edges_test.go
-              functions: [TestTestsEdges_MultiHopViaHttpClient, TestMultiHop_UpvatePattern]
+              functions: [TestTestsEdges_MultiHopViaHttpClient, TestMultiHop_AcmePattern]
           issues_implemented: ["3051", "2987"]
           verified_at: "2026-05-29"
       Type System:

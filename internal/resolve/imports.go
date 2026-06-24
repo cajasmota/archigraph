@@ -2170,14 +2170,14 @@ func ResolveImports(records []types.EntityRecord, tbl ImportTable) ImportResolve
 					}
 					// #1991 — Python __init__.py re-exports of module
 					// bindings. `from .celery import app` is normalised by
-					// the extractor (#2026) to ToID="upvate_core.celery.app"
+					// the extractor (#2026) to ToID="acme_core.celery.app"
 					// where `app` is a module-level binding (the
 					// `app = Celery(...)` assignment), not a top-level
 					// function/class entity. The base (module, leaf) lookup
 					// misses because no entity named "app" exists in module
-					// "upvate_core.celery". The whole-path fallback above
+					// "acme_core.celery". The whole-path fallback above
 					// also misses because moduleFileEntity is keyed on
-					// "upvate_core.celery", not the synthetic ".app" tail.
+					// "acme_core.celery", not the synthetic ".app" tail.
 					// Strip the leaf and rebind to the parent module entity
 					// — the re-export refers to a symbol *defined inside*
 					// that module, and the module is the closest live

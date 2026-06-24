@@ -16,7 +16,7 @@
 //	(c) the trailing slash + letter case,
 //
 // — so the exact match misses and the call-site is counted as an orphan even
-// though it clearly targets the backend route. On the upvate corpus this
+// though it clearly targets the backend route. On the acme corpus this
 // accounted for the bulk of intra-repo HTTP orphans (143 of 144 unresolved
 // call synthetics in the backend repo become resolvable once these three axes
 // are normalized away).
@@ -168,7 +168,7 @@ func endpointMatchKeys(path string) []string {
 //  2. Prefix-injection (#2547): when tier 1 misses AND the call path carries no
 //     API/version prefix of its own, retry by prepending each prefix candidate
 //     from prefixCandidates to the normalized call path and probing
-//     definitionByPath. This handles the upvate pattern where the frontend
+//     definitionByPath. This handles the acme pattern where the frontend
 //     extractor emits `/searchBuildings` but the backend mounts the route at
 //     `/api/v1/searchBuildings`.
 //

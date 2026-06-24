@@ -22,7 +22,7 @@ func TestDfEndpointTail(t *testing.T) {
 	cases := []struct {
 		in, want string
 	}{
-		{"upvate-core::SCOPE.Function:handleLogin", "handleLogin"},
+		{"acme-core::SCOPE.Function:handleLogin", "handleLogin"},
 		{"repo::Kind:Name", "Name"},
 		{"sink:raw_sql_exec", "raw_sql_exec"},
 		{"bare", "bare"},

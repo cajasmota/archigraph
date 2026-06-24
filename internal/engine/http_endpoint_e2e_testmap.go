@@ -129,7 +129,7 @@ func linkE2ERouteTestsToEndpoints(
 
 // e2eEndpointToID returns the TESTS-edge ToID for a matched endpoint definition.
 //
-// #4651 — upvate-v3 (NestJS) has many same-named handlers/routes across modules
+// #4651 — acme-v3 (NestJS) has many same-named handlers/routes across modules
 // (`create`, `update`, `getCounts`, `list`, …). When two
 // http_endpoint_definition entities synthesize the SAME endpoint Name (because
 // the route shape collides, or the controller-prefix segment is lost), a
@@ -200,7 +200,7 @@ func resolveRouteTestToDefinition(
 	}
 	if len(tier1) > 1 {
 		// #4651 — multiple definitions share the SAME normalized route key
-		// (upvate-v3 synthesizes colliding endpoint Names across modules, e.g.
+		// (acme-v3 synthesizes colliding endpoint Names across modules, e.g.
 		// two `getCounts` handlers whose routes fold to the same shape). The
 		// bare route can't pick one, but the SPEC carries module/file affinity:
 		// `test/inspections.e2e-spec.ts` belongs with

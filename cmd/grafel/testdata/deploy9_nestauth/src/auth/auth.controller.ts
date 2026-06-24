@@ -1,4 +1,4 @@
-// Deploy-9 fixture — mirrors the REAL core-backend-v2 auth.controller.ts shape:
+// Deploy-9 fixture — mirrors the REAL acme-backend-v2 auth.controller.ts shape:
 // @Public() sits ABOVE the @Post verb decorator on each login/register route,
 // plus one @InternalKeyOrAuth() route and a class-level @Authenticated() default
 // with a per-method @Public() override (exercising getAllAndOverride precedence).

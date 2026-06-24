@@ -8,14 +8,14 @@ import (
 	"github.com/cajasmota/grafel/internal/types"
 )
 
-// Issue #4628 — END-TO-END coverage repro for the upvate-v3 (Django/DRF + pytest)
+// Issue #4628 — END-TO-END coverage repro for the acme-v3 (Django/DRF + pytest)
 // stack. The symptom: every http_endpoint reads UNCOVERED and overall coverage is
 // stuck at ~18%, even though the spec→endpoint linkage (#4351/#4487/#4620) and
 // handler-credit (#4559) passes are all merged.
 //
 // Unlike the existing #4351 fixtures — which keep the SAME `/api/v1` prefix on
 // BOTH the endpoint-definition path AND the test route — this fixture reproduces
-// the LIVE asymmetry of the upvate stack:
+// the LIVE asymmetry of the acme stack:
 //
 //   - DRF synthesizes the endpoint definition with path "/v1/inspections/get_counts"
 //     (the `api` segment dropped during synthesis — the live ID is
@@ -265,7 +265,7 @@ func TestIssue4628_PYTEST_CallsPathFromScopePattern(t *testing.T) {
 // a pytest suite (SCOPE.Pattern) CALLS the DRF ViewSet handler, the handler
 // IMPLEMENTS the http_endpoint — so coverage must propagate
 // suite(CALLS)→handler(covered)→endpoint(handler-hop). This is the dominant
-// shape across the upvate-v3 Python/DRF surface and the reason coverage was
+// shape across the acme-v3 Python/DRF surface and the reason coverage was
 // pinned at ~18% (every endpoint uncovered) before the SCOPE.Pattern fix.
 func TestIssue4628_FullChain_PytestCallsToEndpoint(t *testing.T) {
 	merged := []types.EntityRecord{

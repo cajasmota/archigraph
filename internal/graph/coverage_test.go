@@ -755,7 +755,7 @@ func TestIsNonTestableEntity_PersistedFieldsOnly(t *testing.T) {
 // #4553: endpoint crediting via handler (read-layer shape)
 // ─────────────────────────────────────────────────────────────────────────────
 
-// TestComputeCoverage_EndpointCreditedViaHandler models the upvate-v3 symptom
+// TestComputeCoverage_EndpointCreditedViaHandler models the acme-v3 symptom
 // (#4553): a NestJS controller spec exercises the handler method, but the
 // http_endpoint_definition the handler IMPLEMENTS is a separate synthetic node
 // that no test points at directly. Before the phase-4 hop the endpoint reads
@@ -882,7 +882,7 @@ func TestIsContractSpecFile(t *testing.T) {
 }
 
 // TestComputeCoverage_ThreeStateBands is the headline #4662 fixture mirroring the
-// live upvate-v3 shape. Three endpoints:
+// live acme-v3 shape. Three endpoints:
 //
 //	epReach   — a UNIT spec CALLS its handler        → reach-covered
 //	epCon     — only an OFFLINE contract spec TESTS  → contract-covered-only

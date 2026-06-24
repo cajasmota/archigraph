@@ -15,7 +15,7 @@
 //
 // Before this pass a Flutter app that called a downstream API produced no
 // http_endpoint_call entity and no cross-repo FETCHES edge — the mobile side of
-// the cross-link graph was invisible, so a backend route served by the Upvate
+// the cross-link graph was invisible, so a backend route served by the Acme
 // API had no consumer edge from the mobile screen that calls it.
 //
 // This emits one synthetic http_endpoint_call per detected Dio / http verb call

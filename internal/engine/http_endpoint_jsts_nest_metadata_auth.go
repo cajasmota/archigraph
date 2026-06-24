@@ -11,7 +11,7 @@
 // The pre-existing #2852 resolver only recognised `@UseGuards`, so on such an
 // app EVERY endpoint resolved to method="unknown" and grafel_auth_coverage
 // reported `covered: 0` for genuinely-protected routes (the deploy-9 finding on
-// core-backend-v2 / upvate-v2: 0 / 305).
+// acme-backend-v2 / acme-v2: 0 / 305).
 //
 // This pass recognises the metadata-decorator family at BOTH method level (binds
 // to that handler) and class level (the controller-level default applies to all
@@ -25,7 +25,7 @@
 // Honest-partial: a route carrying NO recognised metadata decorator at method or
 // class level is left to the existing resolver chain (it may still be gated by a
 // truly global APP_GUARD declared in another file — cross-file, not visible to
-// this per-file pass). In core-backend-v2 every route carries a per-route or
+// this per-file pass). In acme-backend-v2 every route carries a per-route or
 // per-class decorator (154 verb decorators ↔ 153 auth decorators), so this pass
 // greens the real numbers without fabricating coverage.
 //
@@ -62,7 +62,7 @@ var nestPublicDecoratorRe = regexp.MustCompile(`@(?:Public|AllowAnonymous|AllowA
 
 // nestProtectiveMetaDecoratorRe matches the metadata-driven requirement
 // decorators recognised across the common RBAC conventions. The set covers the
-// core-backend-v2 family (@RequirePage / @Authenticated / @AnyPage / @OwnerOnly /
+// acme-backend-v2 family (@RequirePage / @Authenticated / @AnyPage / @OwnerOnly /
 // @OwnerAndPage / @HasPage / @RequireAction / @InternalKeyOrAuth) plus the
 // generic nest-access-control / casl spellings (@Permissions / @RequirePermission(s)
 // / @CheckPolicies / @UseRoles). Group 1 = decorator name, group 2 = raw args.

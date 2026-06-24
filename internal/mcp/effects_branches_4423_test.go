@@ -1,7 +1,7 @@
 package mcp
 
 // effects_branches_4423_test.go — in-pipeline test for the #4423 `branches`
-// facet on REAL upvate Django oracle functions.
+// facet on REAL acme Django oracle functions.
 //
 // Per the standing LIVE-VALIDATE rule (fixtures lie at merge): this exercises
 // the REAL effects MCP handler (handleEffects) end-to-end — resolver, on-disk
@@ -36,7 +36,7 @@ import (
 func branchesTestServer(t *testing.T) *Server {
 	t.Helper()
 	doc := &graph.Document{
-		Repo: "upvate-core",
+		Repo: "acme-core",
 		Entities: []graph.Entity{
 			{
 				ID: "op_create_contact", Name: "ContractViewSet.create_contact",
@@ -64,7 +64,7 @@ func branchesTestServer(t *testing.T) *Server {
 		t.Fatalf("abs testdata: %v", err)
 	}
 	srv.State.mu.Lock()
-	srv.State.groups["test"].Repos["upvate-core"].Path = abs
+	srv.State.groups["test"].Repos["acme-core"].Path = abs
 	srv.State.mu.Unlock()
 	return srv
 }

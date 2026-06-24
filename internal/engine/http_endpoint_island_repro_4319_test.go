@@ -15,7 +15,7 @@ import (
 
 // #4319 LIVE REPRO + LONG-TERM-FIX gate.
 //
-// The endpoint `POST /v1/buildings/inspections/me-manage/merge` (upvate-v3 BuildingController)
+// The endpoint `POST /v1/buildings/inspections/me-manage/merge` (acme-v3 BuildingController)
 // was a graph ISLAND on the live graph after a full reindex, despite TWO prior
 // detect-and-repair fixes (#4326 bare↔qualified name match, #4330 file:line
 // co-location). Both reproduced in HAND-BUILT fixtures (handler StartLine set
@@ -27,7 +27,7 @@ import (
 
 const reproControllerFile = "src/modules/buildings/api/building.controller.ts"
 
-// realControllerSrc loads the exact upvate-v3 controller copied into the repo for
+// realControllerSrc loads the exact acme-v3 controller copied into the repo for
 // the repro; falls back to a faithful reconstruction of the merge route shape.
 func realControllerSrc(t *testing.T) []byte {
 	t.Helper()
@@ -209,7 +209,7 @@ func TestIslandRepro4319_BridgeSurvivesLegacyFailure(t *testing.T) {
 	// Model the live post-merge island shape: the merge/dedup step kept a
 	// same-(verb,path) synthetic that carries NO bindable source_handler (a
 	// same-path definition from another pass — e.g. the OpenAPI-spec synthetic
-	// observed on the live upvate graph — won attribution), and the surviving
+	// observed on the live acme graph — won attribution), and the surviving
 	// synthetic's StartLine no longer agrees with the handler's. Strip both.
 	ep.StartLine = 0
 	delete(ep.Properties, "source_handler")

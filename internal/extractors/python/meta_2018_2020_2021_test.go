@@ -16,7 +16,7 @@ package python_test
 //           IMPORTS edges survive Save → Load → re-read.
 //
 // Fixture: client-fixture-X, a minimal __init__.py + sibling module pair
-// mirroring the production W9R1 shape (upvate-core) without leaking any
+// mirroring the production W9R1 shape (acme-core) without leaking any
 // client name (standing scrub rule).
 
 import (

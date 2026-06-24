@@ -141,7 +141,7 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 	//
 	// Before #1617 the full AST walk emitted one entity per operation
 	// (AddField, RemoveField, AlterField, …) plus the Migration class itself —
-	// producing ~2.3× entity inflation on the UpVate corpus (100 entities for
+	// producing ~2.3× entity inflation on the Acme corpus (100 entities for
 	// 43 files). #1617 pruned to file-only. #2283 restores exactly one
 	// Migration entity per file with per-operation metadata encoded as
 	// properties (operations JSON array, op_count, dependencies) rather than

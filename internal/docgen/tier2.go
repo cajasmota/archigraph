@@ -343,7 +343,7 @@ func pickSliceEntities(group, seedID string, maxPages int) ([]string, error) {
 // resolveEntity finds an entity by exact ID, then by prefix/suffix.
 // It normalises seedID via normalizeSeedEntityID so callers can pass either
 // the raw hex ("7a349f6cd77984c9") or the prefixed form returned by
-// grafel_find ("grafel::7a349f6cd77984c9", "upvate-core::7a349f6cd77984c9").
+// grafel_find ("grafel::7a349f6cd77984c9", "acme-core::7a349f6cd77984c9").
 func resolveEntity(byID map[string]*graph.Entity, seedID string) *graph.Entity {
 	// Strip optional <group>:: prefix — ignore error, fall through to raw lookup.
 	if norm, err := normalizeSeedEntityID(seedID); err == nil {

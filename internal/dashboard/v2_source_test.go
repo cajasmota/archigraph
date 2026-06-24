@@ -69,9 +69,9 @@ func TestResolveSourcePath_PinnedRepo(t *testing.T) {
 }
 
 // TestResolveSourcePath_StaleRepoHintFallsBackToGroupScan reproduces the
-// upvate-v3 / core-backend-v3 source-peek failure (#4551). The frontend passed
-// the GROUP name ("upvate-v3") as the repo hint instead of the entity's owning
-// repo slug ("core-backend-v3"), and the file lives in a repo that is NOT the
+// acme-v3 / acme-backend-v3 source-peek failure (#4551). The frontend passed
+// the GROUP name ("acme-v3") as the repo hint instead of the entity's owning
+// repo slug ("acme-backend-v3"), and the file lives in a repo that is NOT the
 // first one in the group. Before the fix the pinned-but-missing hint failed
 // hard ("file not found in any repo"); now it falls back to scanning every
 // repo root and resolves the file in its real repo.
@@ -82,16 +82,16 @@ func TestResolveSourcePath_StaleRepoHintFallsBackToGroupScan(t *testing.T) {
 
 	grp := &DashGroup{Repos: map[string]*DashRepo{
 		"frontend":        {Slug: "frontend", Path: rootEmpty},
-		"core-backend-v3": {Slug: "core-backend-v3", Path: rootBackend},
+		"acme-backend-v3": {Slug: "acme-backend-v3", Path: rootBackend},
 	}}
 
 	// Hint is the GROUP name, which is not a repo slug — must not fail hard.
-	abs, slug, rel, ok := resolveSourcePath(grp, "src/app.controller.ts", "upvate-v3")
+	abs, slug, rel, ok := resolveSourcePath(grp, "src/app.controller.ts", "acme-v3")
 	if !ok {
 		t.Fatalf("expected fallback scan to resolve file despite stale repo hint")
 	}
-	if slug != "core-backend-v3" {
-		t.Errorf("slug = %q; want core-backend-v3", slug)
+	if slug != "acme-backend-v3" {
+		t.Errorf("slug = %q; want acme-backend-v3", slug)
 	}
 	if rel != "src/app.controller.ts" {
 		t.Errorf("rel = %q; want src/app.controller.ts", rel)

@@ -77,40 +77,40 @@ func TestResolvePythonModuleImport_ResolveImports(t *testing.T) {
 }
 
 // TestResolvePythonModuleImport_InitReExportsModuleBinding reproduces #1991.
-// `from .celery import app` inside upvate_core/__init__.py is normalised
-// (post-#2026 relative-import resolution) to ToID="upvate_core.celery.app".
+// `from .celery import app` inside acme_core/__init__.py is normalised
+// (post-#2026 relative-import resolution) to ToID="acme_core.celery.app".
 // `app` is a module-level *binding* (`app = Celery(...)`) rather than a
 // top-level function/class entity, so the (module, leaf) lookup returns
 // nothing. The whole-path probe also misses because moduleFileEntity
-// indexes the module path "upvate_core.celery", not the ".app" tail.
+// indexes the module path "acme_core.celery", not the ".app" tail.
 // Without #1991 the edge then falls through to external-synthesis and
 // produces an unresolved EXTERNAL synthetic — breaking the re-export chain.
 // After the fix the resolver strips the leaf and binds the IMPORTS edge to
 // the celery module's file entity ID, keeping the re-export chain in-graph.
 func TestResolvePythonModuleImport_InitReExportsModuleBinding(t *testing.T) {
 	records := []types.EntityRecord{
-		// Target module: upvate_core/celery.py.
+		// Target module: acme_core/celery.py.
 		{
 			ID:         "celery-module-id",
-			Name:       "upvate_core/celery.py",
-			SourceFile: "upvate_core/celery.py",
+			Name:       "acme_core/celery.py",
+			SourceFile: "acme_core/celery.py",
 			Kind:       "SCOPE.Component",
 			Language:   "python",
 		},
 		// The `__init__.py` carrier with the re-export IMPORTS edge.
 		{
 			ID:         "init-id",
-			Name:       "upvate_core/__init__.py",
-			SourceFile: "upvate_core/__init__.py",
+			Name:       "acme_core/__init__.py",
+			SourceFile: "acme_core/__init__.py",
 			Kind:       "SCOPE.Component",
 			Language:   "python",
 			Relationships: []types.RelationshipRecord{
 				{
 					Kind:   "IMPORTS",
-					ToID:   "upvate_core.celery.app",
+					ToID:   "acme_core.celery.app",
 					FromID: "init-id",
 					Properties: map[string]string{
-						"source_module": "upvate_core.celery",
+						"source_module": "acme_core.celery",
 						"imported_name": "app",
 						"local_name":    "app",
 						"language":      "python",

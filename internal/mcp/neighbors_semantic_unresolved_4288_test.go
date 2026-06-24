@@ -3,8 +3,8 @@ package mcp
 // neighbors_semantic_unresolved_4288_test.go — #4288: grafel_neighbors must
 // surface semantic edges (JOINS_COLLECTION etc.) that inspect's semantic_edges
 // section already shows, INCLUDING when the far-side target is not a backing
-// indexed entity (the real upvate-core case: a DataAccess node JOINS_COLLECTION
-// upvate-core::Class:Inspection where Class:Inspection has no Entity record).
+// indexed entity (the real acme-core case: a DataAccess node JOINS_COLLECTION
+// acme-core::Class:Inspection where Class:Inspection has no Entity record).
 //
 // Pre-fix neighbors(out)/find_callees silently dropped any out-edge whose
 // ToID did not resolve in byID — so the JOINS_COLLECTION neighbour vanished
@@ -17,7 +17,7 @@ import (
 	"github.com/cajasmota/grafel/internal/graph"
 )
 
-// makeJoinsCollectionUnresolvedDoc models the upvate case: a DataAccess node
+// makeJoinsCollectionUnresolvedDoc models the acme case: a DataAccess node
 // with an outbound JOINS_COLLECTION edge to a class id that is NOT an indexed
 // entity (no Entity record for "Class:Inspection").
 func makeJoinsCollectionUnresolvedDoc() *graph.Document {

@@ -1,6 +1,6 @@
 // process_flow_xrepo_4316_test.go — fix for issue #4316.
 //
-// Symptom (measured on `upvate`): 307 cross-repo HTTP links RESOLVED but
+// Symptom (measured on `acme`): 307 cross-repo HTTP links RESOLVED but
 // only 5 cross-repo FLOWS existed, with many flows dead-ending either AT
 // the http-call node (B1) or AT the backend entry handler (B2).
 //

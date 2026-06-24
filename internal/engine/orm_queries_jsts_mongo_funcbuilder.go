@@ -11,7 +11,7 @@
 // idiomatic NestJS pattern never reaches `.aggregate(...)` in the same file:
 // a FUNCTIONAL FACTORY builder whose pipeline functions RETURN the builder for
 // a downstream `model.aggregate(pipeline.build())` executed elsewhere. The live
-// upvate-v3 case (#4320) is `src/common/query/mongo/aggregation.builder.ts`:
+// acme-v3 case (#4320) is `src/common/query/mongo/aggregation.builder.ts`:
 //
 //	export function mongo<Doc>(): AggregationBuilder<Doc> {
 //	  return AggregationBuilder.create<Doc>();

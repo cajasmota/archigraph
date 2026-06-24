@@ -1,6 +1,6 @@
 // Package javascript — issue #4856 TS interface + type-alias field-membership.
 //
-// Follow-up to #4845 (which fixed only `class`). LIVE root cause (upvate-v3):
+// Follow-up to #4845 (which fixed only `class`). LIVE root cause (acme-v3):
 // a NestJS response DTO declared as `export interface AlternateAddressResponse`
 // resolved to a field-less node — the dashboard shape endpoint returned
 // rows:[] / has_children=None — because interface_declaration and

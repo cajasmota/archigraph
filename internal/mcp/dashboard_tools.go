@@ -214,7 +214,7 @@ func (s *Server) handleTopologyTopicDetail(_ context.Context, req mcpapi.CallToo
 	repos := reposToConsider(lg, nil)
 
 	// #1703: use alias-aware repo resolution so slugs with dash/underscore
-	// variants (e.g. "upvate-core" vs "upvate_core") still narrow to the
+	// variants (e.g. "acme-core" vs "acme_core") still narrow to the
 	// correct repo.  Fall back to all repos when the hint is unrecognised —
 	// the per-repo loop below will find the entity via LabelIndex.
 	repoHint, local := splitPrefixed(topicID)
@@ -883,7 +883,7 @@ func buildRepoAliasMap(lg *LoadedGroup) map[string]*LoadedRepo {
 		// Path basename — the links generator has historically derived the
 		// `repo` field of cross-repo Source/Target prefixes from the on-disk
 		// directory name, which uses underscores where the fleet slug uses
-		// dashes (e.g. /Projects/UpVate/upvate_core vs slug upvate-core). When
+		// dashes (e.g. /Projects/Acme/acme_core vs slug acme-core). When
 		// the links file was written under that older convention but the
 		// current graph.fb is tagged with the new slug, neither slug nor
 		// doc.Repo match the link's prefix. Register the directory basename

@@ -46,7 +46,7 @@ import (
 // emitDestructureDetailEnv is the env var that opts const_destructure /
 // const_destructure_call subtype emission back on.
 //
-// Issue #2338: on the UpVate bench corpus the JS/TS extractor produced
+// Issue #2338: on the Acme bench corpus the JS/TS extractor produced
 // ~2,633 SCOPE.Component/const_destructure entities and ~1,294
 // SCOPE.Operation/const_destructure_call entities (~4,000 total, ~20% of
 // the graph) whose consumer landscape was not fully verified. Binding
@@ -441,7 +441,7 @@ func (e *JSExtractor) Extract(ctx context.Context, file extreg.FileInput) ([]typ
 	// callee. This is the per-call equivalent of the file-to-file edge
 	// emitted above and the JS/TS counterpart to the gain the cross/
 	// testmap pass already delivers for Python (iter4: 87 → 459 TESTS
-	// edges, but all gain in upvate-core/Python; frontend produced 1 and
+	// edges, but all gain in acme-core/Python; frontend produced 1 and
 	// mobile 0 across ~2500 test entities). emitTestsEdgesForTestFile is
 	// a no-op for non-test files (cheap filename check) so the hot path
 	// stays cheap.
@@ -3351,7 +3351,7 @@ func (x *extractor) buildHookVarToModule(root ts.Node) map[string]string {
 //     (not function literals, not primitives). This matches the common
 //     pattern where handlers are declared elsewhere and assembled into a map.
 //
-// Issue #2553 — surfaced by core-mobile's offline-sync subsystem where
+// Issue #2553 — surfaced by acme-mobile's offline-sync subsystem where
 // syncEngine.ts dispatches through syncResolvers via RESOLVERS[action.kind](args).
 func (x *extractor) buildDispatchMaps(root ts.Node) map[string]*dispatchMapInfo {
 	if root == nil {

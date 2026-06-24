@@ -4,7 +4,7 @@
 // The corpus pass (ApplyResponseShapesCorpus) drove findHandlerBody /
 // walkPyClassFields / walkDRFSerializer in an O(endpoints × methods ×
 // filesize) loop, compiling a fresh regexp keyed on the handler name on every
-// call. On the 8k-entity Django oracle (upvate_core) this never finished in 5+
+// call. On the 8k-entity Django oracle (acme_core) this never finished in 5+
 // minutes. The fix indexes each unique source string once into name → body-span
 // maps and reuses them across all lookups for that file.
 //

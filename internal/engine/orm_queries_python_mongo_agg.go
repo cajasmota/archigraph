@@ -254,7 +254,7 @@ func scanPythonMongoAggregation(
 			// #4244 re-fix: the Name MUST embed the call-site line. The graph
 			// entity ID is graph.EntityID(repo, kind, NAME, file) — it ignores
 			// StartLine and the looked-up `from`. A file with several
-			// `coll.aggregate(...)` calls on the SAME collection (the upvate
+			// `coll.aggregate(...)` calls on the SAME collection (the acme
 			// building/service.py shape — four `inspections_cln.aggregate(...)`
 			// calls) independently restarts stage indexing at #0, so stage #2 of
 			// call A and stage #2 of call B previously produced the IDENTICAL
@@ -1236,7 +1236,7 @@ var mongoAggPyFromImportRe = regexp.MustCompile(`(?m)^[ \t]*from\s+([.\w]+)\s+im
 // (group 2, newlines and trailing commas included — split/trimmed by the caller).
 // `(?s)` lets `.` span newlines; `[^)]*` is non-greedy enough because a Python
 // import-name list never contains a nested `)`. This is the dominant real
-// builder-import shape in upvate-core's service.py (deploy-8 item-2): without it
+// builder-import shape in acme-core's service.py (deploy-8 item-2): without it
 // the cross-file builder name never resolves and the $lookup `from` collections
 // orphan.
 var mongoAggPyFromImportParenRe = regexp.MustCompile(`(?ms)^[ \t]*from\s+([.\w]+)\s+import\s+\(([^)]*)\)`)

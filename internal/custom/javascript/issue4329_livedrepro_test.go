@@ -15,7 +15,7 @@ import (
 
 // Issue #4329 LIVE-REPRO.
 //
-// Byte-copies of REAL core-backend-v3 files are committed under
+// Byte-copies of REAL acme-backend-v3 files are committed under
 // testdata/issue4329:
 //
 //   - common.module.ts  — registers APP_FILTER / APP_INTERCEPTOR (x3) /

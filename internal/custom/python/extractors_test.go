@@ -583,7 +583,7 @@ def replicate_invoice(sender, instance, **kwargs):
 // TestDjango_SignalReceiver_StackedDecorators verifies that multiple stacked
 // @receiver decorators on a single function are ALL captured, emitting one
 // HANDLES_SIGNAL edge per @receiver (per sender model).
-// Fixes #2599: upvate's replicate_to_datalake.py has 11 @receiver decorators
+// Fixes #2599: acme's replicate_to_datalake.py has 11 @receiver decorators
 // on one function; the old regex only captured the last one per file.
 func TestDjango_SignalReceiver_StackedDecorators(t *testing.T) {
 	src := `@receiver(post_save, sender=Contract)

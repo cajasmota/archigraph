@@ -1,4 +1,4 @@
-// permissions.rs — Rust mirror of the upvate source-of-truth permission map,
+// permissions.rs — Rust mirror of the acme source-of-truth permission map,
 // exercising the const/static value-set shapes #4431 must index. Representative,
 // not production-copied: the key→value pairs intentionally match the Django
 // PERMISSION_PAGES / v3 PermissionPage oracle so a downstream parity-audit can
@@ -10,7 +10,7 @@ use std::collections::HashMap;
 /// Plain scalar module constants — aggregated into one ConstantsGroupName set.
 const MAX_PERMISSIONS: u32 = 256;
 const DEFAULT_SCOPE: &str = "core";
-static SERVICE_NAME: &str = "upvate";
+static SERVICE_NAME: &str = "acme";
 
 /// A const slice map: the canonical &[(&str, &str)] key→value table.
 const PERMISSION_PAGES: &[(&str, &str)] = &[

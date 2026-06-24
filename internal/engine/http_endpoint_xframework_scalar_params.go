@@ -10,7 +10,7 @@
 // http_endpoint), but the dashboard renders the http_endpoint_definition the
 // route SYNTHESIZER emits, which carried no params (Spring composed Route),
 // or carried none at all (Express, FastAPI, DRF). The result was a
-// "Parameters (0) / None" panel on live upvate-v3.
+// "Parameters (0) / None" panel on live acme-v3.
 //
 // Like the deprecation / pagination / response-code passes
 // (http_endpoint_deprecation.go, _pagination.go, _response_codes.go), this is a

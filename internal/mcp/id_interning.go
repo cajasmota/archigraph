@@ -2,7 +2,7 @@ package mcp
 
 // id_interning.go — #1740 Token sprint Tier-2.1: short-form entity-ID interning.
 //
-// Entity IDs on the wire look like "upvate-core::c84f9b9c0c3a7b18" (25–40 chars).
+// Entity IDs on the wire look like "acme-core::c84f9b9c0c3a7b18" (25–40 chars).
 // On graph-heavy responses (expand depth=2, find_callers depth=2, traces:follow)
 // the same id can appear 10+ times in a single response. By replacing every
 // occurrence with a compact handle (@1, @2, …) and emitting a _id_table field
@@ -36,7 +36,7 @@ import (
 
 // idPattern matches the ADR-0009 canonical prefixed entity-ID form:
 //
-//	<repo-slug>::<16-hex>  e.g. "upvate-core::c84f9b9c0c3a7b18"
+//	<repo-slug>::<16-hex>  e.g. "acme-core::c84f9b9c0c3a7b18"
 //
 // Repo-slug characters: letters, digits, hyphens, underscores, dots (the first
 // char must be alphanumeric to avoid matching "::hex" or ":hex" fragments).

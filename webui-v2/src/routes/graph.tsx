@@ -69,8 +69,8 @@ const COLOR_MODES: { id: ColorMode; label: string }[] = [
  * #4319 — SUPER-HUB DEGREE CAP (graph-view freeze fix).
  *
  * A single structural aggregate node can be incident to a huge share of the
- * graph — e.g. the `core-backend-v3` Module is connected to ~every entity via
- * CONTAINS (degree ~15,613 on the upvate-v3 graph), and new aggregate
+ * graph — e.g. the `acme-backend-v3` Module is connected to ~every entity via
+ * CONTAINS (degree ~15,613 on the acme-v3 graph), and new aggregate
  * "god-nodes" (AggregationBuilder, betweenness ~141k) form similar mega-stars.
  *
  * cosmos.gl's force-directed layout does O(edges) work PER TICK (the link

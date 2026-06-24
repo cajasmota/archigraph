@@ -16,7 +16,7 @@ import (
 func effectContextsTestServer(t *testing.T, sourceFile string, start, end int) *Server {
 	t.Helper()
 	doc := &graph.Document{
-		Repo: "upvate-core",
+		Repo: "acme-core",
 		Entities: []graph.Entity{
 			{
 				ID: "op_sync", Name: "sync",
@@ -32,7 +32,7 @@ func effectContextsTestServer(t *testing.T, sourceFile string, start, end int) *
 		t.Fatalf("abs testdata: %v", err)
 	}
 	srv.State.mu.Lock()
-	srv.State.groups["test"].Repos["upvate-core"].Path = abs
+	srv.State.groups["test"].Repos["acme-core"].Path = abs
 	srv.State.mu.Unlock()
 	return srv
 }

@@ -19,7 +19,7 @@ import (
 // that did NOT equal this id, so Outgoing(nodeID) was empty live — twice.
 func TestMongoAggLookupNode_NeighborsSurfaceJoin_4244(t *testing.T) {
 	const (
-		repo = "upvate-core"
+		repo = "acme-core"
 		file = "core/services/building/service.py"
 		// Mirror the live node name shape produced by mongoAggStageName:
 		// "<coll>.aggregate@L<line>#<idx> $lookup".

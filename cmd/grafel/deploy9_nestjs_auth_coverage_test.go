@@ -1,7 +1,7 @@
 package main
 
 // deploy9_nestjs_auth_coverage_test.go — two-layer regression guard for the
-// deploy-9 finding: on core-backend-v2 (upvate-v2), grafel_auth_coverage
+// deploy-9 finding: on acme-backend-v2 (acme-v2), grafel_auth_coverage
 // reported `covered: 0 / overall_coverage: 0` for ALL 305 endpoints because the
 // app gates routes with a GLOBAL guard + metadata decorators (@RequirePage /
 // @Authenticated / @Public ...) rather than @UseGuards — and the JS/TS auth
@@ -10,7 +10,7 @@ package main
 //
 // The fixture (testdata/deploy9_nestauth) copies the REAL controller shapes
 // (buildings.controller.ts → devices.controller.ts; auth.controller.ts) and the
-// REAL decorators (shared/auth.decorators.ts), not edited in core-backend-v2.
+// REAL decorators (shared/auth.decorators.ts), not edited in acme-backend-v2.
 //
 // LAYER 1 — FULL PIPELINE: Index() → graph.{fb,json} → assert each guarded
 // endpoint carries the auth signal (auth_required=true + auth_guard + the page),

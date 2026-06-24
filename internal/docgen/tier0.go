@@ -240,13 +240,13 @@ func defaultOutDir(group string) (string, error) {
 // NormalizeSeedEntityID strips an optional <group>:: or <repo>:: prefix from
 // a seed entity ID and returns the raw 16-char hex. This lets users pass the
 // prefixed form returned by grafel_find (e.g. "grafel::7a349f6cd77984c9"
-// or "upvate-core::7a349f6cd77984c9") directly to --seed-entity without having
+// or "acme-core::7a349f6cd77984c9") directly to --seed-entity without having
 // to manually trim the prefix.
 //
 // Accepted forms (all resolve to the same raw hex):
 //   - "7a349f6cd77984c9"               — raw hex (unchanged)
 //   - "grafel::7a349f6cd77984c9"   — group-prefixed
-//   - "upvate-core::7a349f6cd77984c9"  — repo-prefixed
+//   - "acme-core::7a349f6cd77984c9"  — repo-prefixed
 //
 // Returns an error when the input contains "::" but the RHS is empty.
 func NormalizeSeedEntityID(id string) (string, error) {

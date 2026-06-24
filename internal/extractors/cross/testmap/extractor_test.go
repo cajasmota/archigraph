@@ -110,7 +110,7 @@ func main() { fmt.Println("hi") }`
 // Issue #2060 — TESTS edges carry a convention-derived prodFile hint at every
 // confidence so the resolver short-form path can bind (file, name) without
 // falling through to the "?" global byName lookup (which only resolves
-// globally-unique names — rare in grafel + upvate where production
+// globally-unique names — rare in grafel + acme where production
 // callees like `GetUser` / `create_order` collide across packages).
 // ---------------------------------------------------------------------------
 
@@ -3236,12 +3236,12 @@ FIXTURE = 1
 // ---------------------------------------------------------------------------
 
 // TestPytest_TestsDirWithoutPrefix_IsIndexed exercises the root cause of #2604:
-// Django projects (including upvate) place test files under a tests/ directory
+// Django projects (including acme) place test files under a tests/ directory
 // without requiring a test_ prefix in the basename (e.g. core/tests/schedule.py,
 // api/tests/views.py). Before this fix, selectFramework returned nil for these
 // files because the pytest filenameHints only matched test_*.py / *_test.py
 // basenames. The testmap extractor then returned 0 entities for the whole tests/
-// directory, causing ~107 test entities indexed instead of ~1,406 on upvate.
+// directory, causing ~107 test entities indexed instead of ~1,406 on acme.
 //
 // The fix adds a pathHints regex (/tests?/.*\.py$) that matches the full
 // repo-relative path, so files in tests/ or test/ are recognised without
@@ -3364,7 +3364,7 @@ func TestAllFrameworks_NoPathPatternsInFilenameHints(t *testing.T) {
 // Issue #3173 — TESTS edges wiring for pytest (Django TestCase) + JS (Jest)
 // ---------------------------------------------------------------------------
 
-// TestIssue3173_Pytest_DjangoTestCase_EmitsTESTSEdge exercises the upvate corpus
+// TestIssue3173_Pytest_DjangoTestCase_EmitsTESTSEdge exercises the acme corpus
 // pattern: a Django TestCase test method that directly calls a production helper
 // (resolve_device) should emit a high-confidence TESTS edge targeting that helper.
 // The test also verifies that HTTP test client calls (self.client.post) are NOT

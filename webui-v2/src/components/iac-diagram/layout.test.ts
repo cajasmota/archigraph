@@ -235,7 +235,7 @@ describe("ownership-as-containment (#4862)", () => {
   });
 });
 
-/** #4884 — env-scoped containment fixture mirroring the live upvate-v3 prod tab:
+/** #4884 — env-scoped containment fixture mirroring the live acme-v3 prod tab:
  *  ONE prod module instance whose definition resources are SHARED across envs, so
  *  the backend left their parent_id EMPTY (cross-env). Only the prod instance is
  *  rendered (the dev/staging instances were filtered out by the env tab). The

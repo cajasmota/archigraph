@@ -174,7 +174,7 @@ func applyORMQueries(args DetectorPassArgs) DetectorPassResult {
 		// (`mongo<…>().lookupOne({from}).…` / `AggregationBuilder.create().…`)
 		// that are RETURNED/assigned without a co-located `.aggregate(...)` call.
 		// Emits the same per-stage SCOPE.DataAccess + JOINS_COLLECTION contract,
-		// closing the live upvate-v3 NestJS pipeline-builder gap (#4320).
+		// closing the live acme-v3 NestJS pipeline-builder gap (#4320).
 		scanJSMongoFuncBuilder(src, funcs, path, lang,
 			func(ent types.EntityRecord) { entities = append(entities, ent) },
 			func(rel types.RelationshipRecord) { relationships = append(relationships, rel) },

@@ -10,7 +10,7 @@
 //
 // The `id` field carries the full "<repo>::<localID>" format (ADR-0009) which
 // can be passed directly to grafel_get_source, eliminating the round-trip
-// inspect call that previously ~25% of upvate sessions needed.
+// inspect call that previously ~25% of acme sessions needed.
 package mcp
 
 import (

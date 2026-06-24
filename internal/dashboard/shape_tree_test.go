@@ -232,7 +232,7 @@ func TestShape_NestedExpansion(t *testing.T) {
 // tsFieldShapeFixture models TS DTOs whose field entities carry the JS/TS
 // `name[?]: type` signature convention. CreateAlternateAddressBody is a class
 // DTO (handlePublicFieldDefinition path); AlternateAddressResponse is an
-// interface DTO (emitSchemaMemberFields path). It is the upvate-v3 shape that
+// interface DTO (emitSchemaMemberFields path). It is the acme-v3 shape that
 // surfaced #4868 — the field TYPE came out ” (→ "unknown") and everything was
 // marked required because the Java parser misread `name: type`.
 func tsFieldShapeFixture() *DashGroup {
@@ -366,7 +366,7 @@ func TestShape_UnknownType(t *testing.T) {
 // "(none)". Before the fix findClassEntityByName only matched SCOPE.Component.
 func TestFindClassEntityByName_ResolvesSchemaKindDTO(t *testing.T) {
 	entities := []graph.Entity{
-		// A response DTO indexed as a Schema model (the upvate-v3 shape).
+		// A response DTO indexed as a Schema model (the acme-v3 shape).
 		{
 			ID: "schema_counts", Name: "ProposalCountsResponse",
 			Kind: "SCOPE.Schema", Subtype: "model",
@@ -543,7 +543,7 @@ func TestShape_FieldValidationsChips(t *testing.T) {
 	}
 }
 
-// nestMappedTypeFixture models the live upvate-v3 NestJS mapped-type DTO shape:
+// nestMappedTypeFixture models the live acme-v3 NestJS mapped-type DTO shape:
 // CreateThingBody owns its fields, UpdateThingBody (extends PartialType(...))
 // owns NONE — its field-set is inherited via the EXTENDS edge that #4845's
 // extractor change emits to the base DTO. AdminThingBody adds its own field on
@@ -723,7 +723,7 @@ func nestInterfaceResponseFixture() *DashGroup {
 // TestShape_InterfaceResponseExpandsWithInheritedFields proves #4856's dashboard
 // side: a NestJS response DTO declared as an `interface` returns non-empty shape
 // rows for both its own field and the field inherited via EXTENDS, and reports
-// has_children=true. This is the upvate-v3 AlternateAddressResponse case that
+// has_children=true. This is the acme-v3 AlternateAddressResponse case that
 // previously returned rows:[] / has_children=None.
 func TestShape_InterfaceResponseExpandsWithInheritedFields(t *testing.T) {
 	grp := nestInterfaceResponseFixture()

@@ -1,4 +1,4 @@
-# Real-shape DRF ViewSet mirroring upvate_core core/views/jurisdiction_viewset.py.
+# Real-shape DRF ViewSet mirroring acme_core core/views/jurisdiction_viewset.py.
 # get_permissions() branches on self.action and returns CustomPagePermissionCheck
 # guards keyed by PERMISSION_PAGES["<KEY>"] PER ACTION. The resolved page key must
 # reach the @action's synthesized endpoint as `auth_permissions` through the FULL
@@ -8,7 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-# Stand-ins for upvate_core.settings.PERMISSION_PAGES and the custom guards.
+# Stand-ins for acme_core.settings.PERMISSION_PAGES and the custom guards.
 PERMISSION_PAGES = {
     "JURISDICTIONS": "jurisdictions",
     "EMAIL_TEMPLATES": "email_templates",

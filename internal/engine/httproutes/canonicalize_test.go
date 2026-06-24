@@ -130,7 +130,7 @@ func TestCanonicalize_PythonNamedGroups(t *testing.T) {
 	cases := []struct {
 		framework, in, want string
 	}{
-		// The triggering upvate case: DRF @action(url_path=…) on NoteViewSet.
+		// The triggering acme case: DRF @action(url_path=…) on NoteViewSet.
 		{
 			FrameworkDjango,
 			`group/(?P<group_id>[^/.]+)/entity/(?P<entity>[^/.]+)/(?P<entity_id>[^/.]+)`,

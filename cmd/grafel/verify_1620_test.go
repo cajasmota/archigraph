@@ -11,11 +11,11 @@ import (
 
 // TestVerify1620Pipeline is the isolated end-to-end verification for #1620.
 // Gated behind GRAFEL_VERIFY_REPO so it never runs in normal CI; point it
-// at a real repo (e.g. upvate_core) to measure community counts at every layer
+// at a real repo (e.g. acme_core) to measure community counts at every layer
 // of the pipeline: sidecar -> graph.fb -> loaded Document, plus the fast
 // reactive (graph-algo skipped) re-index. Never touches the live daemon.
 //
-//	GRAFEL_VERIFY_REPO=/path/to/upvate_core go test ./cmd/grafel/ \
+//	GRAFEL_VERIFY_REPO=/path/to/acme_core go test ./cmd/grafel/ \
 //	  -run TestVerify1620Pipeline -v -count=1 -timeout=20m
 func TestVerify1620Pipeline(t *testing.T) {
 	t.Setenv("GRAFEL_DAEMON_ROOT", t.TempDir())

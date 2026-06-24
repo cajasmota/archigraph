@@ -6,7 +6,7 @@ import (
 	"github.com/cajasmota/grafel/internal/types"
 )
 
-// realMePageRetrievePipeline is a BYTE-COPY of the live upvate-v3 consumer
+// realMePageRetrievePipeline is a BYTE-COPY of the live acme-v3 consumer
 // src/modules/me-page/pipelines/me-page-retrieve.pipeline.ts. It exercises the
 // FUNCTIONAL aggregation-builder factory `mongo<T>()` followed by a fluent
 // chain that includes `.lookupOne({ from: 'me_pages', ... })`. The pipeline is
@@ -77,7 +77,7 @@ func runORMOnSource(t *testing.T, path, src string) ([]types.EntityRecord, []typ
 }
 
 // TestMongoFuncBuilder_4320_RealSource reproduces the live gap on a byte-copy of
-// the real upvate-v3 consumer, then (after the fix) asserts the data-access
+// the real acme-v3 consumer, then (after the fix) asserts the data-access
 // semantics are emitted: a SCOPE.DataAccess node for the pipeline stages and a
 // JOINS_COLLECTION edge to the looked-up `me_pages` collection.
 func TestMongoFuncBuilder_4320_RealSource(t *testing.T) {
@@ -119,7 +119,7 @@ func TestMongoFuncBuilder_4320_RealSource(t *testing.T) {
 }
 
 // realInspectionDevicesPipeline is a TRIMMED byte-faithful copy of the live
-// upvate-v3 consumer inspection-devices.pipeline.ts — it mixes an INLINE
+// acme-v3 consumer inspection-devices.pipeline.ts — it mixes an INLINE
 // `.lookup({ from: 'inspection_groups', ... })` (statically resolvable join)
 // with VARIABLE-passed `.lookupPipelineOne(deviceLookup)` (the `from` lives in a
 // separate const → honestly unresolved). Asserts the inline join resolves and

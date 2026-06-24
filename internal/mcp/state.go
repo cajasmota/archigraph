@@ -326,7 +326,7 @@ type LoadedRepo struct {
 	// sentinel community ids, e.g. -1) AFTER the overlay was first applied. When
 	// that happens the overlay file mtime is unchanged, so the group-level memo
 	// would skip re-stamping and the reparsed repo's entities silently revert to
-	// community_id:-1 (the core-mobile symptom in #5401). Tracking the stamped
+	// community_id:-1 (the acme-mobile symptom in #5401). Tracking the stamped
 	// mtime per repo lets the apply re-stamp exactly the repos that were reparsed
 	// since the last stamp, regardless of the overlay-file memo. The zero value
 	// means "never stamped", so a freshly-loaded repo is always (re-)stamped.
@@ -1144,7 +1144,7 @@ func applyGroupAlgoOverlay(grp *LoadedGroup) {
 	// was first applied (a reparse produces fresh doc.Entities carrying the
 	// per-repo sentinel community ids, e.g. -1). With the group memo, that
 	// reparsed repo never got re-stamped and silently reverted to
-	// community_id:-1 (the core-mobile symptom in #5401; the same staleness
+	// community_id:-1 (the acme-mobile symptom in #5401; the same staleness
 	// also left grafel_inspect surfacing nothing in #5400). We re-stamp a repo
 	// whenever EITHER the overlay file advanced (overlayChanged) OR that repo's
 	// graph.fb was reparsed since we last stamped it (lr.mtime moved). This

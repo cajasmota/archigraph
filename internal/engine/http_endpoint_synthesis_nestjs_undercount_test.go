@@ -1,9 +1,9 @@
 package engine
 
 // Regression tests for the NestJS HTTP-endpoint UNDERCOUNT + mis-attribution
-// bug reported by the upvate-v2 Django→NestJS migration (the parity oracle).
+// bug reported by the acme-v2 Django→NestJS migration (the parity oracle).
 //
-// Report: core-backend-v2/.migration/plans/grafel-endpoint-undercount-report.md
+// Report: acme-backend-v2/.migration/plans/grafel-endpoint-undercount-report.md
 //
 // Three defects in synthesizeNestJS / applyHTTPEndpointSynthesis:
 //
@@ -77,7 +77,7 @@ export class AuthController {
 // ---------------------------------------------------------------------------
 // Defect 1 (full controller) — the real 6-route AuthController emits all 6.
 // This is the EXACT decorator-stack shape from
-// core-backend-v2/src/modules/auth/api/auth.controller.ts. Proves the
+// acme-backend-v2/src/modules/auth/api/auth.controller.ts. Proves the
 // undercount (6→? in the report; here 6/6) is gone.
 // ---------------------------------------------------------------------------
 
@@ -198,7 +198,7 @@ export class AuthController {
 // Defect 2 — the thin/aliasing UsersLoginController emits its route. The
 // constructor sitting before the first route must not be mis-bound as the
 // handler. Fixture is the EXACT content of
-// core-backend-v2/src/modules/auth/api/users-login.controller.ts.
+// acme-backend-v2/src/modules/auth/api/users-login.controller.ts.
 // ---------------------------------------------------------------------------
 
 func TestNestJS_Defect2_ThinAliasingController_EmitsRoute(t *testing.T) {
@@ -241,7 +241,7 @@ export class UsersLoginController {
 // ---------------------------------------------------------------------------
 // Defect 3a — the bare @Get() HealthController emits GET /health, sourced from
 // the controller file. Fixture is the EXACT content of
-// core-backend-v2/src/modules/health/health.controller.ts.
+// acme-backend-v2/src/modules/health/health.controller.ts.
 // ---------------------------------------------------------------------------
 
 func TestNestJS_Defect3a_BareGetHealthController_EmitsFromController(t *testing.T) {
@@ -377,7 +377,7 @@ func TestIsNonAppSourceFile(t *testing.T) {
 		desc string
 	}{
 		{"scripts/docs-check.mjs", true, "scripts/ dir"},
-		{"core-backend-v2/scripts/docs-check.mjs", true, "nested scripts/ dir"},
+		{"acme-backend-v2/scripts/docs-check.mjs", true, "nested scripts/ dir"},
 		{"tools/codegen.js", true, "tools/ dir"},
 		{"bin/release.ts", true, "bin/ dir"},
 		{"build.mjs", true, "top-level build script .mjs"},

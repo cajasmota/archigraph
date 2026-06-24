@@ -143,15 +143,15 @@ func TestCLIRegistryFormat(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Group 1: upvate with 1 repo
+	// Group 1: acme with 1 repo
 	cfg1 := map[string]any{
-		"name": "upvate",
+		"name": "acme",
 		"repos": []map[string]any{
 			{"slug": "repo1", "path": r1},
 		},
 	}
 	cfg1Data, _ := json.MarshalIndent(cfg1, "", "  ")
-	cfg1Path := filepath.Join(configDir, "upvate.fleet.json")
+	cfg1Path := filepath.Join(configDir, "acme.fleet.json")
 	if err := os.WriteFile(cfg1Path, cfg1Data, 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -174,7 +174,7 @@ func TestCLIRegistryFormat(t *testing.T) {
 		"version": 1,
 		"groups": []map[string]any{
 			{
-				"name":         "upvate",
+				"name":         "acme",
 				"config_path":  cfg1Path,
 				"installed_at": "2026-05-20T12:00:00Z",
 			},
@@ -202,17 +202,17 @@ func TestCLIRegistryFormat(t *testing.T) {
 	if len(groups) != 2 {
 		t.Errorf("expected 2 groups, got %d: %v", len(groups), groups)
 	}
-	if !containsString(groups, "upvate") || !containsString(groups, "client-fixture") {
-		t.Errorf("expected both upvate and client-fixture groups, got: %v", groups)
+	if !containsString(groups, "acme") || !containsString(groups, "client-fixture") {
+		t.Errorf("expected both acme and client-fixture groups, got: %v", groups)
 	}
 
-	// Verify group upvate has repo1
-	gUpvate := srv.State.Group("upvate")
-	if gUpvate == nil || len(gUpvate.Repos) != 1 {
-		t.Errorf("expected upvate to have 1 repo, got %v", gUpvate)
+	// Verify group acme has repo1
+	gAcme := srv.State.Group("acme")
+	if gAcme == nil || len(gAcme.Repos) != 1 {
+		t.Errorf("expected acme to have 1 repo, got %v", gAcme)
 	}
-	if _, ok := gUpvate.Repos["repo1"]; !ok {
-		t.Errorf("expected upvate to have repo1")
+	if _, ok := gAcme.Repos["repo1"]; !ok {
+		t.Errorf("expected acme to have repo1")
 	}
 
 	// Verify group client-fixture has repo2

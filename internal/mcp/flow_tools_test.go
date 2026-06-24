@@ -424,18 +424,18 @@ func TestFindCallers_FileEntityImportsSource(t *testing.T) {
 // (#2039 / closes #1991)
 func TestFindCallers_ModuleInitReExports(t *testing.T) {
 	// Topology:
-	//   upvate_core/__init__.py (Component, subtype=module) --IMPORTS--> upvate_core.celery
+	//   acme_core/__init__.py (Component, subtype=module) --IMPORTS--> acme_core.celery
 	doc := minDoc(
 		[]graph.Entity{
 			{
-				ID: "init-module", Name: "upvate_core/__init__.py",
-				Kind: "SCOPE.Component", SourceFile: "upvate_core/__init__.py",
+				ID: "init-module", Name: "acme_core/__init__.py",
+				Kind: "SCOPE.Component", SourceFile: "acme_core/__init__.py",
 				Properties: map[string]string{"subtype": "module"},
 			},
 			{
 				ID:   "celery-module",
-				Name: "upvate_core.celery",
-				Kind: "SCOPE.Component", SourceFile: "upvate_core/celery.py",
+				Name: "acme_core.celery",
+				Kind: "SCOPE.Component", SourceFile: "acme_core/celery.py",
 				Properties: map[string]string{"subtype": "module"},
 			},
 			// Target needs a real referencable entity; the test entity itself is
@@ -460,8 +460,8 @@ func TestFindCallers_ModuleInitReExports(t *testing.T) {
 		t.Fatalf("expected 1 caller (__init__.py via IMPORTS), got %d: %v", len(callers), callers)
 	}
 	first := callers[0].(map[string]any)
-	if first["name"] != "upvate_core/__init__.py" {
-		t.Errorf("expected caller=upvate_core/__init__.py, got %v", first["name"])
+	if first["name"] != "acme_core/__init__.py" {
+		t.Errorf("expected caller=acme_core/__init__.py, got %v", first["name"])
 	}
 }
 
@@ -1928,7 +1928,7 @@ func TestFindCallers_TieBreakAlphabetical(t *testing.T) {
 //
 // Fixture: A×1 call, B×3 calls, C×2 calls → expected order [B, C, A].
 // Each caller has exactly ONE relationship record but with "count" in Properties.
-// This matches how JS/Python extractors represent multi-site callers on upvate data.
+// This matches how JS/Python extractors represent multi-site callers on acme data.
 func TestFindCallersIntegration_FrequencyRankedOnRealHandler(t *testing.T) {
 	// One CALLS edge per caller, with Properties["count"] encoding frequency.
 	entities := []graph.Entity{

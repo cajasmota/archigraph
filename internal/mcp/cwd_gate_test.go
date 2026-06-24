@@ -221,7 +221,7 @@ func TestListToolsForCWD_MultipleGroups_UnmatchedCWD_FullList(t *testing.T) {
 func TestListToolsForCWD_SingleGroup_RootCwd_FullList(t *testing.T) {
 	repoDir := t.TempDir()
 	srv := makeTestServer(t, map[string]map[string]string{
-		"upvate": {"upvate_core": repoDir},
+		"acme": {"acme_core": repoDir},
 	})
 
 	entries, err := srv.ListToolsForCWD("/")

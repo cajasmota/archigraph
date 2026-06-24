@@ -523,11 +523,11 @@ func (c *GraphCache) loadGroupForRef(groupName, ref string) (*DashGroup, error) 
 // The repo-slug PREFIX written by the link pass diverges from the dashboard
 // repo slugs in (at least) two ways observed in the corpus:
 //
-//   - underscore vs dash:   "upvate_core"  vs  "upvate-core"
+//   - underscore vs dash:   "acme_core"  vs  "acme-core"
 //   - short name vs full:   "catalog"      vs  "polyglot-platform-services-catalog"
 //
 // Because the <entity-id> suffix is globally unique within a group (verified:
-// 0 collisions across upvate's 19,613 and polyglot-platform's 1,316 nodes),
+// 0 collisions across acme's 19,613 and polyglot-platform's 1,316 nodes),
 // the most reliable resolution is by that suffix: we index every entity ID ->
 // its canonical prefixed node ID and rewrite each endpoint to the canonical
 // form of the entity it points at. Endpoints whose entity ID is unknown (or

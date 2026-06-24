@@ -28,7 +28,7 @@
 // joined pair yields one diff record. format=terse omits the per-side Detail
 // strings; format=full includes the full posture provenance.
 //
-// Live cross-graph validation (oracle upvate vs v3 upvate-v3) is DEPLOY-GATED:
+// Live cross-graph validation (oracle acme vs v3 acme-v3) is DEPLOY-GATED:
 // it needs a live reindex of BOTH groups so the endpoints carry current
 // auth-posture properties. The decode + diff logic is unit-tested in
 // internal/authposture; this handler is exercised by a stubbed 2-group store.

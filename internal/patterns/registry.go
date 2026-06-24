@@ -64,7 +64,7 @@ func normalizeLanguage(lang string) string {
 // makeEntity constructs a minimal EntityRecord for a pattern match.
 //
 // Issue #1725 — SCOPE.Pattern entities were emitted with empty
-// qualified_name in 100% of cases (1156/1156 on upvate-core). The fix
+// qualified_name in 100% of cases (1156/1156 on acme-core). The fix
 // derives a stable, file-scoped QN from the source path so downstream
 // consumers (denoise, dashboards, search) can resolve the pattern back
 // to its containing module. Format:

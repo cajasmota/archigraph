@@ -23,7 +23,7 @@ import (
 func callContextsServer(t *testing.T, sourceFile string, start, end int, callerName string, callLines [3]int) *Server {
 	t.Helper()
 	doc := &graph.Document{
-		Repo: "upvate-core",
+		Repo: "acme-core",
 		Entities: []graph.Entity{
 			{
 				ID: "op_sync", Name: callerName,
@@ -47,7 +47,7 @@ func callContextsServer(t *testing.T, sourceFile string, start, end int, callerN
 		t.Fatalf("abs testdata: %v", err)
 	}
 	srv.State.mu.Lock()
-	srv.State.groups["test"].Repos["upvate-core"].Path = abs
+	srv.State.groups["test"].Repos["acme-core"].Path = abs
 	srv.State.mu.Unlock()
 	return srv
 }

@@ -1,4 +1,4 @@
-// Deploy-9 fixture controller — mirrors the REAL core-backend-v2
+// Deploy-9 fixture controller — mirrors the REAL acme-backend-v2
 // buildings.controller.ts decorator layout: a global PermissionsGuard +
 // AuthenticationGuard (registered as APP_GUARD elsewhere) enforce auth; each
 // route declares its requirement with a SetMetadata-based decorator. There is

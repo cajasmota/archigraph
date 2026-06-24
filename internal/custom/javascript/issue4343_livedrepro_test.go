@@ -15,7 +15,7 @@ import (
 
 // Issue #4343 LIVE-REPRO.
 //
-// Byte-copies of REAL core-backend-v3 *.spec.ts files are committed under
+// Byte-copies of REAL acme-backend-v3 *.spec.ts files are committed under
 // testdata/issue4343. We run the ACTUAL jest extractor (and the ACTUAL
 // resolve.BuildIndex symbol table) over them and assert:
 //

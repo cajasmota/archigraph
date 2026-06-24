@@ -134,22 +134,22 @@ func TestSeedEntity_GrafelPrefixed(t *testing.T) {
 }
 
 // TestSeedEntity_ArbitraryGroupPrefixed checks that "<group>::<hex>" resolves
-// for a repo-specific group name (e.g. upvate-core).
+// for a repo-specific group name (e.g. acme-core).
 func TestSeedEntity_ArbitraryGroupPrefixed(t *testing.T) {
 	const rawHex = "7a349f6cd77984c9"
 	group := buildSeedEntityFixture(t, rawHex)
 
 	_, _, score, err := docgen.Run(docgen.RunOpts{
 		Group:        group,
-		SeedEntityID: "upvate-core::" + rawHex, // any group:: prefix must work
+		SeedEntityID: "acme-core::" + rawHex, // any group:: prefix must work
 		Section:      "overview",
 		OutputDir:    t.TempDir(),
 	})
 	if err != nil {
-		t.Fatalf("Run with prefixed upvate-core:: form: %v", err)
+		t.Fatalf("Run with prefixed acme-core:: form: %v", err)
 	}
 	if !score.SeedEntityFound {
-		t.Errorf("seed_entity_found: want true (upvate-core:: prefix), got false")
+		t.Errorf("seed_entity_found: want true (acme-core:: prefix), got false")
 	}
 }
 

@@ -107,7 +107,7 @@ var receiverDefRe = regexp.MustCompile(
 //
 // A class is treated as a Serializer candidate when its name ends in
 // "Serializer" OR when its base-class list contains a name ending in
-// "Serializer".  This matches the conventions used in upvate_core and the
+// "Serializer".  This matches the conventions used in acme_core and the
 // majority of DRF codebases.
 //
 // pyPaths:    repo-relative paths of every Python file.
@@ -235,7 +235,7 @@ func senderClassNameFromString(s string) (appLabel, className string) {
 // Bare `@receiver(post_save)` handlers (without sender=) are intentionally
 // skipped because they don't name a specific model.
 //
-// Multiple stacked @receiver decorators on the same def (upvate_core pattern:
+// Multiple stacked @receiver decorators on the same def (acme_core pattern:
 // one @receiver per model) each produce a separate HANDLES_SIGNAL edge.
 func ApplyReceiverSenderEdges(
 	pyPaths []string,

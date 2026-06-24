@@ -4,7 +4,7 @@ package engine
 // messaging Topology channels.
 //
 // The TestIaCTopologyChannels_RealTerraformSQSModule case runs a BYTE-COPY of
-// the real core-backend-v3 `infra/terraform/modules/sqs-queue/main.tf`
+// the real acme-backend-v3 `infra/terraform/modules/sqs-queue/main.tf`
 // (aws_sqs_queue.main + .dlq) through the actual HCL extractor and then through
 // applyIaCTopologyChannels, asserting both queues emerge as SCOPE.Queue
 // broker=sqs channels. Before this pass, /topology reported "No async channels
@@ -22,7 +22,7 @@ import (
 )
 
 // realCoreBackendSQSModule is a verbatim copy of
-// core-backend-v3/infra/terraform/modules/sqs-queue/main.tf.
+// acme-backend-v3/infra/terraform/modules/sqs-queue/main.tf.
 const realCoreBackendSQSModule = `locals {
   queue_name = "${var.env}-${var.name}"
   dlq_name   = "${var.env}-${var.name}-dlq"

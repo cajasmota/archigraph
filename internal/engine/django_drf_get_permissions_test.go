@@ -348,7 +348,7 @@ func TestPostureForAction_PermissionPages(t *testing.T) {
 }
 
 // TestParseDRFActionPermissions_AssignThenReturnComprehension is the #3972
-// value-asserting direct-parser test on the REAL upvate GroupViewSet shape:
+// value-asserting direct-parser test on the REAL acme GroupViewSet shape:
 // each branch ASSIGNS `permission_classes = [...]` (not `return [...]`) and the
 // method ends with `return [p() for p in permission_classes]` — the assigned
 // list must bind per branch, the PERMISSION_PAGES["<KEY>"] argument must surface
@@ -438,7 +438,7 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from core.helper.permissions import CustomPagePermissionCheck, CustomActionPermissionCheck
-from upvate_core.settings import PERMISSION_PAGES
+from acme_core.settings import PERMISSION_PAGES
 
 class GroupViewSet(ModelViewSet):
     @action(detail=False, methods=["get"], url_path="jurisdictions")

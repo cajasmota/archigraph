@@ -23,7 +23,7 @@
 //     collapses to the highest-confidence call and a noisy naming-convention
 //     fallback that walks up to the wrong ViewSet).
 //
-// On upvate-core this left TESTS coverage at ~0.6%: every TESTS edge originated
+// On acme-core this left TESTS coverage at ~0.6%: every TESTS edge originated
 // from a SCOPE.Pattern coverage wrapper (not the test-function entity itself)
 // and pointed at a handful of mis-resolved targets, so grafel_test_coverage
 // reported almost no covered production entities.

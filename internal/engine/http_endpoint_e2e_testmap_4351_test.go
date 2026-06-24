@@ -10,7 +10,7 @@ import (
 // TESTS edge from the test_suite to the http_endpoint_definition they exercise.
 //
 // These tests drive the REAL resolve pass (ResolveHTTPEndpointHandlers) over a
-// merged entity table shaped like the live core-backend-v3 graph: NestJS
+// merged entity table shaped like the live acme-backend-v3 graph: NestJS
 // controller routes synthesized as http_endpoint_definition entities (with an
 // `/api/v1` mount prefix and `:id`/`{id}` template params) plus the one-per-spec
 // test_suite that the Jest extractor stamps with `e2e_route_calls`.

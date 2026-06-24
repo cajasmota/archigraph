@@ -84,7 +84,7 @@ focused on additive token-economy work that does not break agent callers.
 
 ## Anti-goals (kept out of scope this PR)
 
-- Removing any tool the upvate field-report uses (#1742 acceptance bar).
+- Removing any tool the acme field-report uses (#1742 acceptance bar).
 - Hard rename of `find` / `inspect` / `expand` / `trace` — deferred to next
   release with a deprecation cycle.
 - Folding `quality_*` / `secrets` / `module_analysis` under one bundle — that

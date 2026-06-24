@@ -129,7 +129,7 @@ func hasModulePrefix(source string, prefixes []string) bool {
 // Angular and NestJS both spell a DI provider `@Injectable()` with a
 // constructor-injected providers list, so the bare decorator name is
 // insufficient: classifying every @Injectable as Angular mis-tags an entire
-// NestJS codebase as Angular (the upvate-v3 /di "121 angular" bug). The
+// NestJS codebase as Angular (the acme-v3 /di "121 angular" bug). The
 // disambiguation is by import-origin/markers, not the bare decorator:
 //
 //   - The NestJS-only decorators (@Controller / @Resolver / @WebSocketGateway)

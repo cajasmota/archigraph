@@ -40,7 +40,7 @@ class AocReadOnlyViewSet(viewsets.ReadOnlyModelViewSet):
 
 // TestDRFViewSet_NoDoubleEmit verifies that a DRF ViewSet class emits exactly
 // ONE entity node — the View — and NOT a duplicate Controller.  Regression for
-// issue #3172 ("~72 phantom Controller nodes in Upvate bench, AocViewSet being
+// issue #3172 ("~72 phantom Controller nodes in Acme bench, AocViewSet being
 // the canonical example").
 func TestDRFViewSet_NoDoubleEmit(t *testing.T) {
 	rules, err := LoadAllRules()

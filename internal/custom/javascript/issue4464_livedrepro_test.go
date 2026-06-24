@@ -18,7 +18,7 @@ import (
 
 // Issue #4464 LIVE-REPRO — handler→request-DTO ACCEPTS_INPUT edge.
 //
-// Byte-copies of REAL core-backend-v3 files are committed under
+// Byte-copies of REAL acme-backend-v3 files are committed under
 // testdata/dto_4464:
 //
 //   - permit.controller.ts        — `@Get() list(@Query() query: PermitListQueryDto)
@@ -29,7 +29,7 @@ import (
 // DTOs (reNestBodyParam). The whole-object @Query()/@Param()/@Headers() request
 // DTOs got a `parameters` PROPERTY but NO graph EDGE, so PermitListQueryDto (and
 // its CONTAINS field subtree, #4328) floated as orphan degree-1 nodes — the
-// upvate-v3 'orphan ring' root cause.
+// acme-v3 'orphan ring' root cause.
 //
 // POST-FIX: each whole-object non-@Body request DTO yields an ACCEPTS_INPUT edge
 // (match_source=param_decorator) to `Class:<dto>`, which the central resolver

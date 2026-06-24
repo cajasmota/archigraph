@@ -1,6 +1,6 @@
 // drf_serializer_fields.go — DRF serializer-field REFERENCES emission.
 //
-// Issue #2061 — Across upvate, polyglot-platform and client-fixture-de,
+// Issue #2061 — Across acme, polyglot-platform and client-fixture-de,
 // SCOPE.Schema/field entities emitted for DRF serializer field declarations
 // were consistently degree-0 orphans (~1 132 across three groups). Post
 // #2042 / #2052 / #2057 covered model-side relational shapes (FK / O2O / M2M

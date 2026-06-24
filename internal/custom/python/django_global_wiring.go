@@ -51,7 +51,7 @@ var (
 	// (...) tuple (both are idiomatic), so the opening delimiter is captured
 	// (group 1) and the body read by balanced scan — the legacy
 	// djangoDRFAuthClassesRe only handled [...] and silently missed the very
-	// common tuple form (e.g. the real upvate_core settings).
+	// common tuple form (e.g. the real acme_core settings).
 	djangoDRFDefaultClassKeyRe = regexp.MustCompile(
 		`["'](DEFAULT_AUTHENTICATION_CLASSES|DEFAULT_PERMISSION_CLASSES|DEFAULT_RENDERER_CLASSES)["']\s*:\s*([\[(])`)
 

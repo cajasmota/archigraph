@@ -7,7 +7,7 @@
 // diverged: stub_detector stripped the /api[/vN] prefix and canonicalised
 // path-params to {*}, but auth_posture_diff did NOT strip the api-prefix and
 // additionally folded a DRF #action suffix into the key — so on the real
-// upvate (DRF /api/v1/...) ↔ upvate-v3 (NestJS /v1/...) groups its join matched
+// acme (DRF /api/v1/...) ↔ acme-v3 (NestJS /v1/...) groups its join matched
 // ZERO endpoints while stub_detector matched 420/446 on the same data.
 //
 // This is now the ONE normalizer both tools call. It mirrors the cross-repo

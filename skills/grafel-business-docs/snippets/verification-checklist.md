@@ -33,7 +33,7 @@ False positives are possible (acronyms, capitalized prose words) — review each
 
 - [ ] No link points into a source-code directory (`src/`, `core/`, `dockerfile`, …). Source paths are backticked, not linked.
 - [ ] No bare-directory link (`](modules/)`) without a real index-file target that exists.
-- [ ] Relative link PATHS use the filesystem dirname; prose may use the slug. (Catches the `upvate-core` vs `upvate_core` 404.)
+- [ ] Relative link PATHS use the filesystem dirname; prose may use the slug. (Catches the `acme-core` vs `acme_core` 404.)
 - [ ] No link to an optional page the plan did not schedule.
 - [ ] If the file declares `anchors:` in frontmatter, every declared anchor has a matching heading IN THIS FILE whose slug equals it. The list was derived FROM the headings, not hand-authored.
 

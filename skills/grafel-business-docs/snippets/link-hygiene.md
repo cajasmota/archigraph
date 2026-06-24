@@ -41,10 +41,10 @@ Never emit `](modules/)` with a trailing slash and no file.
 
 ## 4. Use the filesystem dirname for paths, the slug for prose
 
-The registry slug (`upvate-core`, hyphenated) and the on-disk directory
-(`upvate_core`, underscored) can differ. This caused
-`core-mobile/docs/overview.md` → `../../upvate-core/docs/` (404, dir is
-`upvate_core`).
+The registry slug (`acme-core`, hyphenated) and the on-disk directory
+(`acme_core`, underscored) can differ. This caused
+`acme-mobile/docs/overview.md` → `../../acme-core/docs/` (404, dir is
+`acme_core`).
 
 - **Relative link paths** (`../../<dir>/docs/...`) MUST use the actual
   filesystem directory name. Resolve it from `grafel_orient (view=me)` /
@@ -52,7 +52,7 @@ The registry slug (`upvate-core`, hyphenated) and the on-disk directory
 - **Prose / display text** may use the human slug.
 
 ```markdown
-See the [billing overview](../../upvate_core/docs/overview.md) in `upvate-core`.
+See the [billing overview](../../acme_core/docs/overview.md) in `acme-core`.
                               └ filesystem dirname ┘            └ slug in prose ┘
 ```
 

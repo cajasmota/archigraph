@@ -127,8 +127,8 @@ func readDirBounded(dir string, timeout time.Duration) (entries []os.DirEntry, e
 // inputs that differ only in casing refer to the same directory but
 // sha256(path) would produce different hashes. canonicalizePath walks
 // each segment top-down via os.ReadDir and substitutes the real entry
-// name so that "UpVate" and "upvate" both canonicalize to whichever
-// casing the filesystem holds (e.g. "UpVate").
+// name so that "Acme" and "acme" both canonicalize to whichever
+// casing the filesystem holds (e.g. "Acme").
 //
 // If a segment is not found on disk (path may be virtual or not yet
 // created) the input casing is preserved for that segment and all

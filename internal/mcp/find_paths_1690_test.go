@@ -28,7 +28,7 @@ import (
 // canonicalise both sides to the slug so BFS can continue.
 func TestFindPaths_1690_RepoPrefixAlias(t *testing.T) {
 	docMobile := &graph.Document{
-		Repo: "core-mobile",
+		Repo: "acme-mobile",
 		Entities: []graph.Entity{
 			{ID: "caller_fn", Name: "createInspectionDeficiency", Kind: "Function", SourceFile: "api.ts"},
 			{ID: "ep_call", Name: "http:POST:/inspections", Kind: "http_endpoint_call", SourceFile: "api.ts"},
@@ -38,19 +38,19 @@ func TestFindPaths_1690_RepoPrefixAlias(t *testing.T) {
 		},
 	}
 	docCore := &graph.Document{
-		Repo: "upvate-core", // fleet slug
+		Repo: "acme-core", // fleet slug
 		Entities: []graph.Entity{
 			{ID: "handler_fn", Name: "InspectionViewSet.create_deficiency", Kind: "Function", SourceFile: "views.py"},
 		},
 	}
 	srv := newTestServer(t, docMobile, docCore)
 	lg := srv.State.Group("test")
-	// The links emitter wrote the upvate-core side as `upvate_core::handler_fn`
+	// The links emitter wrote the acme-core side as `acme_core::handler_fn`
 	// (path-basename with underscores) — this MUST still resolve.
 	lg.Links = []CrossRepoLink{
 		{
-			Source:   prefixedID("core-mobile", "ep_call"),
-			Target:   "upvate_core::handler_fn",
+			Source:   prefixedID("acme-mobile", "ep_call"),
+			Target:   "acme_core::handler_fn",
 			Relation: "calls",
 			Method:   "http",
 		},
@@ -58,8 +58,8 @@ func TestFindPaths_1690_RepoPrefixAlias(t *testing.T) {
 
 	res := callEndpointTool(t, srv.handleFindPaths, map[string]any{
 		"group": "test",
-		"from":  prefixedID("core-mobile", "caller_fn"),
-		"to":    prefixedID("upvate-core", "handler_fn"),
+		"from":  prefixedID("acme-mobile", "caller_fn"),
+		"to":    prefixedID("acme-core", "handler_fn"),
 	})
 	if found, _ := res["found"].(bool); !found {
 		t.Fatalf("expected cross-repo path via underscore-prefixed link target, got: %v", res)
@@ -83,7 +83,7 @@ func TestFindPaths_1690_RepoPrefixAlias(t *testing.T) {
 // BFS must walk IMPLEMENTS in reverse.
 func TestFindPaths_1690_ReverseImplementsAcrossRepo(t *testing.T) {
 	docMobile := &graph.Document{
-		Repo: "core-mobile",
+		Repo: "acme-mobile",
 		Entities: []graph.Entity{
 			{ID: "caller_fn", Name: "createInspectionDeficiency", Kind: "Function", SourceFile: "api.ts"},
 			{ID: "ep_call", Name: "http:POST:/inspections", Kind: "http_endpoint_call", SourceFile: "api.ts"},
@@ -93,7 +93,7 @@ func TestFindPaths_1690_ReverseImplementsAcrossRepo(t *testing.T) {
 		},
 	}
 	docCore := &graph.Document{
-		Repo: "upvate-core",
+		Repo: "acme-core",
 		Entities: []graph.Entity{
 			{ID: "handler_fn", Name: "InspectionViewSet.create_deficiency", Kind: "Function", SourceFile: "views.py"},
 			{ID: "ep_def", Name: "http:POST:/inspections", Kind: "http_endpoint_definition", SourceFile: "views.py"},
@@ -108,8 +108,8 @@ func TestFindPaths_1690_ReverseImplementsAcrossRepo(t *testing.T) {
 	lg := srv.State.Group("test")
 	lg.Links = []CrossRepoLink{
 		{
-			Source:   prefixedID("core-mobile", "ep_call"),
-			Target:   prefixedID("upvate-core", "ep_def"), // lands on the endpoint, NOT the handler
+			Source:   prefixedID("acme-mobile", "ep_call"),
+			Target:   prefixedID("acme-core", "ep_def"), // lands on the endpoint, NOT the handler
 			Relation: "calls",
 			Method:   "http",
 		},
@@ -117,8 +117,8 @@ func TestFindPaths_1690_ReverseImplementsAcrossRepo(t *testing.T) {
 
 	res := callEndpointTool(t, srv.handleFindPaths, map[string]any{
 		"group": "test",
-		"from":  prefixedID("core-mobile", "caller_fn"),
-		"to":    prefixedID("upvate-core", "handler_fn"),
+		"from":  prefixedID("acme-mobile", "caller_fn"),
+		"to":    prefixedID("acme-core", "handler_fn"),
 	})
 	if found, _ := res["found"].(bool); !found {
 		t.Fatalf("expected find_paths to walk IMPLEMENTS in reverse, got: %v", res)

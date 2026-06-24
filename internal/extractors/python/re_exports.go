@@ -2,7 +2,7 @@
 //
 // Package __init__.py files are the canonical Python re-export surface:
 //
-//	# upvate_core/__init__.py
+//	# acme_core/__init__.py
 //	from .celery import app as celery_app
 //	from .models import User, Group
 //	__all__ = ("celery_app", "User", "Group")

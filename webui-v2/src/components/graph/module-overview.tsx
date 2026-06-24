@@ -2,7 +2,7 @@
    components/graph/module-overview.tsx — the COLLAPSED module-level
    canvas (#1386, closes epic #1380 alongside #1384).
 
-   At module scope a corpus is small (12 modules on upvate, ~30 on
+   At module scope a corpus is small (12 modules on acme, ~30 on
    polyglot per repo) so we skip cosmos.gl entirely and lay the graph
    out in SVG. The render is deterministic + screenshot-friendly:
 

@@ -46,7 +46,7 @@ func parseMembersJSON(t *testing.T, en *types.EntityRecord) map[string]string {
 // hyphen-vs-underscore parity case from the cross-language oracle).
 func TestJavaConstMap_StaticFinalMapOf(t *testing.T) {
 	src := `
-package com.upvate.auth;
+package com.acme.auth;
 
 import java.util.Map;
 
@@ -91,7 +91,7 @@ public final class RoleSlugs {
 // as one value-set named after the interface.
 func TestJavaConstGroup_InterfaceConstants(t *testing.T) {
 	src := `
-package com.upvate.auth;
+package com.acme.auth;
 
 public interface Permissions {
     String READ = "read";
@@ -121,7 +121,7 @@ public interface Permissions {
 // TestJavaConstMap_MapOfEntries covers the Map.ofEntries(entry(...)) shape.
 func TestJavaConstMap_MapOfEntries(t *testing.T) {
 	src := `
-package com.upvate.auth;
+package com.acme.auth;
 
 import java.util.Map;
 import static java.util.Map.entry;
@@ -148,7 +148,7 @@ public final class Codes {
 // builder().put(...).build() chain (declaration order preserved).
 func TestJavaConstMap_GuavaImmutableMap(t *testing.T) {
 	src := `
-package com.upvate.auth;
+package com.acme.auth;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -190,7 +190,7 @@ public final class GuavaMaps {
 // TestJavaConstArray covers a static-final array of constant string literals.
 func TestJavaConstArray(t *testing.T) {
 	src := `
-package com.upvate.auth;
+package com.acme.auth;
 
 public final class Names {
     static final String[] NAMES = {"alpha", "beta", "gamma"};
@@ -213,7 +213,7 @@ public final class Names {
 // constant is NOT promoted to a value-set (needs ≥2 to be a comparable set).
 func TestJavaConstGroup_SingleConstantNotEmitted(t *testing.T) {
 	src := `
-package com.upvate.auth;
+package com.acme.auth;
 
 public final class Lonely {
     public static final String ONLY = "one";

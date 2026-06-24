@@ -5,7 +5,7 @@ package engine
 // method route normalised identically across controllers, collapsing distinct
 // endpoints onto one synthetic ("defined in N controllers").
 //
-// Real source (core-backend-v3):
+// Real source (acme-backend-v3):
 //
 //	@Controller({ path: 'companies/inspection',  version: '1' })  inspection-company.controller.ts:17
 //	@Controller({ path: 'companies/witnessing',  version: '1' })  witnessing-company.controller.ts:17

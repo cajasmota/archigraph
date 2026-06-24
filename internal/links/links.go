@@ -720,7 +720,7 @@ func loadAllGraphs(graphsDir string) ([]repoGraph, error) {
 		// exact fleet slug (dash form). doc.Repo, by contrast, is set from
 		// the repoTag written at index time — historically derived from the
 		// on-disk directory basename, which may use underscores where the
-		// fleet config uses dashes (e.g. "upvate_core" vs "upvate-core").
+		// fleet config uses dashes (e.g. "acme_core" vs "acme-core").
 		// Using the directory name here means the emitter writes the correct
 		// fleet slug into Link.Source / Link.Target, so downstream readers
 		// (MCP find_paths, dashboard graph merge) never need to alias-map

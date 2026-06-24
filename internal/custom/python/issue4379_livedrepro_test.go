@@ -21,7 +21,7 @@ import (
 
 // Issue #4379 LIVE-REPRO — Django global cross-cutting wiring.
 //
-// Byte-copies of the REAL upvate_core legacy Django backend are committed under
+// Byte-copies of the REAL acme_core legacy Django backend are committed under
 // testdata/issue4379:
 //
 //   - settings.py — declares MIDDLEWARE (incl. custom
@@ -108,7 +108,7 @@ func hasGlobalUses(ents []types.EntityRecord, dotted, role string) (types.Relati
 	return types.RelationshipRecord{}, false
 }
 
-// TestIssue4379_RealUpvateSettings_GlobalWiring runs the REAL upvate_core
+// TestIssue4379_RealAcmeSettings_GlobalWiring runs the REAL acme_core
 // settings.py + its custom middleware classes through the actual merged
 // extract+resolve pipeline.
 //
@@ -118,8 +118,8 @@ func hasGlobalUses(ents []types.EntityRecord, dotted, role string) (types.Relati
 //
 // GREEN (post-fix): the dotted path is USES-linked global=true and resolves to
 // the real middleware class entity through resolve.BuildIndex.
-func TestIssue4379_RealUpvateSettings_GlobalWiring(t *testing.T) {
-	settings := loadRepro4379(t, "settings.py", "upvate_core/settings.py")
+func TestIssue4379_RealAcmeSettings_GlobalWiring(t *testing.T) {
+	settings := loadRepro4379(t, "settings.py", "acme_core/settings.py")
 	mw1 := loadRepro4379(t, "core/middleware/token_authentication.py", "core/middleware/token_authentication.py")
 	mw2 := loadRepro4379(t, "core/middleware/current_user.py", "core/middleware/current_user.py")
 	mw3 := loadRepro4379(t, "core/middleware/performance_debug.py", "core/middleware/performance_debug.py")
@@ -135,7 +135,7 @@ func TestIssue4379_RealUpvateSettings_GlobalWiring(t *testing.T) {
 	if len(globals) == 0 {
 		t.Fatal("RED: no global USES edges emitted from settings.py")
 	}
-	t.Logf("emitted %d global USES edges from upvate_core settings.py", len(globals))
+	t.Logf("emitted %d global USES edges from acme_core settings.py", len(globals))
 
 	// --- MIDDLEWARE: the three custom middleware classes must be linked AND
 	// resolve to the real class entities through the symbol table. ---

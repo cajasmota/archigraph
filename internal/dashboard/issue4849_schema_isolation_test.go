@@ -2,7 +2,7 @@ package dashboard
 
 // issue4849_schema_isolation_test.go — diagnostic for issue #4849.
 //
-// Coordinator's live finding: ~15.7% of upvate-v3 nodes render isolated
+// Coordinator's live finding: ~15.7% of acme-v3 nodes render isolated
 // (Schema-isolated ≈1,359) and that count did NOT drop after the DTO
 // field-membership reindex (#4845/#4856), even though DTO classes now have
 // CONTAINS→field children and the dashboard SHAPE endpoint returns those

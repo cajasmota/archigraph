@@ -15,7 +15,7 @@ import (
 
 // Issue #4351 LIVE-REPRO (extractor side).
 //
-// Byte-copies of REAL core-backend-v3 *.e2e-spec.ts files are committed under
+// Byte-copies of REAL acme-backend-v3 *.e2e-spec.ts files are committed under
 // testdata/e2e_4351. We run the ACTUAL jest extractor over them and assert the
 // supertest route-by-string calls are captured onto the one-per-spec
 // test_suite's `e2e_route_calls` property — the raw material the resolve pass

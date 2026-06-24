@@ -2,7 +2,7 @@ package main
 
 // TestRebuild_PrefixlessTestsAreCounted is the integration test for #2608:
 // after the testmap pathHints fix (#2604), the grafel_test_coverage MCP
-// tool STILL reports 107 test entities on upvate instead of the expected
+// tool STILL reports 107 test entities on acme instead of the expected
 // ~1,406+.
 //
 // Root cause (#2608):

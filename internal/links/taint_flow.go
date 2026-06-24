@@ -57,7 +57,7 @@ import (
 const MethodTaintFlow = "taint_flow"
 
 // maxTaintPropagationDepth bounds the forward BFS from each source.
-// Empirically 6 covers handler→service→repo→raw-sql chains in upvate
+// Empirically 6 covers handler→service→repo→raw-sql chains in acme
 // and similar monorepos; anything beyond is almost always a cycle and
 // will be caught by the visited-set guard.
 const maxTaintPropagationDepth = 6

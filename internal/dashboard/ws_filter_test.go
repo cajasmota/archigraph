@@ -25,7 +25,7 @@ func TestWSFilter_Nil_IsFirehose(t *testing.T) {
 	f := newWSFilter(nil, nil)
 
 	cases := []WSEvent{
-		{Group: "upvate", Ref: "main"},
+		{Group: "acme", Ref: "main"},
 		{Group: "grafel", Ref: "feature/foo"},
 		{Group: "", Ref: ""},
 	}
@@ -37,44 +37,44 @@ func TestWSFilter_Nil_IsFirehose(t *testing.T) {
 }
 
 func TestWSFilter_GroupFilter(t *testing.T) {
-	f := newWSFilter([]string{"upvate"}, nil)
+	f := newWSFilter([]string{"acme"}, nil)
 
-	if !f.Matches(WSEvent{Group: "upvate", Ref: "main"}) {
-		t.Error("expected upvate/main to pass group filter")
+	if !f.Matches(WSEvent{Group: "acme", Ref: "main"}) {
+		t.Error("expected acme/main to pass group filter")
 	}
 	if f.Matches(WSEvent{Group: "grafel", Ref: "main"}) {
 		t.Error("expected grafel/main to be blocked by group filter")
 	}
-	if !f.Matches(WSEvent{Group: "upvate", Ref: "feature/foo"}) {
-		t.Error("expected upvate/feature/foo to pass group filter")
+	if !f.Matches(WSEvent{Group: "acme", Ref: "feature/foo"}) {
+		t.Error("expected acme/feature/foo to pass group filter")
 	}
 }
 
 func TestWSFilter_RefFilter(t *testing.T) {
 	f := newWSFilter(nil, []string{"main"})
 
-	if !f.Matches(WSEvent{Group: "upvate", Ref: "main"}) {
-		t.Error("expected upvate/main to pass ref filter")
+	if !f.Matches(WSEvent{Group: "acme", Ref: "main"}) {
+		t.Error("expected acme/main to pass ref filter")
 	}
-	if f.Matches(WSEvent{Group: "upvate", Ref: "feature/foo"}) {
-		t.Error("expected upvate/feature/foo to be blocked by ref filter")
+	if f.Matches(WSEvent{Group: "acme", Ref: "feature/foo"}) {
+		t.Error("expected acme/feature/foo to be blocked by ref filter")
 	}
 }
 
 func TestWSFilter_GroupAndRefFilter(t *testing.T) {
-	f := newWSFilter([]string{"upvate", "grafel"}, []string{"main", "feature/foo"})
+	f := newWSFilter([]string{"acme", "grafel"}, []string{"main", "feature/foo"})
 
 	// Both group and ref match → pass.
-	if !f.Matches(WSEvent{Group: "upvate", Ref: "main"}) {
-		t.Error("upvate/main should pass")
+	if !f.Matches(WSEvent{Group: "acme", Ref: "main"}) {
+		t.Error("acme/main should pass")
 	}
 	if !f.Matches(WSEvent{Group: "grafel", Ref: "feature/foo"}) {
 		t.Error("grafel/feature/foo should pass")
 	}
 
 	// Right group, wrong ref → block.
-	if f.Matches(WSEvent{Group: "upvate", Ref: "hotfix/x"}) {
-		t.Error("upvate/hotfix/x should be blocked (ref not subscribed)")
+	if f.Matches(WSEvent{Group: "acme", Ref: "hotfix/x"}) {
+		t.Error("acme/hotfix/x should be blocked (ref not subscribed)")
 	}
 
 	// Wrong group, right ref → block.
@@ -89,7 +89,7 @@ func TestWSFilter_LegacyEventNoRef_AlwaysPasses(t *testing.T) {
 	// stay visible and backward compatibility is preserved.
 	f := newWSFilter(nil, []string{"main"})
 
-	if !f.Matches(WSEvent{Group: "upvate", Ref: ""}) {
+	if !f.Matches(WSEvent{Group: "acme", Ref: ""}) {
 		t.Error("legacy event (Ref='') must pass through a ref filter unconditionally")
 	}
 }
@@ -110,9 +110,9 @@ func TestWSFilter_SubscribeReplacesPriorFilter(t *testing.T) {
 		done: make(chan struct{}),
 	}
 
-	// First subscription: only upvate/main.
+	// First subscription: only acme/main.
 	c.subMu.Lock()
-	c.sub = newWSFilter([]string{"upvate"}, []string{"main"})
+	c.sub = newWSFilter([]string{"acme"}, []string{"main"})
 	c.subMu.Unlock()
 
 	// Second subscription replaces: only grafel/feature/foo.
@@ -124,8 +124,8 @@ func TestWSFilter_SubscribeReplacesPriorFilter(t *testing.T) {
 	f := c.sub
 	c.subMu.Unlock()
 
-	if f.Matches(WSEvent{Group: "upvate", Ref: "main"}) {
-		t.Error("old filter must have been replaced — upvate/main should now be blocked")
+	if f.Matches(WSEvent{Group: "acme", Ref: "main"}) {
+		t.Error("old filter must have been replaced — acme/main should now be blocked")
 	}
 	if !f.Matches(WSEvent{Group: "grafel", Ref: "feature/foo"}) {
 		t.Error("new filter should pass grafel/feature/foo")
@@ -139,7 +139,7 @@ func TestWSFilter_Unsubscribe_ClearsFilter(t *testing.T) {
 	}
 	// Install a filter.
 	c.subMu.Lock()
-	c.sub = newWSFilter([]string{"upvate"}, []string{"main"})
+	c.sub = newWSFilter([]string{"acme"}, []string{"main"})
 	c.subMu.Unlock()
 
 	// Unsubscribe — set nil (firehose).
@@ -188,7 +188,7 @@ func TestWSHub_Broadcast_FiltersPerClient(t *testing.T) {
 	// Broadcast a main-ref event.
 	hub.Broadcast(WSEvent{
 		Type:  "reindex_completed",
-		Group: "upvate",
+		Group: "acme",
 		Ref:   "main",
 	})
 
@@ -338,7 +338,7 @@ func TestWSIntegration_SubscribeFiltersEvents(t *testing.T) {
 	// Broadcast a main-ref event; the debounce is 2 s.
 	srv.hub.Broadcast(WSEvent{
 		Type:  "reindex_completed",
-		Group: "upvate",
+		Group: "acme",
 		Ref:   "main",
 	})
 
@@ -391,7 +391,7 @@ func TestWSIntegration_Unsubscribe_RestoresFirehose(t *testing.T) {
 	// Broadcast a feature/foo event; after unsubscribe the client should receive it.
 	srv.hub.Broadcast(WSEvent{
 		Type:  "reindex_completed",
-		Group: "upvate",
+		Group: "acme",
 		Ref:   "feature/foo",
 	})
 	time.Sleep(2500 * time.Millisecond)

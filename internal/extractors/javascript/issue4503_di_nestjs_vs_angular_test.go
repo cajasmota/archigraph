@@ -13,7 +13,7 @@ import (
 // Angular (@angular/core) and NestJS (@nestjs/common) BOTH spell a DI provider
 // `@Injectable()` with a constructor-injected providers list. The JS/TS
 // extractor mapped the bare `Injectable` decorator to framework=angular
-// unconditionally, so an entire NestJS codebase (core-backend-v3, 100% NestJS,
+// unconditionally, so an entire NestJS codebase (acme-backend-v3, 100% NestJS,
 // zero Angular) surfaced on /di as "angular (121)". The DI view groups
 // INJECTED_INTO edges by their `framework` property, and that property was
 // stamped angular for every NestJS provider.
@@ -26,7 +26,7 @@ import (
 // must still classify as angular.
 //
 // The test runs the REAL JSExtractor.Extract pipeline over BYTE-COPIES of real
-// core-backend-v3 NestJS providers and a faithful Angular provider, then asserts
+// acme-backend-v3 NestJS providers and a faithful Angular provider, then asserts
 // the framework tag on both the provider entity and its INJECTED_INTO edges.
 
 // injectedIntoFramework returns the framework property of the first
@@ -55,10 +55,10 @@ func entityFramework(ents []types.EntityRecord, name string) string {
 }
 
 // TestIssue4503_NestJSInjectableClassifiesAsNestJS feeds byte-copies of real
-// core-backend-v3 NestJS @Injectable providers through the real extractor and
+// acme-backend-v3 NestJS @Injectable providers through the real extractor and
 // asserts framework=nestjs (NOT angular) on the entity and INJECTED_INTO edges.
 func TestIssue4503_NestJSInjectableClassifiesAsNestJS(t *testing.T) {
-	// Byte-copy of core-backend-v3 src/common/integrations/mailgun/services/
+	// Byte-copy of acme-backend-v3 src/common/integrations/mailgun/services/
 	// email.service.ts (trimmed body) — a NestJS @Injectable from @nestjs/common
 	// with constructor injection. This is the exact shape the /di "angular" bug
 	// mis-tagged.

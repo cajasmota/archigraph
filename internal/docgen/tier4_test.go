@@ -258,7 +258,7 @@ func TestTier4Score_JSONSchema(t *testing.T) {
 	score := docgen.Tier4Score{
 		Tier:                         4,
 		WallTimeMS:                   2400000,
-		Group:                        "upvate",
+		Group:                        "acme",
 		RepoCount:                    3,
 		TotalPageCount:               56,
 		TotalTokenCount:              180000,
@@ -293,8 +293,8 @@ func TestTier4Score_JSONSchema(t *testing.T) {
 	if got := parsed["tier"].(float64); got != 4 {
 		t.Errorf("tier: want 4, got %v", got)
 	}
-	if got := parsed["group"].(string); got != "upvate" {
-		t.Errorf("group: want 'upvate', got %q", got)
+	if got := parsed["group"].(string); got != "acme" {
+		t.Errorf("group: want 'acme', got %q", got)
 	}
 }
 

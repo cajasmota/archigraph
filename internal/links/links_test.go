@@ -744,7 +744,7 @@ func TestLoadAllGraphs_FBOnly(t *testing.T) {
 
 // TestLoadAllGraphs_MixedFBAndJSON verifies that a group where one repo has
 // graph.json and another has only graph.fb loads both repos correctly.
-// This mirrors the real upvate group (upvate_core has json; frontend/mobile are fb-only).
+// This mirrors the real acme group (acme_core has json; frontend/mobile are fb-only).
 func TestLoadAllGraphs_MixedFBAndJSON(t *testing.T) {
 	root := t.TempDir()
 
@@ -814,8 +814,8 @@ func TestLoadAllGraphs_MixedFBAndJSON(t *testing.T) {
 // directory is named after the fleet slug (dash form) but the embedded
 // doc.Repo field uses the path-derived underscore form, loadAllGraphs
 // returns the dash-slug as repoGraph.Repo. This is the #1701 regression:
-// the links emitter was writing "upvate_core::<id>" targets instead of
-// "upvate-core::<id>", causing find_paths to need an alias map.
+// the links emitter was writing "acme_core::<id>" targets instead of
+// "acme-core::<id>", causing find_paths to need an alias map.
 func TestLoadAllGraphs_SlugCanonicalisation(t *testing.T) {
 	root := t.TempDir()
 

@@ -6,7 +6,7 @@ import "testing"
 // representative shapes: an except-swallow, an except-raise, an env-gate, an
 // early-return guard, and a redirect. Complements the in-pipeline MCP test
 // (internal/mcp/effects_branches_4423_test.go) which runs the REAL handler on
-// byte-copies of upvate oracle functions.
+// byte-copies of acme oracle functions.
 func TestAnalyzeBranchesPython_Outcomes(t *testing.T) {
 	src := `def handler(self, request):
     if not settings.FEATURE_X:

@@ -2,7 +2,7 @@ package mcp
 
 // effective_contract_extends_4243_test.go — regression coverage for #4243.
 //
-// THE BUG (verified live on upvate-core): grafel_effective_contract is
+// THE BUG (verified live on acme-core): grafel_effective_contract is
 // normally called with an entity_id. When that entity_id resolved to a DRF
 // ViewSet that the Python extractor emits as Kind="View" with an EMPTY subtype
 // (so isClassEntity is false for it), resolveEffectiveContractTarget matched
@@ -25,7 +25,7 @@ import (
 	"github.com/cajasmota/grafel/internal/graph"
 )
 
-// drfViewKindViewSetDoc mirrors the live upvate-core shape: a JurisdictionViewSet
+// drfViewKindViewSetDoc mirrors the live acme-core shape: a JurisdictionViewSet
 // emitted as Kind="View", Subtype="" (NOT a SCOPE.Component/class), an EXTENDS
 // edge to viewsets.ModelViewSet (base_name carries the dotted attribute form the
 // external synthesiser rewrites the ToID away from), and a couple of
@@ -39,10 +39,10 @@ func drfViewKindViewSetDoc() *graph.Document {
 		return graph.Entity{ID: id, Name: id, Kind: "http_endpoint", Language: "python", Properties: p}
 	}
 	return &graph.Document{
-		Repo: "upvate-core",
+		Repo: "acme-core",
 		Entities: []graph.Entity{
 			// The ViewSet — Kind="View", empty subtype, exactly as the Python
-			// extractor emits it on upvate-core. isClassEntity is FALSE for it.
+			// extractor emits it on acme-core. isClassEntity is FALSE for it.
 			{ID: "vs1", Name: "JurisdictionViewSet",
 				QualifiedName: "core.views.jurisdiction_viewset.JurisdictionViewSet",
 				Kind:          "View", Subtype: "", SourceFile: "core/views/jurisdiction_viewset.py",
@@ -92,7 +92,7 @@ func TestEffectiveContract_4243_ResolvesByEntityIDForms(t *testing.T) {
 	for _, target := range []string{
 		"JurisdictionViewSet", // bare class name (already worked pre-fix)
 		"vs1",                 // LOCAL entity id (returned null pre-fix)
-		"upvate-core::vs1",    // prefixed entity id (returned null pre-fix)
+		"acme-core::vs1",      // prefixed entity id (returned null pre-fix)
 	} {
 		t.Run(target, func(t *testing.T) {
 			out := callEffectiveContract(t, srv, target)
@@ -131,7 +131,7 @@ func TestEffectiveContract_4243_PreFixResolverReturnedNull(t *testing.T) {
 	doc := drfViewKindViewSetDoc()
 	srv := newTestServer(t, doc)
 	lg := srv.State.groups["test"]
-	r := lg.Repos["upvate-core"]
+	r := lg.Repos["acme-core"]
 
 	// OLD resolveEffectiveContractTarget: only the router-route and class-entity
 	// branches returned; everything else fell to the raw leaf. A Kind="View"

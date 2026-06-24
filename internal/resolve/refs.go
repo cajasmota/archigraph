@@ -1806,7 +1806,7 @@ func (idx Index) lookupStructural(stub string) (id string, status int, handled b
 				// every confidence (not just "low") so the short-form
 				// stub appears for many more test→production edges. If
 				// the convention guess is wrong (e.g. table-driven test
-				// calls a helper in a sibling file, or upvate test calls
+				// calls a helper in a sibling file, or acme test calls
 				// a domain function in a different module) we still want
 				// to resolve via the globally-unique name path before
 				// giving up. Without this branch the broadened extractor

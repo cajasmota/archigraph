@@ -1,6 +1,6 @@
 // Package javascript_test — issue #2671: react-router-dom v6+ and Next.js
 // NAVIGATES_TO extraction. Builds on #2655 / #2658 / #2665 by adding coverage
-// for the patterns dominant in upvate-core-frontend (which had 0 navigation
+// for the patterns dominant in acme-core-frontend (which had 0 navigation
 // edges before this change).
 //
 // Patterns covered here:

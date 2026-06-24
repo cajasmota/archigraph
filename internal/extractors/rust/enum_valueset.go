@@ -28,7 +28,7 @@
 //     `m.insert(<lit>, <lit>)` calls → kind_hint="rust_lazy_map". Each insert is
 //     one member.
 //   - module constant group: the remaining module-level scalar `const`/`static`
-//     literal bindings (`const MAX: u32 = 100; const NAME: &str = "upvate";`)
+//     literal bindings (`const MAX: u32 = 100; const NAME: &str = "acme";`)
 //     are aggregated into ONE synthetic value-set named after the file stem +
 //     "Constants" → kind_hint="rust_module_constants". Each binding is one
 //     {name=value} member. Emitted ONLY when ≥2 such literal bindings exist (a

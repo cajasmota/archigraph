@@ -348,7 +348,7 @@ func TestStripAPIPrefix(t *testing.T) {
 
 // TestHTTPPass_GenericPrefixMatch verifies that a producer serving
 // `/api/v1/inspections/{pk}` links to a consumer calling `/inspections/{id}`
-// even when the producer carries NO url_prefix property — the concrete upvate
+// even when the producer carries NO url_prefix property — the concrete acme
 // case from issue #1409 (#819 only handled the property-driven strip).
 func TestHTTPPass_GenericPrefixMatch(t *testing.T) {
 	root := fixtureRoot(t)
@@ -1848,7 +1848,7 @@ func TestHTTPPass_HandlesEmptyCanonicalPath(t *testing.T) {
 // #2569 — prefix-candidates retry in cross-repo linker
 //
 // PR #2557 added Tier-2 prefix-injection to the intra-repo resolver
-// (resolveCallByPath). Bench iter 2 showed upvate's 94.7% cross-repo orphan
+// (resolveCallByPath). Bench iter 2 showed acme's 94.7% cross-repo orphan
 // rate was unchanged because cross-repo lookups go through http_pass.go
 // whose byPath matching did not get the same retry. These tests gate the port.
 // ---------------------------------------------------------------------------
@@ -2295,14 +2295,14 @@ func TestHTTPPass_CrossRepoResolvedMatchesLinks(t *testing.T) {
 // that live in the SAME repo produce a ROUTES_TO link with method=http_self
 // rather than being silently dropped by the former `cRepo == pRepo` guard.
 //
-// Fixture: upvate-core style — a Django DRF endpoint (producer) and a
-// requests.get call in a Celery task (consumer) in the same "upvate-core" repo.
+// Fixture: acme-core style — a Django DRF endpoint (producer) and a
+// requests.get call in a Celery task (consumer) in the same "acme-core" repo.
 // The expected link: caller (task function) --ROUTES_TO--> handler (view),
 // method = "http_self", relation = "routes_to", intra_repo = "true".
 func TestHTTPPass_IntraRepoSelfCall_Resolved(t *testing.T) {
 	root := fixtureRoot(t)
 	writeFixture(t, root, fixtureGraph{
-		Repo: "upvate-core",
+		Repo: "acme-core",
 		Entities: []map[string]any{
 			// Producer: DRF ViewSet handler
 			{
@@ -2369,11 +2369,11 @@ func TestHTTPPass_IntraRepoSelfCall_Resolved(t *testing.T) {
 	if found.Relation != RelationRoutesTo {
 		t.Errorf("#2585: relation: want %q, got %q", RelationRoutesTo, found.Relation)
 	}
-	if found.Source != "upvate-core::task1" {
-		t.Errorf("#2585: source: want upvate-core::task1 (resolved caller), got %s", found.Source)
+	if found.Source != "acme-core::task1" {
+		t.Errorf("#2585: source: want acme-core::task1 (resolved caller), got %s", found.Source)
 	}
-	if found.Target != "upvate-core::view1" {
-		t.Errorf("#2585: target: want upvate-core::view1 (resolved handler), got %s", found.Target)
+	if found.Target != "acme-core::view1" {
+		t.Errorf("#2585: target: want acme-core::view1 (resolved handler), got %s", found.Target)
 	}
 	if found.Properties["intra_repo"] != "true" {
 		t.Errorf("#2585: expected Properties[intra_repo]=true, got %v", found.Properties)
@@ -2884,8 +2884,8 @@ func TestHTTPPass_CrossRepo_CaseNormalization_NoReorderMatch(t *testing.T) {
 	}
 }
 
-// TestHTTPPass_CrossRepo_CaseStyleNormalization_Upvate3169 reproduces the
-// genuine upvate cross-repo misses called out in #3169 (after the React-Query
+// TestHTTPPass_CrossRepo_CaseStyleNormalization_Acme3169 reproduces the
+// genuine acme cross-repo misses called out in #3169 (after the React-Query
 // queryKey phantoms were removed in #3171). The frontend emits camelCase
 // route segments while the backend DRF @action exposes the snake_case
 // method-name default url_path:
@@ -2898,7 +2898,7 @@ func TestHTTPPass_CrossRepo_CaseNormalization_NoReorderMatch(t *testing.T) {
 // versus the real backend `assigned_devices` route, so it MUST NOT cross-link
 // — proving the per-segment canonicaliser preserves the full alphanumeric run
 // and never collapses a longer name onto a shorter one.
-func TestHTTPPass_CrossRepo_CaseStyleNormalization_Upvate3169(t *testing.T) {
+func TestHTTPPass_CrossRepo_CaseStyleNormalization_Acme3169(t *testing.T) {
 	root := fixtureRoot(t)
 
 	writeFixture(t, root, fixtureGraph{
@@ -3308,7 +3308,7 @@ func TestLiteralFillsParamSlot(t *testing.T) {
 		producer string
 		want     bool
 	}{
-		// The live core-mobile case: literal `buildings` fills {pk} after the
+		// The live acme-mobile case: literal `buildings` fills {pk} after the
 		// producer's /api/v1 prefix is stripped.
 		{"recents_buildings_vs_pk", "/recents/buildings", "/api/v1/recents/{pk}", true},
 		// Same, DELETE-style producer with a different param name.
@@ -3341,7 +3341,7 @@ func TestLiteralFillsParamSlot(t *testing.T) {
 	}
 }
 
-// TestHTTPPass_CrossRepo_LiteralParamFill verifies the live core-mobile case:
+// TestHTTPPass_CrossRepo_LiteralParamFill verifies the live acme-mobile case:
 // `GET /recents/buildings` resolves to the DRF detail route
 // `GET /api/v1/recents/{pk}` via the literal-fills-param strategy, the link is
 // stamped resolve_strategy=literal_param_fill, and it lands in the
@@ -3524,7 +3524,7 @@ func TestCaseNormalizePathSegments(t *testing.T) {
 		{"/api/v1/contracts/{*}/assigned_contacts", "/api/v1/contracts/{*}/assignedcontacts"},
 		{"/api/v1/contracts/{*}/assignedContacts", "/api/v1/contracts/{*}/assignedcontacts"},
 		{"/equipment-types", "/equipmenttypes"},
-		// #3169 — the exact upvate misses: frontend camelCase ↔ backend
+		// #3169 — the exact acme misses: frontend camelCase ↔ backend
 		// snake_case (DRF default url_path = method name).
 		{"/jurisdictions/inspectionTypes", "/jurisdictions/inspectiontypes"},
 		{"/jurisdictions/inspection_types", "/jurisdictions/inspectiontypes"},

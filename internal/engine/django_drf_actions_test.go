@@ -542,7 +542,7 @@ router.register(r"mystery", MysteryViewSet)
 // A ViewSet whose base class is just `viewsets.ViewSet` (no CRUD mixins) but
 // which explicitly defines `def create(self, ...)` must emit a per-verb POST
 // endpoint at the bare prefix, not collapse to a verb-less ANY entry. This is
-// the upvate RefreshViewSet shape — without the fix every consumer-side
+// the acme RefreshViewSet shape — without the fix every consumer-side
 // `POST /api/v1/auth/refresh` call falls into the verb-agnostic ANY bucket
 // and the cross-repo matcher can't tell apart a real POST from an accidental
 // GET / DELETE caller.
@@ -1125,7 +1125,7 @@ class UserViewSet(ModelViewSet):
 // bare path (/<prefix>/...).
 func TestApplyDjangoDRFRoutes_PrefixedOnlyNoBareDupe(t *testing.T) {
 	files := fileMap{
-		"upvate_core/urls.py": `
+		"acme_core/urls.py": `
 from django.urls import path, include
 urlpatterns = [
     path('api/v1/', include('core.routers')),
@@ -1153,7 +1153,7 @@ class ContractViewSet(ModelViewSet):
     pass
 `,
 	}
-	pyPaths := []string{"upvate_core/urls.py", "core/routers.py", "core/views.py"}
+	pyPaths := []string{"acme_core/urls.py", "core/routers.py", "core/views.py"}
 	got := ApplyDjangoDRFRoutes(pyPaths, files.reader)
 
 	// Each of the 3 ViewSets should appear ONLY at the /api/v1/ prefix.
@@ -1198,7 +1198,7 @@ class ContractViewSet(ModelViewSet):
 // consumers can strip it when matching client-side API calls.
 func TestApplyDjangoDRFRoutes_URLPrefixProperty(t *testing.T) {
 	files := fileMap{
-		"upvate_core/urls.py": `
+		"acme_core/urls.py": `
 from django.urls import path, include
 urlpatterns = [
     path('api/v1/', include('core.routers')),
@@ -1218,7 +1218,7 @@ class BuildingViewSet(ModelViewSet):
     pass
 `,
 	}
-	pyPaths := []string{"upvate_core/urls.py", "core/routers.py", "core/views.py"}
+	pyPaths := []string{"acme_core/urls.py", "core/routers.py", "core/views.py"}
 	got := ApplyDjangoDRFRoutes(pyPaths, files.reader)
 
 	for _, r := range got {
@@ -1239,7 +1239,7 @@ class BuildingViewSet(ModelViewSet):
 // validates at least the direct include level works correctly).
 func TestApplyDjangoDRFRoutes_NestedIncludeChain(t *testing.T) {
 	files := fileMap{
-		"upvate_core/urls.py": `
+		"acme_core/urls.py": `
 from django.urls import path, include
 urlpatterns = [
     path('api/v1/', include('core.routers')),
@@ -1259,7 +1259,7 @@ class ContractViewSet(ModelViewSet):
     pass
 `,
 	}
-	pyPaths := []string{"upvate_core/urls.py", "core/routers.py", "core/views.py"}
+	pyPaths := []string{"acme_core/urls.py", "core/routers.py", "core/views.py"}
 	got := ApplyDjangoDRFRoutes(pyPaths, files.reader)
 
 	// Prefixed form must be present.
@@ -1896,7 +1896,7 @@ func TestDeduplicateHTTPSynthesisANY_BasicCRUD(t *testing.T) {
 	listPath := "/api/v1/contracts"
 	detailPath := "/api/v1/contracts/{pk}"
 
-	// Pass 2.5 synthesis entries (would have been ~200 ANY in upvate).
+	// Pass 2.5 synthesis entries (would have been ~200 ANY in acme).
 	synthEntities := []types.EntityRecord{
 		makeHTTPSynthesisANY(listPath),
 		makeHTTPSynthesisANY(detailPath),
@@ -2083,10 +2083,10 @@ func TestDeduplicateHTTPSynthesisANY_ModelViewSetAndAction(t *testing.T) {
 // the local path() prefix, resulting in both /api/v1/X and /X in the graph.
 func TestApplyDjangoDRFRoutes_LocalAttrIncludeNoBareDupe(t *testing.T) {
 	files := fileMap{
-		"upvate_core/urls.py": `
+		"acme_core/urls.py": `
 from django.urls import path, include
 from rest_framework import routers
-from upvate_core.views import (
+from acme_core.views import (
     AlternateAddressViewSet,
     BuildingViewSet,
     ContractViewSet,
@@ -2101,7 +2101,7 @@ urlpatterns = [
     path("api/v1/", include(router.urls)),
 ]
 `,
-		"upvate_core/views.py": `
+		"acme_core/views.py": `
 from rest_framework.viewsets import ModelViewSet
 
 class AlternateAddressViewSet(ModelViewSet):
@@ -2115,7 +2115,7 @@ class ContractViewSet(ModelViewSet):
 `,
 	}
 
-	pyPaths := []string{"upvate_core/urls.py", "upvate_core/views.py"}
+	pyPaths := []string{"acme_core/urls.py", "acme_core/views.py"}
 	got := ApplyDjangoDRFRoutes(pyPaths, files.reader)
 
 	// Must emit at the /api/v1/ prefix (correct composed path).
@@ -2369,7 +2369,7 @@ class ChildViewSet(ModelViewSet):
 // TestDRF_ActionDecorator_EmitsEndpoint verifies that a ViewSet with an
 // @action decorator whose url_path contains a slash (e.g. "notes/create")
 // is correctly emitted under the full composed path
-// /<prefix>/{pk}/notes/create when detail=True. This is the upvate
+// /<prefix>/{pk}/notes/create when detail=True. This is the acme
 // ContractViewSet pattern where custom sub-resource actions are mounted as
 // nested URL segments rather than flat paths.
 func TestDRF_ActionDecorator_EmitsEndpoint(t *testing.T) {
@@ -2385,7 +2385,7 @@ urlpatterns = [
     path("", include(router.urls)),
 ]
 `,
-		"upvate_core/urls.py": `
+		"acme_core/urls.py": `
 from django.urls import path, include
 urlpatterns = [
     path("api/v1/", include("core.routers")),
@@ -2414,7 +2414,7 @@ class ContractViewSet(ModelViewSet):
 `,
 	}
 
-	pyPaths := []string{"upvate_core/urls.py", "core/routers.py", "core/views.py"}
+	pyPaths := []string{"acme_core/urls.py", "core/routers.py", "core/views.py"}
 	got := ApplyDjangoDRFRoutes(pyPaths, files.reader)
 
 	// detail=False → collection route (no {pk})
@@ -2430,7 +2430,7 @@ class ContractViewSet(ModelViewSet):
 // TestDRF_ActionDetailFalse_EmitsCollectionPath verifies that
 // @action(detail=False) decorators on a ViewSet emit the action at the
 // collection path (without a {pk} segment). Tests multiple HTTP verbs and
-// url_path values to cover the common upvate patterns (permissions,
+// url_path values to cover the common acme patterns (permissions,
 // s3_attachment, import viewsets).
 func TestDRF_ActionDetailFalse_EmitsCollectionPath(t *testing.T) {
 	files := fileMap{
@@ -2481,7 +2481,7 @@ class PermissionViewSet(ModelViewSet):
 // test for #2614 pattern (b): a DRF ViewSet mounted outside router.register()
 // via the explicit method-map form ViewSet.as_view({'verb': 'action'}).
 //
-// This covers the upvate notification routing pattern where:
+// This covers the acme notification routing pattern where:
 //
 //	_notification_list = views.NotificationViewSet.as_view({
 //	    'get': 'list', 'delete': 'delete_all'})
@@ -2491,7 +2491,7 @@ class PermissionViewSet(ModelViewSet):
 //	]
 func TestDjango_CustomPathOutsideRouter_EmitsEndpoint(t *testing.T) {
 	files := fileMap{
-		"upvate_core/urls.py": `
+		"acme_core/urls.py": `
 from django.urls import path, include
 urlpatterns = [
     path("api/v1/", include("core.routers")),
@@ -2526,7 +2526,7 @@ urlpatterns = [
 `,
 	}
 
-	pyPaths := []string{"upvate_core/urls.py", "core/routers.py"}
+	pyPaths := []string{"acme_core/urls.py", "core/routers.py"}
 	got := ApplyDjangoViewSetAsViewRoutes(pyPaths, files.reader)
 
 	// Pre-bound variable form: _notification_list → GET + DELETE at collection path.
@@ -2630,7 +2630,7 @@ urlpatterns = [
 //
 // Failure mode prior to the fix: NoteViewSet's three @action declarations
 // silently disappeared from the index, cascading into 7 unresolved mobile
-// orphans in the upvate group quality bench.
+// orphans in the acme group quality bench.
 func TestDRF_ActionDecorator_RegexUrlPath_NamedGroups(t *testing.T) {
 	files := fileMap{
 		"core/routers.py": `
@@ -2644,7 +2644,7 @@ urlpatterns = [
     path("", include(router.urls)),
 ]
 `,
-		"upvate_core/urls.py": `
+		"acme_core/urls.py": `
 from django.urls import path, include
 urlpatterns = [
     path("api/v1/", include("core.routers")),
@@ -2669,7 +2669,7 @@ class NoteViewSet(ModelViewSet):
 `,
 	}
 
-	pyPaths := []string{"upvate_core/urls.py", "core/routers.py", "core/views.py"}
+	pyPaths := []string{"acme_core/urls.py", "core/routers.py", "core/views.py"}
 	got := ApplyDjangoDRFRoutes(pyPaths, files.reader)
 
 	// Every @action above must emit a canonicalised endpoint whose path

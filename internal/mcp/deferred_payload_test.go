@@ -408,7 +408,7 @@ func buildBenchPayload() map[string]any {
 	items := make([]any, 0, 200)
 	for i := 0; i < 200; i++ {
 		items = append(items, map[string]any{
-			"id":          "upvate-core::endpoint_" + itoa64(int64(i)),
+			"id":          "acme-core::endpoint_" + itoa64(int64(i)),
 			"method":      "POST",
 			"path":        "/api/v1/orders/" + itoa64(int64(i)),
 			"handler":     "OrderViewSet.create",

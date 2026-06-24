@@ -42,7 +42,7 @@ func e2eRouteCalls(t *testing.T, path, src string) string {
 }
 
 // realCounterPartyContractSpec is a BYTE-COPY of the head of the live
-// core-backend-v3 contract spec
+// acme-backend-v3 contract spec
 // test/contract/inspections/inspection-counter-party-results.contract.spec.ts.
 // It issues NO supertest call — the endpoint is named only in the describe
 // label — which is exactly the shape that left endpoints showing Tests (0).

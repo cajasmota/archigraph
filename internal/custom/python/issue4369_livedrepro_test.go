@@ -26,7 +26,7 @@ import (
 // edges.
 //
 // This test runs the ACTUAL pytest extractor over a BYTE-COPY of a REAL DRF
-// APITestCase from the upvate_core legacy Django backend
+// APITestCase from the acme_core legacy Django backend
 // (core/tests/test_schedule_import.py: `self.client.post("/schedule/import/")`)
 // plus synthetic-but-representative FastAPI/Flask/httpx test files, and asserts
 // the route calls land on the suite. Before #4369 the extractor recorded no
@@ -63,7 +63,7 @@ func fileInput4369(path, content string) extreg.FileInput {
 	return extreg.FileInput{Path: path, Language: "python", Content: []byte(content)}
 }
 
-// TestIssue4369_RealDRFTest_RouteCaptured runs the real upvate_core DRF test
+// TestIssue4369_RealDRFTest_RouteCaptured runs the real acme_core DRF test
 // (byte-copied) and asserts the `self.client.post("/schedule/import/")` call is
 // captured onto the suite.
 func TestIssue4369_RealDRFTest_RouteCaptured(t *testing.T) {

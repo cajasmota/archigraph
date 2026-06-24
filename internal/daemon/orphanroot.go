@@ -9,7 +9,7 @@
 // reclaims a top-level store root that is tracked by NOTHING anymore: a
 // `<store>/<slug>-<hash>/` slot for a worktree/repo that was indexed once, then
 // removed from the registry (or whose worktree was deleted) so it never appears
-// in TrackedRepos again. On core-backend-v3 the live store grew to ~12GB across
+// in TrackedRepos again. On acme-backend-v3 the live store grew to ~12GB across
 // 357 top-level roots, most of them such orphans.
 //
 // # The store-root ↔ source-path mapping (the key design decision)

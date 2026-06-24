@@ -42,20 +42,20 @@ func TestOverlaySweep_StaleGroupArmsPass(t *testing.T) {
 		mu    sync.Mutex
 		calls int
 	)
-	s := newSweepScheduler(t, func() []string { return []string{"upvate"} }, &calls, &mu)
+	s := newSweepScheduler(t, func() []string { return []string{"acme"} }, &calls, &mu)
 	// Do NOT Start(): we only exercise the testable core, no goroutines needed.
 
 	s.sweepStaleOverlays()
 
 	s.mu.Lock()
-	pending := s.groupAlgoPending["upvate"]
+	pending := s.groupAlgoPending["acme"]
 	s.mu.Unlock()
 	if !pending {
 		t.Fatalf("expected a group-algo pass to be armed for the stale group, pending=%v", pending)
 	}
 	// Clean up the armed timer.
 	s.mu.Lock()
-	s.cancelGroupAlgoLocked("upvate")
+	s.cancelGroupAlgoLocked("acme")
 	s.mu.Unlock()
 }
 
@@ -85,12 +85,12 @@ func TestOverlaySweep_DoesNotReArmPendingPass(t *testing.T) {
 		mu    sync.Mutex
 		calls int
 	)
-	s := newSweepScheduler(t, func() []string { return []string{"upvate"} }, &calls, &mu)
+	s := newSweepScheduler(t, func() []string { return []string{"acme"} }, &calls, &mu)
 
 	// Pre-arm a pass so the group is "busy" (pending).
-	s.scheduleGroupAlgo("upvate")
+	s.scheduleGroupAlgo("acme")
 	s.mu.Lock()
-	first := s.groupAlgoTimers["upvate"]
+	first := s.groupAlgoTimers["acme"]
 	s.mu.Unlock()
 	if first == nil {
 		t.Fatal("setup: expected a pre-armed group-algo timer")
@@ -99,13 +99,13 @@ func TestOverlaySweep_DoesNotReArmPendingPass(t *testing.T) {
 	s.sweepStaleOverlays()
 
 	s.mu.Lock()
-	second := s.groupAlgoTimers["upvate"]
+	second := s.groupAlgoTimers["acme"]
 	s.mu.Unlock()
 	if second != first {
 		t.Fatalf("sweep re-armed an already-pending group-algo pass (timer swapped) — should have skipped it")
 	}
 	s.mu.Lock()
-	s.cancelGroupAlgoLocked("upvate")
+	s.cancelGroupAlgoLocked("acme")
 	s.mu.Unlock()
 }
 
@@ -116,19 +116,19 @@ func TestOverlaySweep_DoesNotReArmInFlightPass(t *testing.T) {
 		mu    sync.Mutex
 		calls int
 	)
-	s := newSweepScheduler(t, func() []string { return []string{"upvate"} }, &calls, &mu)
+	s := newSweepScheduler(t, func() []string { return []string{"acme"} }, &calls, &mu)
 
 	// Simulate an in-flight pass: a cancel func registered, no pending timer.
 	_, cancel := context.WithCancel(context.Background())
 	s.mu.Lock()
-	s.groupAlgoCancel["upvate"] = cancel
+	s.groupAlgoCancel["acme"] = cancel
 	s.mu.Unlock()
 
 	s.sweepStaleOverlays()
 
 	s.mu.Lock()
-	_, armed := s.groupAlgoTimers["upvate"]
-	pending := s.groupAlgoPending["upvate"]
+	_, armed := s.groupAlgoTimers["acme"]
+	pending := s.groupAlgoPending["acme"]
 	s.mu.Unlock()
 	if armed || pending {
 		t.Fatalf("sweep armed a new pass while one was in flight (armed=%v pending=%v)", armed, pending)
@@ -174,7 +174,7 @@ func TestOverlaySweep_DisabledIntervalDoesNotStartLoop(t *testing.T) {
 			mu.Lock()
 			called = true
 			mu.Unlock()
-			return []string{"upvate"}
+			return []string{"acme"}
 		},
 		MemReleaseDisabled: true,
 	})

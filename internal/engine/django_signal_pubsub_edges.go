@@ -6,7 +6,7 @@
 // lives in the SAME file as the task definition. Real Django/Celery apps almost
 // never satisfy that constraint: tasks live in `tasks/*.py` and are dispatched
 // from `views/`, `services/`, `signals/`, and `management/commands/`. So the
-// same-file pass produced ~4 edges on upvate while 14 dispatch sites and 21
+// same-file pass produced ~4 edges on acme while 14 dispatch sites and 21
 // tasks went unconnected.
 //
 // Likewise, Django's custom-signal mechanism — `sig = Signal()`, fired with

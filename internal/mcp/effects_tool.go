@@ -245,7 +245,7 @@ func attachBranchesFacet(out map[string]any, lr *LoadedRepo, e *graph.Entity, wa
 // byte-identical (#2828 token-reduction respected).
 //
 // Scope: the first increment validates Python (Django/oracle stack) and JS/TS
-// (NestJS) — the upvate-v3 + upvate groups. Other languages are computed when
+// (NestJS) — the acme-v3 + acme groups. Other languages are computed when
 // their effect sniffer + block detector exist but are expanded/validated in the
 // per-language generalize follow-ups (see epic #4820).
 func attachEffectContextsFacet(out map[string]any, lr *LoadedRepo, e *graph.Entity, want bool) {

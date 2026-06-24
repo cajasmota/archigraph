@@ -44,7 +44,7 @@ class InspectionService:
         return db.inspections.aggregate(pipeline)
 `
 	const path = "core/services/inspection/service.py"
-	const repoTag = "upvate-core"
+	const repoTag = "acme-core"
 
 	funcs := indexEnclosingFunctions("python", src)
 	var ents []types.EntityRecord
