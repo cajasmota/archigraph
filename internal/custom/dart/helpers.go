@@ -32,6 +32,27 @@ func makeEntity(name, kind, subtype, filePath, language string, lineNum int) typ
 	return e
 }
 
+// findBraceEndByte returns the byte offset of the matching closing `}` for the
+// brace at bracePos (best-effort: string/char-literal braces are not stripped).
+func findBraceEndByte(src string, bracePos int) int {
+	depth := 0
+	for i := bracePos; i < len(src); i++ {
+		switch src[i] {
+		case '{':
+			depth++
+		case '}':
+			depth--
+			if depth == 0 {
+				return i
+			}
+		}
+	}
+	if len(src) == 0 {
+		return 0
+	}
+	return len(src) - 1
+}
+
 func setProps(e *types.EntityRecord, kv ...string) {
 	if len(kv)%2 != 0 {
 		return

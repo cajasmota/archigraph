@@ -160,6 +160,7 @@ var exactManifestNames = map[string]bool{
 	"pom.xml":             true,
 	"requirements.txt":    true,
 	"pubspec.yaml":        true,
+	"pubspec.lock":        true,
 	"Gemfile":             true,
 	"packages.lock.json":  true,
 	// C++ build/package manifests
@@ -219,6 +220,7 @@ func detectPackageManager(filePath string) string {
 		"pom.xml":             "maven",
 		"requirements.txt":    "pip",
 		"pubspec.yaml":        "pub",
+		"pubspec.lock":        "pub",
 		"Gemfile":             "bundler",
 		"packages.lock.json":  "nuget",
 		// C++ build/package manifests
@@ -833,6 +835,90 @@ func parsePubspecYaml(source string) []dep {
 	var out []dep
 	out = append(out, extractDeps(bodyFor("dependencies"), false, "runtime")...)
 	out = append(out, extractDeps(bodyFor("dev_dependencies"), true, "dev")...)
+	return out
+}
+
+// ---------------------------------------------------------------------------
+// Parser: pubspec.lock (Dart/Flutter lockfile)
+// ---------------------------------------------------------------------------
+//
+// pubspec.lock is the fully-resolved dependency tree for a Dart/Flutter
+// project. It is YAML with a top-level `packages:` map; each package entry
+// carries a `dependency:` classifier ("direct main" / "direct dev" /
+// "transitive") and a `version:` field:
+//
+//	packages:
+//	  drift:
+//	    dependency: "direct main"
+//	    description: { name: drift, url: "https://pub.dev" }
+//	    source: hosted
+//	    version: "2.14.1"
+//	  build_runner:
+//	    dependency: "direct dev"
+//	    source: hosted
+//	    version: "2.4.6"
+//	  meta:
+//	    dependency: transitive
+//	    source: hosted
+//	    version: "1.10.0"
+//
+// Lockfile deps record the EXACT resolved version and include the transitive
+// closure pubspec.yaml never names — that is the point of lockfile_parsing.
+// Each emitted dep is flagged kind="locked"; dev classification follows the
+// `dependency:` line, and transitive entries are marked indirect=true.
+var pubspecLockPkgRE = regexp.MustCompile(`(?m)^  ([A-Za-z0-9_-]+):\s*$`)
+var pubspecLockDepKindRE = regexp.MustCompile(`(?m)^\s+dependency:\s*"?([^"\n]+?)"?\s*$`)
+var pubspecLockVersionRE = regexp.MustCompile(`(?m)^\s+version:\s*"?([^"\n]+?)"?\s*$`)
+
+func parsePubspecLock(source string) []dep {
+	// Restrict scanning to the `packages:` block so the trailing `sdks:` map
+	// (which lists the Dart/Flutter SDK constraint, not a package) is excluded.
+	body := source
+	if idx := strings.Index(source, "\npackages:"); idx >= 0 {
+		body = source[idx+len("\npackages:"):]
+	} else if strings.HasPrefix(source, "packages:") {
+		body = source[len("packages:"):]
+	}
+	// Stop at the next top-level key (a line beginning in column 0).
+	if end := regexp.MustCompile(`(?m)^[A-Za-z]`).FindStringIndex(body); end != nil {
+		body = body[:end[0]]
+	}
+
+	pkgIdx := pubspecLockPkgRE.FindAllStringSubmatchIndex(body, -1)
+	var out []dep
+	seen := map[string]bool{}
+	for i, m := range pkgIdx {
+		name := body[m[2]:m[3]]
+		if seen[name] {
+			continue
+		}
+		seen[name] = true
+		// The entry body runs from this match to the next package header.
+		blockEnd := len(body)
+		if i+1 < len(pkgIdx) {
+			blockEnd = pkgIdx[i+1][0]
+		}
+		block := body[m[1]:blockEnd]
+
+		isDev := false
+		indirect := false
+		if dm := pubspecLockDepKindRE.FindStringSubmatch(block); dm != nil {
+			kind := strings.TrimSpace(dm[1])
+			isDev = strings.Contains(kind, "dev")
+			indirect = strings.HasPrefix(kind, "transitive")
+		}
+		version := ""
+		if vm := pubspecLockVersionRE.FindStringSubmatch(block); vm != nil {
+			version = strings.TrimSpace(vm[1])
+		}
+		out = append(out, dep{
+			name:     name,
+			version:  version,
+			isDev:    isDev,
+			kind:     "locked",
+			indirect: indirect,
+		})
+	}
 	return out
 }
 
@@ -1595,6 +1681,7 @@ var parsers = map[string]parserFn{
 	"pom.xml":             parsePomXML,
 	"requirements.txt":    parseRequirementsTxt,
 	"pubspec.yaml":        parsePubspecYaml,
+	"pubspec.lock":        parsePubspecLock,
 	"Gemfile":             parseGemfile,
 	"packages.lock.json":  parseNugetLockJSON,
 	// C++ build/package manifests
