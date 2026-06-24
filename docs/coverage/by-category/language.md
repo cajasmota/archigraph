@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # language
 
-**Total**: 27 records · **assembly**: 5 · **clojure**: 1 · **COBOL**: 5 · **crystal**: 1 · **dart**: 1 · **elixir**: 1 · **erlang**: 2 · **F#**: 1 · **groovy**: 1 · **JCL**: 1 · **lua**: 1 · **nim**: 1 · **scala**: 1 · **solidity**: 2 · **swift**: 1 · **verilog**: 1 · **VHDL**: 1
+**Total**: 28 records · **assembly**: 5 · **clojure**: 1 · **COBOL**: 5 · **crystal**: 1 · **dart**: 1 · **elixir**: 1 · **erlang**: 2 · **F#**: 1 · **groovy**: 1 · **JCL**: 1 · **lua**: 1 · **nim**: 1 · **pony**: 1 · **scala**: 1 · **solidity**: 2 · **swift**: 1 · **verilog**: 1 · **VHDL**: 1
 
 Back to [summary](../summary.md). Bucket: **Other**.
 
@@ -28,6 +28,7 @@ Back to [summary](../summary.md). Bucket: **Other**.
 | [JCL](../by-language/jcl.md) | [IBM z/OS JCL (JES2/JES3)](../detail/lang.jcl.runtime.zos.md) | ✅ | ✅ | — | — | ✅ | — | ✅ | ✅ | |
 | [lua](../by-language/lua.md) | [Lua (base language)](../detail/lang.lua.base.md) | ✅ | ✅ | — | — | — | — | ✅ | ✅ | |
 | [nim](../by-language/nim.md) | [Nim](../detail/lang.nim.core.md) | ✅ | ✅ | — | — | — | — | 🟢 | 🟢 | |
+| [pony](../by-language/pony.md) | [Pony actor model](../detail/lang.pony.runtime.actor.md) | — | 🟢 | — | — | — | — | — | 🟢 | |
 | [scala](../by-language/scala.md) | [Scala (base language)](../detail/lang.scala.base.md) | ✅ | ✅ | — | — | — | — | ✅ | ✅ | |
 | [solidity](../by-language/solidity.md) | [OpenZeppelin Contracts](../detail/lang.solidity.framework.openzeppelin.md) | — | — | — | ✅ | — | — | ✅ | ✅ | |
 | [solidity](../by-language/solidity.md) | [Solidity](../detail/lang.solidity.core.md) | 🟢 | ✅ | — | — | — | — | 🟢 | 🟢 | |
