@@ -686,3 +686,182 @@ func TestSV_ALUPackageFixture(t *testing.T) {
 		t.Error("expected IMPORTS edge for alu_sv_pkg")
 	}
 }
+
+// ── Port topology tests (#5380) ───────────────────────────────────────────────
+
+func vFindPort(ents []types.EntityRecord, name string) *types.EntityRecord {
+	return vFindSubtype(ents, name, "SCOPE.Schema", "port")
+}
+
+func TestVerilog_ANSIPorts(t *testing.T) {
+	src := `module adder (
+		input  wire        clk,
+		input  wire [7:0]  a,
+		input  wire [7:0]  b,
+		output reg  [8:0]  sum,
+		inout              bus
+	);
+	endmodule`
+	ents := runVerilog(t, src, "adder.v", "verilog")
+
+	for _, tc := range []struct{ name, dir, width string }{
+		{"adder.clk", "input", ""},
+		{"adder.a", "input", "[7:0]"},
+		{"adder.b", "input", "[7:0]"},
+		{"adder.sum", "output", "[8:0]"},
+		{"adder.bus", "inout", ""},
+	} {
+		p := vFindPort(ents, tc.name)
+		if p == nil {
+			t.Errorf("missing port %s", tc.name)
+			continue
+		}
+		if p.Properties["direction"] != tc.dir {
+			t.Errorf("%s: direction=%q want %q", tc.name, p.Properties["direction"], tc.dir)
+		}
+		if p.Properties["width"] != tc.width {
+			t.Errorf("%s: width=%q want %q", tc.name, p.Properties["width"], tc.width)
+		}
+	}
+
+	// CONTAINS edges module → ports.
+	if !vHasRelPartial(ents, "adder", "SCOPE.Component", "CONTAINS", "adder.clk") {
+		t.Error("expected CONTAINS edge adder → adder.clk")
+	}
+}
+
+func TestVerilog_ClassicPorts(t *testing.T) {
+	src := `module legacy (clk, a, q);
+		input        clk;
+		input  [3:0] a;
+		output [3:0] q;
+	endmodule`
+	ents := runVerilog(t, src, "legacy.v", "verilog")
+
+	for _, name := range []string{"legacy.clk", "legacy.a", "legacy.q"} {
+		if vFindPort(ents, name) == nil {
+			t.Errorf("missing classic-style port %s", name)
+		}
+	}
+	if p := vFindPort(ents, "legacy.q"); p != nil && p.Properties["direction"] != "output" {
+		t.Errorf("legacy.q direction=%q want output", p.Properties["direction"])
+	}
+}
+
+func TestVerilog_PortDedup(t *testing.T) {
+	// Classic header lists the port, body re-declares its direction. One entity.
+	src := `module dut (clk);
+		input clk;
+	endmodule`
+	ents := runVerilog(t, src, "dut.v", "verilog")
+	count := 0
+	for i := range ents {
+		if ents[i].Name == "dut.clk" && ents[i].Subtype == "port" {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Errorf("expected exactly 1 dut.clk port entity, got %d", count)
+	}
+}
+
+// ── Instance topology tests (#5380) ───────────────────────────────────────────
+
+func TestVerilog_InstanceTopology(t *testing.T) {
+	src := `module top (input clk);
+		sub_a u_a (.clk(clk));
+		sub_b #(.W(8)) u_b (.clk(clk));
+	endmodule`
+	ents := runVerilog(t, src, "top.v", "verilog")
+
+	top := vFind(ents, "top", "SCOPE.Component")
+	if top == nil {
+		t.Fatal("missing top module")
+	}
+	got := map[string]types.RelationshipRecord{}
+	for _, r := range top.Relationships {
+		if r.Kind == "USES" {
+			got[r.ToID] = r
+		}
+	}
+	a, ok := got["sub_a"]
+	if !ok {
+		t.Fatal("missing USES edge top → sub_a")
+	}
+	if a.Properties["instance_name"] != "u_a" {
+		t.Errorf("sub_a instance_name=%q want u_a", a.Properties["instance_name"])
+	}
+	b, ok := got["sub_b"]
+	if !ok {
+		t.Fatal("missing USES edge top → sub_b")
+	}
+	if b.Properties["instance_name"] != "u_b" {
+		t.Errorf("sub_b instance_name=%q want u_b", b.Properties["instance_name"])
+	}
+	if b.Properties["parameterized"] != "true" {
+		t.Errorf("sub_b should be flagged parameterized; props=%v", b.Properties)
+	}
+}
+
+// ── Sim/synth tool detection tests (#5380) ────────────────────────────────────
+
+func vFindTool(ents []types.EntityRecord, label string) *types.EntityRecord {
+	return vFindSubtype(ents, label, "SCOPE.Component", "tool")
+}
+
+func TestVerilog_VerilatorPragma(t *testing.T) {
+	src := `module m;
+		/* verilator lint_off WIDTH */
+		wire x;
+		/* verilator lint_on WIDTH */
+	endmodule`
+	ents := runVerilog(t, src, "m.v", "verilog")
+	tool := vFindTool(ents, "Verilator")
+	if tool == nil {
+		t.Fatal("expected Verilator tool entity")
+	}
+	if tool.Properties["tool"] != "verilator" {
+		t.Errorf("tool prop=%q want verilator", tool.Properties["tool"])
+	}
+}
+
+func TestVerilog_VerilatorConfig(t *testing.T) {
+	src := "`verilator_config\nlint_off -rule WIDTH\n"
+	ents := runVerilog(t, src, "cfg.vlt", "verilog")
+	if vFindTool(ents, "Verilator") == nil {
+		t.Fatal("expected Verilator tool entity from `verilator_config")
+	}
+}
+
+func TestVerilog_SynthesisAttrs(t *testing.T) {
+	src := `module m (input clk);
+		(* keep = "true" *) reg r;
+		(* dont_touch = "true" *) wire w;
+	endmodule`
+	ents := runVerilog(t, src, "m.sv", "systemverilog")
+	if vFindTool(ents, "Synthesis (Vivado/Quartus)") == nil {
+		t.Fatal("expected synthesis tool entity from (* keep *) / (* dont_touch *)")
+	}
+}
+
+func TestVerilog_YosysAttr(t *testing.T) {
+	src := `(* top *)
+	module m (input clk);
+	endmodule`
+	ents := runVerilog(t, src, "m.v", "verilog")
+	if vFindTool(ents, "Yosys") == nil {
+		t.Fatal("expected Yosys tool entity from (* top *)")
+	}
+}
+
+func TestVerilog_NoToolFalsePositive(t *testing.T) {
+	src := `module m (input clk, output q);
+		assign q = clk;
+	endmodule`
+	ents := runVerilog(t, src, "m.v", "verilog")
+	for i := range ents {
+		if ents[i].Subtype == "tool" {
+			t.Errorf("unexpected tool entity %q on plain module", ents[i].Name)
+		}
+	}
+}

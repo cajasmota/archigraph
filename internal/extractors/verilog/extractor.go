@@ -11,9 +11,11 @@
 //   - `class Foo; ... endclass`                  → SCOPE.Component (class, SV)
 //   - `function [type] name(...); ... endfunction` → SCOPE.Operation (function)
 //   - `task name(...); ... endtask`              → SCOPE.Operation (task)
-//   - `Foo inst_name(...)` — module instantiations → USES edges
+//   - `input/output/inout` ports                → SCOPE.Schema(subtype=port)
+//   - `Foo inst_name(...)` — module instantiations → USES edges (with instance_name)
 //   - `import Pkg::*;` / `import Pkg::item;`     → IMPORTS (SV)
 //   - “ `include "foo.vh" “                    → IMPORTS
+//   - sim/synth tool signals (verilator/synth-attr/yosys) → SCOPE.Component(subtype=tool)
 //
 // File extensions handled: .v, .vh (Verilog), .sv, .svh (SystemVerilog).
 //
@@ -113,10 +115,44 @@ var (
 	//   ModuleName inst_name (...)
 	//   ModuleName #(...) inst_name (...)
 	// Group 1: module type name (leading uppercase or known pattern)
-	// Group 2: instance name
+	// Group 2: optional parameter-override block #(...)
+	// Group 3: instance name
 	instantiationRE = regexp.MustCompile(
-		`(?m)^\s*([A-Za-z_][A-Za-z0-9_$]*)\s+(?:#\s*\([^)]*\)\s+)?([A-Za-z_][A-Za-z0-9_$]*)\s*\(`,
+		`(?m)^\s*([A-Za-z_][A-Za-z0-9_$]*)\s+(#\s*\((?:[^()]|\([^()]*\))*\)\s+)?([A-Za-z_][A-Za-z0-9_$]*)\s*\(`,
 	)
+
+	// portDeclRE matches port direction declarations, both ANSI header style
+	// and classic body style:
+	//   input  wire        clk
+	//   output reg  [7:0]  data
+	//   inout              bus
+	//   input  logic [W-1:0] sel,
+	// Group 1: direction (input|output|inout)
+	// Group 2: optional net/var type + width modifiers (wire/reg/logic/[..])
+	// Group 3: port identifier
+	portDeclRE = regexp.MustCompile(
+		`(?m)(?:^|[,(])\s*(input|output|inout)\s+((?:wire|reg|logic|bit|signed|unsigned|tri|var|integer|real|time|byte|shortint|int|longint)\s+)*(?:\[[^\]]*\]\s*)*([A-Za-z_][A-Za-z0-9_$]*)`,
+	)
+
+	// portWidthRE extracts the packed dimension (width) preceding a port name,
+	// used to stamp a `width` property on the port entity.
+	portWidthRE = regexp.MustCompile(`\[[^\]]*\]`)
+
+	// verilatorPragmaRE matches Verilator-specific lint/config pragmas:
+	//   /* verilator lint_off WIDTH */   (handled pre-scrub on raw src)
+	//   `verilator_config
+	verilatorLintRE   = regexp.MustCompile(`verilator\s+(?:lint_off|lint_on|lint_save|lint_restore|coverage_off|coverage_on|public|isolate_assignments|tracing_off|tracing_on|no_inline)`)
+	verilatorConfigRE = regexp.MustCompile("(?m)`verilator_config")
+
+	// synthAttrRE matches synthesis attributes used by Vivado/Quartus/generic
+	// synthesis flows:
+	//   (* synthesis, ... *)   (* keep = "true" *)   (* dont_touch *)
+	//   (* mark_debug = "true" *)   (* ram_style = "block" *)
+	synthAttrRE = regexp.MustCompile(`\(\*\s*(synthesis|keep|keep_hierarchy|dont_touch|mark_debug|ram_style|rom_style|fsm_encoding|use_dsp|async_reg|max_fanout|syn_keep|syn_preserve|altera_attribute|preserve)\b`)
+
+	// yosysAttrRE matches Yosys-style attributes:
+	//   (* top *)   (* blackbox *)   (* whitebox *)   (* gentb_skip *)
+	yosysAttrRE = regexp.MustCompile(`\(\*\s*(top|blackbox|whitebox|abc9_box|gentb_clock|nomem2reg|mem2reg)\b`)
 )
 
 // verilogFunctionKeywords is the set of names that must NOT be treated as
@@ -221,7 +257,90 @@ func extractVerilog(src, filePath, lang string) []types.EntityRecord {
 	// ── 3. Module declarations ────────────────────────────────────────────
 	entities = append(entities, findComponents(scrubbed, src, filePath, lang)...)
 
+	// ── 4. Sim/synth toolchain detection ──────────────────────────────────
+	entities = append(entities, buildToolEntities(src, scrubbed, filePath, lang)...)
+
 	return entities
+}
+
+// -----------------------------------------------------------------------
+// Sim/synth toolchain detection
+// -----------------------------------------------------------------------
+
+// toolSpec describes a sim/synth toolchain recognised from signals present
+// inside HDL source (the only files routed to this extractor). Each spec is a
+// signal heuristic — not project-file parsing — so recognition is honest
+// "partial".
+type toolSpec struct {
+	id            string            // tool record id, e.g. "verilator"
+	label         string            // display name
+	matchRaw      func(string) bool // applied to raw source (catches comment pragmas)
+	matchScrubbed func(string) bool // applied to comment-stripped source (attributes)
+}
+
+var toolSpecs = []toolSpec{
+	{
+		id:    "verilator",
+		label: "Verilator",
+		matchRaw: func(raw string) bool {
+			return verilatorLintRE.MatchString(raw) || verilatorConfigRE.MatchString(raw)
+		},
+	},
+	{
+		id:            "synthesis",
+		label:         "Synthesis (Vivado/Quartus)",
+		matchScrubbed: func(s string) bool { return synthAttrRE.MatchString(s) },
+	},
+	{
+		id:            "yosys",
+		label:         "Yosys",
+		matchScrubbed: func(s string) bool { return yosysAttrRE.MatchString(s) },
+	},
+}
+
+// buildToolEntities emits one SCOPE.Component(subtype=tool) entity per
+// recognised sim/synth toolchain whose signals appear in the file, with a
+// USES edge file → tool so the toolchain is navigable from the source.
+func buildToolEntities(src, scrubbed, filePath, lang string) []types.EntityRecord {
+	var out []types.EntityRecord
+	seen := make(map[string]bool)
+
+	for _, spec := range toolSpecs {
+		matched := false
+		if spec.matchRaw != nil && spec.matchRaw(src) {
+			matched = true
+		}
+		if !matched && spec.matchScrubbed != nil && spec.matchScrubbed(scrubbed) {
+			matched = true
+		}
+		if !matched || seen[spec.id] {
+			continue
+		}
+		seen[spec.id] = true
+
+		out = append(out, types.EntityRecord{
+			Name:       spec.label,
+			Kind:       "SCOPE.Component",
+			Subtype:    "tool",
+			SourceFile: filePath,
+			Language:   lang,
+			Properties: map[string]string{
+				"tool":           spec.id,
+				"toolchain_kind": "sim_synth",
+			},
+			Relationships: []types.RelationshipRecord{
+				{
+					FromID: filePath,
+					ToID:   spec.id,
+					Kind:   "USES",
+					Properties: map[string]string{
+						"tool": spec.id,
+					},
+				},
+			},
+		})
+	}
+	return out
 }
 
 // -----------------------------------------------------------------------
@@ -382,8 +501,95 @@ func findComponents(scrubbed, src, filePath, lang string) []types.EntityRecord {
 			for _, u := range usesRels {
 				out[compIdx].Relationships = append(out[compIdx].Relationships, u)
 			}
+
+			// ── Ports (module/interface I/O topology) ─────────────────────
+			// Ports may be declared in the ANSI header (between the module
+			// declaration and the terminating ';') or classic-style in the body.
+			if spec.subtype == "module" || spec.subtype == "interface" {
+				header := scrubbed[m[0]:m[1]]
+				portRecs := buildPortEntities(header, body, name, filePath, lang, startLine)
+				for i := range portRecs {
+					out = append(out, portRecs[i])
+					toID := extractor.BuildOperationStructuralRef(lang, filePath, portRecs[i].Name)
+					out[compIdx].Relationships = append(out[compIdx].Relationships, types.RelationshipRecord{
+						ToID: toID,
+						Kind: "CONTAINS",
+					})
+				}
+			}
 		}
 	}
+
+	return out
+}
+
+// -----------------------------------------------------------------------
+// Port extraction (module/interface I/O topology)
+// -----------------------------------------------------------------------
+
+// buildPortEntities scans a module/interface header and body for port
+// direction declarations (input/output/inout) and emits one SCOPE.Schema
+// entity per port, stamped with direction and (when present) width.
+//
+// ANSI-style ports live in the header:  module foo (input wire clk, output [7:0] q);
+// Classic-style ports live in the body: module foo (clk, q); input clk; output [7:0] q;
+//
+// De-duplicated by port name so a classic port re-declared in the body is
+// emitted once.
+func buildPortEntities(header, body, ownerName, filePath, lang string, ownerLine int) []types.EntityRecord {
+	seen := make(map[string]bool)
+	var out []types.EntityRecord
+
+	scan := func(text string, lineBase int) {
+		for _, pm := range portDeclRE.FindAllStringSubmatchIndex(text, -1) {
+			if len(pm) < 8 {
+				continue
+			}
+			direction := text[pm[2]:pm[3]]
+			portName := text[pm[6]:pm[7]]
+			if verilogKeywords[portName] {
+				continue
+			}
+			if seen[portName] {
+				continue
+			}
+			seen[portName] = true
+
+			// Width: the last packed dimension before the name, if any.
+			width := ""
+			decl := text[pm[0]:pm[7]]
+			if w := portWidthRE.FindAllString(decl, -1); len(w) > 0 {
+				width = w[len(w)-1]
+			}
+
+			qualName := ownerName + "." + portName
+			line := lineBase + strings.Count(text[:pm[0]], "\n")
+
+			props := map[string]string{
+				"direction": direction,
+				"port":      portName,
+			}
+			if width != "" {
+				props["width"] = width
+			}
+
+			out = append(out, types.EntityRecord{
+				Name:       qualName,
+				Kind:       "SCOPE.Schema",
+				Subtype:    "port",
+				SourceFile: filePath,
+				Language:   lang,
+				StartLine:  line,
+				EndLine:    line,
+				Properties: props,
+			})
+		}
+	}
+
+	// Header ports are on the owner declaration line(s).
+	scan(header, ownerLine)
+	// Body ports follow the header.
+	scan(body, ownerLine)
 
 	return out
 }
@@ -492,11 +698,12 @@ func collectInstantiations(body, ownerName string) []types.RelationshipRecord {
 	var out []types.RelationshipRecord
 
 	for _, m := range instantiationRE.FindAllStringSubmatch(body, -1) {
-		if len(m) < 3 {
+		if len(m) < 4 {
 			continue
 		}
 		typeName := m[1]
-		instName := m[2]
+		hasParamOverride := strings.TrimSpace(m[2]) != ""
+		instName := m[3]
 
 		// Skip keywords, built-ins, and the owner's own name.
 		if verilogKeywords[typeName] || verilogKeywords[strings.ToLower(typeName)] {
@@ -530,9 +737,18 @@ func collectInstantiations(body, ownerName string) []types.RelationshipRecord {
 		}
 		seen[key] = true
 
+		props := map[string]string{
+			"instance_name": instName,
+			"module_type":   typeName,
+		}
+		if hasParamOverride {
+			props["parameterized"] = "true"
+		}
+
 		out = append(out, types.RelationshipRecord{
-			ToID: typeName,
-			Kind: "USES",
+			ToID:       typeName,
+			Kind:       "USES",
+			Properties: props,
 		})
 	}
 	return out
