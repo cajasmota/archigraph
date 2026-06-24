@@ -29,6 +29,7 @@
 //   - *.nimble             (nimble — Nim manifest_parsing, requires directives)
 //   - paket.dependencies   (paket — .NET/F# manifest_parsing, nuget directives)
 //   - paket.lock           (paket — .NET/F# lockfile_parsing, resolved NUGET tree)
+//   - *.ipkg               (idris2 — Idris manifest_parsing, depends/modules)
 //
 // Entity kind: "SCOPE.Component"
 // Relationships emitted: DEPENDS_ON(kind=external_dependency)
@@ -255,6 +256,11 @@ func IsManifest(filePath string) bool {
 	if strings.HasSuffix(basename, ".opam") {
 		return true
 	}
+	// *.ipkg — Idris (Idris2) package manifest (the package name is the file's
+	// base name, e.g. myproject.ipkg, so it is matched by extension; #5382).
+	if strings.HasSuffix(basename, ".ipkg") {
+		return true
+	}
 	return false
 }
 
@@ -347,6 +353,10 @@ func detectPackageManager(filePath string) string {
 	// *.opam → opam (OCaml package manifest)
 	if strings.HasSuffix(basename, ".opam") {
 		return "opam"
+	}
+	// *.ipkg → idris2 (Idris package manifest)
+	if strings.HasSuffix(basename, ".ipkg") {
+		return "idris2"
 	}
 	return "unknown"
 }
@@ -2018,6 +2028,10 @@ func dispatchParser(filePath, source string) (string, []dep) {
 	if strings.HasSuffix(basename, ".opam") {
 		return "opam", parseOpam(source)
 	}
+	// *.ipkg — Idris (Idris2) package manifest.
+	if strings.HasSuffix(basename, ".ipkg") {
+		return "idris2", parseIpkg(source)
+	}
 	// Makefile — only an erlang.mk build when it includes erlang.mk / declares
 	// PROJECT (requireSignal=true); a plain Makefile is a no-op.
 	if basename == "Makefile" {
@@ -2263,6 +2277,19 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 				anchorProps = map[string]string{}
 			}
 			anchorProps["rescript_config"] = cfg
+		}
+	}
+
+	// Idris *.ipkg — surface the declared package/modules/main/executable/
+	// sourcedir metadata on the project anchor as an "ipkg_config" property so
+	// the package configuration is queryable without a new entity kind (#5382).
+	// Empty for every other manifest.
+	if strings.HasSuffix(filepath.Base(file.Path), ".ipkg") {
+		if cfg := ipkgConfigProperty(string(file.Content)); cfg != "" {
+			if anchorProps == nil {
+				anchorProps = map[string]string{}
+			}
+			anchorProps["ipkg_config"] = cfg
 		}
 	}
 
