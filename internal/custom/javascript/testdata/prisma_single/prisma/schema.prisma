@@ -1,0 +1,16 @@
+enum Role {
+  ADMIN
+  USER
+}
+
+model User {
+  id      Int     @id @default(autoincrement())
+  role    Role
+  orders  Order[]
+}
+
+model Order {
+  id      Int   @id
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id])
+}
