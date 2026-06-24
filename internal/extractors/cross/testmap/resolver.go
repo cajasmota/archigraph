@@ -562,7 +562,7 @@ var stopwords = map[string]bool{
 	"expect.true": true, "expect.false": true, "expect.err": true,
 	"expect.ok": true, "expect.equallists": true, "expect.equaldicts": true,
 	"expect.equalsets": true,
-	"fuzz.int": true, "fuzz.string": true, "fuzz.bool": true, "fuzz.float": true,
+	"fuzz.int":         true, "fuzz.string": true, "fuzz.bool": true, "fuzz.float": true,
 	"fuzz.list": true, "fuzz.constant": true, "fuzz.map": true, "fuzz.andmap": true,
 	"fuzz.intrange": true, "fuzz.oneof": true, "fuzz.frequency": true,
 	// Common language keywords that end up in call-like positions
@@ -587,6 +587,23 @@ var stopwords = map[string]bool{
 	"error": true, "assert_": true, "table.insert": true, "table.remove": true,
 	"table.concat": true, "table.sort": true, "string.format": true,
 	"string.match": true, "string.gmatch": true, "string.gsub": true,
+	// Zig — `zig test` (#5377). The std.testing assertion DSL is test-harness
+	// plumbing, never the production subject. `try expect(...)` already denies
+	// the bare `expect`/`try` tokens above; these add the dotted std.testing.*
+	// forms and the bare assertion tails that surface after the `)` chain break.
+	"std.testing.expect": true, "std.testing.expectequal": true,
+	"std.testing.expecterror": true, "std.testing.expectequalstrings": true,
+	"std.testing.expectequalslices": true, "std.testing.expectequaldeep": true,
+	"std.testing.expectapproxeqabs": true, "std.testing.expectapproxeqrel": true,
+	"std.testing.expectfmt": true, "std.testing.expectstringstartswith": true,
+	"std.testing.expectstringendswith": true, "std.testing.refalldecls": true,
+	"testing.expect": true, "testing.expectequal": true, "testing.expecterror": true,
+	"testing.expectequalstrings": true, "testing.expectequalslices": true,
+	"testing.expectequaldeep": true, "testing.expectapproxeqabs": true,
+	"testing.expectapproxeqrel": true, "testing.refalldecls": true,
+	"expectequal": true, "expecterror": true, "expectequalstrings": true,
+	"expectequalslices": true, "expectequaldeep": true, "expectapproxeqabs": true,
+	"expectapproxeqrel": true, "expectfmt": true, "refalldecls": true,
 }
 
 // isStopword reports whether id is a test-helper, assertion, mock library,

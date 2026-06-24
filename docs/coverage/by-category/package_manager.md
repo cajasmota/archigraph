@@ -1,7 +1,7 @@
 <!-- DO NOT EDIT — generated from docs/coverage/registry.json by 'go run ./tools/coverage gen' -->
 # package_manager
 
-**Total**: 29 records · **C/C++**: 4 · **crystal**: 1 · **C#**: 1 · **dart**: 1 · **elixir**: 1 · **elm**: 1 · **erlang**: 1 · **F#**: 1 · **go**: 1 · **haskell**: 1 · **java**: 2 · **JS/TS**: 2 · **lua**: 1 · **multi**: 1 · **nim**: 1 · **OCaml**: 1 · **php**: 1 · **python**: 3 · **ruby**: 1 · **rust**: 1 · **scala**: 1 · **swift**: 1
+**Total**: 30 records · **C/C++**: 4 · **crystal**: 1 · **C#**: 1 · **dart**: 1 · **elixir**: 1 · **elm**: 1 · **erlang**: 1 · **F#**: 1 · **go**: 1 · **haskell**: 1 · **java**: 2 · **JS/TS**: 2 · **lua**: 1 · **multi**: 1 · **nim**: 1 · **OCaml**: 1 · **php**: 1 · **python**: 3 · **ruby**: 1 · **rust**: 1 · **scala**: 1 · **swift**: 1 · **zig**: 1
 
 Back to [summary](../summary.md). Bucket: **Tools**.
 
@@ -37,3 +37,4 @@ Back to [summary](../summary.md). Bucket: **Tools**.
 | [rust](../by-language/rust.md) | [Cargo.toml](../detail/pkg.cargo.md) | — | 🔴 | ✅ | |
 | [scala](../by-language/scala.md) | [build.sbt](../detail/pkg.sbt.md) | — | — | 🔴 | |
 | [swift](../by-language/swift.md) | [Package.swift / Podfile](../detail/pkg.swift-package.md) | — | — | 🟢 | |
+| [zig](../by-language/zig.md) | [build.zig.zon (Zig package manifest)](../detail/pkg.zig-zon.md) | — | — | ✅ | |

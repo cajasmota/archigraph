@@ -203,6 +203,12 @@ var exactManifestNames = map[string]bool{
 	// and package (flat version-range) shapes. elm.json IS the lockfile (deps are
 	// exactly pinned), so there is no separate lockfile format.
 	"elm.json": true,
+	// Zig — `zig build` is both build orchestrator and dependency fetcher (#5377).
+	// build.zig is the build script (targets + b.dependency() deps); build.zig.zon
+	// is the content-addressed package manifest. build.zig.zon IS the lockfile
+	// (.hash pins each dep), so there is no separate lockfile format.
+	"build.zig":     true,
+	"build.zig.zon": true,
 }
 
 // IsManifest returns true when filePath names a supported manifest file.
@@ -299,6 +305,9 @@ func detectPackageManager(filePath string) string {
 		"dune-project": "dune",
 		// Elm — elm.json manifest
 		"elm.json": "elm",
+		// Zig — build.zig (build system) + build.zig.zon (package manifest)
+		"build.zig":     "zig",
+		"build.zig.zon": "zig",
 	}
 	basename := filepath.Base(filePath)
 	if v, ok := pm[basename]; ok {
@@ -1955,6 +1964,11 @@ var parsers = map[string]parserFn{
 	"dune-project": parseDuneProject,
 	// Elm — elm.json manifest (application + package shapes).
 	"elm.json": parseElmJSON,
+	// Zig — build.zig (b.dependency() build-graph deps) + build.zig.zon (ZON
+	// package manifest). Build-target extraction for build.zig is handled in
+	// buildEntitiesAndRels via buildZigTargetsProperty (#5377).
+	"build.zig":     parseBuildZig,
+	"build.zig.zon": parseBuildZigZon,
 }
 
 func dispatchParser(filePath, source string) (string, []dep) {
@@ -2000,6 +2014,13 @@ func dispatchParser(filePath, source string) (string, []dep) {
 // ---------------------------------------------------------------------------
 
 func buildEntitiesAndRels(filePath, packageManager string, deps []dep) []types.EntityRecord {
+	return buildEntitiesAndRelsWithProps(filePath, packageManager, deps, nil)
+}
+
+// buildEntitiesAndRelsWithProps is buildEntitiesAndRels with extra properties to
+// merge onto the project-anchor entity (e.g. the Zig build.zig "build_targets"
+// list). A nil/empty map is identical to buildEntitiesAndRels.
+func buildEntitiesAndRelsWithProps(filePath, packageManager string, deps []dep, anchorProps map[string]string) []types.EntityRecord {
 	var out []types.EntityRecord
 	projRef := projectRef(filePath)
 	seen := map[string]bool{}
@@ -2018,6 +2039,16 @@ func buildEntitiesAndRels(filePath, packageManager string, deps []dep) []types.E
 	// language-level entity. The `ref` property is what byQualifiedName
 	// keys off (resolve/refs.go line ~1662); we set QualifiedName too for
 	// belt-and-braces resolution.
+	anchorProperties := map[string]string{
+		"package_manager": packageManager,
+		"ref":             projRef,
+		"provenance":      "INFERRED_FROM_PACKAGE_MANIFEST",
+	}
+	// Merge caller-supplied anchor properties (e.g. the Zig build.zig
+	// "build_targets" list, #5377). A nil/empty map is a no-op.
+	for k, v := range anchorProps {
+		anchorProperties[k] = v
+	}
 	out = append(out, types.EntityRecord{
 		Name:          filepath.Base(filePath),
 		Kind:          "SCOPE.Component",
@@ -2025,12 +2056,8 @@ func buildEntitiesAndRels(filePath, packageManager string, deps []dep) []types.E
 		SourceFile:    filePath,
 		Language:      "",
 		QualifiedName: projRef,
-		Properties: map[string]string{
-			"package_manager": packageManager,
-			"ref":             projRef,
-			"provenance":      "INFERRED_FROM_PACKAGE_MANIFEST",
-		},
-		QualityScore: 0.5,
+		Properties:    anchorProperties,
+		QualityScore:  0.5,
 	})
 
 	for _, d := range deps {
@@ -2200,5 +2227,14 @@ func (e *Extractor) Extract(ctx context.Context, file extractor.FileInput) ([]ty
 		attribute.Int("total_found", depCount+devCount),
 	)
 
-	return buildEntitiesAndRels(file.Path, pm, deps), nil
+	// Zig build.zig — surface the declared build-target names (addExecutable/
+	// addStaticLibrary/addModule/…) on the project anchor as a "build_targets"
+	// property so target_extraction is queryable without a new entity kind
+	// (#5377). Empty for every other manifest.
+	var anchorProps map[string]string
+	if targets := buildZigTargetsProperty(file.Path, string(file.Content)); targets != "" {
+		anchorProps = map[string]string{"build_targets": targets}
+	}
+
+	return buildEntitiesAndRelsWithProps(file.Path, pm, deps, anchorProps), nil
 }
