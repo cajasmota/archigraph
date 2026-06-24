@@ -49,16 +49,35 @@ const ExternalServiceSourceFile = "<external-service>"
 // to one source of truth; the AWS family keeps the `aws-<svc>` shape and
 // AWSGeneric is the honest-partial fallback for a dynamic boto3 service arg.
 const (
-	ServiceStripe       = "stripe"
-	ServiceTwilio       = "twilio"
-	ServiceSendGrid     = "sendgrid"
-	ServiceOpenAI       = "openai"
-	ServiceSlack        = "slack"
-	ServiceSentry       = "sentry"
-	ServiceFirebase     = "firebase"
-	ServiceAlgolia      = "algolia"
-	ServiceAWSGeneric   = "aws-generic"
-	ServiceAWSCognito   = "aws-cognito"
+	ServiceStripe     = "stripe"
+	ServiceTwilio     = "twilio"
+	ServiceSendGrid   = "sendgrid"
+	ServiceOpenAI     = "openai"
+	ServiceSlack      = "slack"
+	ServiceSentry     = "sentry"
+	ServiceFirebase   = "firebase"
+	ServiceAlgolia    = "algolia"
+	ServiceAWSGeneric = "aws-generic"
+	ServiceAWSCognito = "aws-cognito"
+
+	// #5502 common TS SaaS SDKs — one allow-list, NOT per-SDK sprawl. Each is
+	// recognised by its official import package; the call-shape detection
+	// (`new Ctor()` + receiver, or a default-import receiver call) is the
+	// generic, import-gated pass already shared across services.
+	ServicePlaid       = "plaid"       // @plaid (payments / banking)
+	ServiceKnock       = "knock"       // @knocklabs/node (notifications)
+	ServicePostmark    = "postmark"    // postmark (transactional email)
+	ServicePostHog     = "posthog"     // posthog-node (product analytics)
+	ServiceLinear      = "linear"      // @linear/sdk (project management)
+	ServiceHubSpot     = "hubspot"     // @hubspot/api-client (CRM)
+	ServiceIntercom    = "intercom"    // intercom-client (support / messaging)
+	ServiceUploadThing = "uploadthing" // uploadthing (file storage)
+	ServiceContentful  = "contentful"  // contentful (CMS)
+	ServiceMapbox      = "mapbox"      // @mapbox/mapbox-sdk (maps / geo)
+	ServiceCalcom      = "cal.com"     // @calcom/* (scheduling)
+	ServiceVercelAI    = "vercel-ai"   // ai / @ai-sdk/* (LLM gateway)
+	ServiceOpenFeature = "openfeature" // @openfeature/* (feature flags)
+
 	awsServicePrefix    = "aws-"
 	externalServiceName = "service:"
 )
@@ -179,6 +198,15 @@ func ServiceForImportSource(source string) string {
 	if strings.HasPrefix(head, "@aws-sdk/") || head == "@aws-sdk" {
 		return awsServicePrefix
 	}
+	// #5502 scoped-family SDKs: every package under the scope is the same
+	// service (`@ai-sdk/openai`, `@ai-sdk/anthropic` → vercel-ai;
+	// `@openfeature/server-sdk`, `@openfeature/web-sdk` → openfeature).
+	if strings.HasPrefix(head, "@ai-sdk/") || head == "@ai-sdk" {
+		return ServiceVercelAI
+	}
+	if strings.HasPrefix(head, "@openfeature/") || head == "@openfeature" {
+		return ServiceOpenFeature
+	}
 	switch head {
 	case "stripe":
 		return ServiceStripe
@@ -196,6 +224,31 @@ func ServiceForImportSource(source string) string {
 		return ServiceFirebase
 	case "algoliasearch":
 		return ServiceAlgolia
+	// --- #5502 common TS SaaS SDKs (allow-list, import-gated) ---
+	case "plaid":
+		return ServicePlaid
+	case "@knocklabs/node", "@knocklabs/client", "@knocklabs/react":
+		return ServiceKnock
+	case "postmark":
+		return ServicePostmark
+	case "posthog-node", "posthog-js":
+		return ServicePostHog
+	case "@linear/sdk":
+		return ServiceLinear
+	case "@hubspot/api-client":
+		return ServiceHubSpot
+	case "intercom-client", "@intercom/messenger-js-sdk":
+		return ServiceIntercom
+	case "uploadthing", "@uploadthing/react", "@uploadthing/shared":
+		return ServiceUploadThing
+	case "contentful", "contentful-management":
+		return ServiceContentful
+	case "@mapbox/mapbox-sdk", "mapbox-gl":
+		return ServiceMapbox
+	case "@calcom/embed-react", "@calcom/embed-core", "@calcom/api":
+		return ServiceCalcom
+	case "ai":
+		return ServiceVercelAI
 	case "boto3", "botocore", "@aws-sdk", "aws-sdk":
 		// AWS is recognised at import time but the concrete service requires
 		// the client/service-name argument; callers use AWSServiceFromArg.
@@ -257,6 +310,28 @@ type ServiceCall struct {
 	Operation string // optional SDK operation, e.g. "charges.create"
 }
 
+// isConstructorOp reports whether an operation token is the construction-site
+// placeholder (`new <Ctor>`) rather than a real SDK call. Used to prefer a
+// call operation (`charges.create`) over the constructor when both are seen for
+// the same (function, service) edge.
+func isConstructorOp(op string) bool {
+	return strings.HasPrefix(op, "new ")
+}
+
+// findServiceRel returns the DEPENDS_ON_SERVICE relationship on host pointing at
+// the given service, or nil. Used to upgrade an already-emitted edge's
+// operation in place.
+func findServiceRel(host *types.EntityRecord, service string) *types.RelationshipRecord {
+	want := ExternalServiceTargetID(service)
+	for i := range host.Relationships {
+		r := &host.Relationships[i]
+		if r.Kind == string(types.RelationshipKindDependsOnService) && r.ToID == want {
+			return r
+		}
+	}
+	return nil
+}
+
 // EmitServiceDependencyEdges appends, to *entities, the external-service
 // entities and DEPENDS_ON_SERVICE edges for the given detections.
 //
@@ -311,6 +386,16 @@ func EmitServiceDependencyEdges(entities *[]types.EntityRecord, lang string, cal
 					Properties: props,
 				})
 			emitted++
+		} else if c.Operation != "" && !isConstructorOp(c.Operation) {
+			// An edge already exists for (FromName, service). Prefer a real SDK
+			// CALL operation (`charges.create`, `chat.postMessage`) over the
+			// less-informative `new <Ctor>` placeholder from the construction
+			// site, so the recorded operation names the actual integration use.
+			if hostRel := findServiceRel(&(*entities)[hostIdx], service); hostRel != nil {
+				if op := hostRel.Properties["operation"]; op == "" || isConstructorOp(op) {
+					hostRel.Properties["operation"] = c.Operation
+				}
+			}
 		}
 
 		if !seenSvc[service] {
