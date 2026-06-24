@@ -182,7 +182,8 @@ func runRebuildClient(cmd *cobra.Command, args []string, wipe bool, quiet bool, 
 
 	// --quiet: skip progress, run synchronously with no token.
 	if quiet {
-		reply, err := c.Rebuild(proto.RebuildArgs{Group: group, Slug: slug, Wipe: wipe, Incremental: inc})
+		// #5328: an explicit `grafel rebuild`/repair is human-awaited → foreground.
+		reply, err := c.Rebuild(proto.RebuildArgs{Group: group, Slug: slug, Wipe: wipe, Incremental: inc, Interactive: true})
 		if err != nil {
 			return err
 		}
@@ -212,6 +213,8 @@ func runRebuildClient(cmd *cobra.Command, args []string, wipe bool, quiet bool, 
 			Wipe:          wipe,
 			ProgressToken: token,
 			Incremental:   inc,
+			// #5328: explicit user-triggered repair → foreground (priority + cap).
+			Interactive: true,
 		})
 		outcomeCh <- rebuildOutcome{
 			repos:    reply.Repos,
@@ -451,6 +454,8 @@ func indexGroupWithProgress(w, errW io.Writer, group string) error {
 		reply, rpcErr := c.Rebuild(proto.RebuildArgs{
 			Group:         group,
 			ProgressToken: token,
+			// #5328: explicit user-triggered rebuild → foreground (priority + cap).
+			Interactive: true,
 		})
 		outcomeCh <- rebuildOutcome{
 			repos:    reply.Repos,

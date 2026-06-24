@@ -337,7 +337,8 @@ func streamIndexWithSummary(evCh chan<- progress.Event, outCh chan<- wiztui.Inde
 func triggerRebuild(c *client.Client, group string, token string) <-chan rebuildOutcome {
 	rpcCh := make(chan rebuildOutcome, 1)
 	go func() {
-		reply, rpcErr := c.Rebuild(proto.RebuildArgs{Group: group, ProgressToken: token})
+		// #5328: the wizard is human-awaited → foreground (priority + higher CPU cap).
+		reply, rpcErr := c.Rebuild(proto.RebuildArgs{Group: group, ProgressToken: token, Interactive: true})
 		rpcCh <- rebuildOutcome{
 			repos:    reply.Repos,
 			warning:  reply.Warning,

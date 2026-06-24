@@ -64,10 +64,11 @@ func resolveIndexConcurrency() int {
 type IndexGate struct {
 	cap int
 
-	mu     sync.Mutex
-	active int             // slots currently held
-	fg     []chan struct{} // FIFO of waiting foreground tickets
-	bg     []chan struct{} // FIFO of waiting background tickets
+	mu       sync.Mutex
+	active   int             // slots currently held
+	fgActive int             // foreground slots currently held (#5328)
+	fg       []chan struct{} // FIFO of waiting foreground tickets
+	bg       []chan struct{} // FIFO of waiting background tickets
 }
 
 // NewIndexGate constructs a gate with the given cap. A cap <= 0 is coerced to 1
@@ -98,6 +99,16 @@ func (g *IndexGate) Stats() (active, queued int) {
 	return g.active, len(g.fg) + len(g.bg)
 }
 
+// ForegroundActive reports how many foreground (interactive) index operations
+// are currently holding a slot (#5328). Background reindex paths consult this to
+// YIELD their core share while a human-awaited foreground index is running, so
+// foreground+background together never exceed the machine's core budget.
+func (g *IndexGate) ForegroundActive() int {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	return g.fgActive
+}
+
 // reserveForForeground is how many slots are held back from background work so a
 // foreground acquirer is never fully locked out by a background storm (#5328).
 // With cap>=2 we reserve exactly one; with cap==1 we cannot reserve (serial).
@@ -119,6 +130,9 @@ func (g *IndexGate) Acquire(ctx context.Context, foreground bool) error {
 	g.mu.Lock()
 	if g.canAdmitLocked(foreground) {
 		g.active++
+		if foreground {
+			g.fgActive++
+		}
 		g.publishLocked()
 		g.mu.Unlock()
 		return nil
@@ -150,7 +164,7 @@ func (g *IndexGate) Acquire(ctx context.Context, foreground bool) error {
 		// Already signalled between ctx.Done and acquiring the lock: a slot was
 		// charged to us. Release it so it isn't leaked.
 		g.mu.Unlock()
-		g.Release()
+		g.Release(foreground)
 		return ctx.Err()
 	}
 }
@@ -172,11 +186,15 @@ func (g *IndexGate) canAdmitLocked(foreground bool) bool {
 }
 
 // Release frees one slot and wakes the next eligible waiter (foreground first,
-// FIFO within a class). MUST be paired with a successful Acquire.
-func (g *IndexGate) Release() {
+// FIFO within a class). MUST be paired with a successful Acquire, passing the
+// same foreground value so the foreground-active count (#5328) stays balanced.
+func (g *IndexGate) Release(foreground bool) {
 	g.mu.Lock()
 	if g.active > 0 {
 		g.active--
+	}
+	if foreground && g.fgActive > 0 {
+		g.fgActive--
 	}
 	g.wakeLocked()
 	g.publishLocked()
@@ -192,6 +210,7 @@ func (g *IndexGate) wakeLocked() {
 		t := g.fg[0]
 		g.fg = g.fg[1:]
 		g.active++
+		g.fgActive++
 		close(t)
 	}
 	for len(g.bg) > 0 && g.canAdmitLocked(false) {
@@ -225,7 +244,7 @@ func (g *IndexGate) Run(ctx context.Context, foreground bool, fn func() error) e
 	if err := g.Acquire(ctx, foreground); err != nil {
 		return err
 	}
-	defer g.Release()
+	defer g.Release(foreground)
 	return fn()
 }
 
@@ -239,5 +258,5 @@ func (g *IndexGate) publish() {
 // publishLocked mirrors the current counts to the indexstate leaf package so the
 // MCP/status surfaces can read "indexing N, queued M". MUST hold g.mu.
 func (g *IndexGate) publishLocked() {
-	indexstate.SetIndexConcurrency(g.active, len(g.fg)+len(g.bg), g.cap)
+	indexstate.SetIndexConcurrency(g.active, len(g.fg)+len(g.bg), g.cap, g.fgActive)
 }

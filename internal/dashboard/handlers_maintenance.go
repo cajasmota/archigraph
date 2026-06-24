@@ -181,6 +181,8 @@ func (s *Server) dispatchRebuild(w http.ResponseWriter, group, repo string, wipe
 		Slug:          repo,
 		Wipe:          wipe,
 		ProgressToken: token,
+		// #5328: a dashboard maintenance rebuild is human-awaited → foreground.
+		Interactive: true,
 	}
 	go func() {
 		bgClient, dialErr := client.Dial()

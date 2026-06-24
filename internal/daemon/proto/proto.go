@@ -209,6 +209,15 @@ type RebuildArgs struct {
 	// since the last successful run. Wipe=true overrides Incremental (a wipe
 	// is always a full rebuild).
 	Incremental bool `json:"incremental,omitempty"`
+	// Interactive marks this rebuild as a human-awaited FOREGROUND request
+	// (dashboard wizard index, explicit CLI `grafel index`/`rebuild`/`wizard`,
+	// repair) rather than an automatic background watcher/git-hook reindex
+	// (#5328). Foreground rebuilds acquire the index gate on the priority lane
+	// (jump ahead of queued background work, may use the reserved slot) and run
+	// at the higher rebuild CPU cap; background reindexes yield while they run.
+	// Defaults to false so an unset caller is treated as background — the safe,
+	// throttled classification.
+	Interactive bool `json:"interactive,omitempty"`
 }
 
 // RebuildReply lists the repos that were rebuilt and any warning that
