@@ -9,6 +9,20 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 ## [Unreleased]
 
 ### Added
+- **Prisma modular split schema resolved cross-file (#5489):** the Prisma schema
+  extractor now treats a modular split schema — `prisma/schema/*.prisma`, one
+  domain per file, the `prismaSchemaFolder` preview feature — as ONE logical
+  schema. When a `.prisma` file lives in a folder holding multiple `.prisma`
+  files, the extractor unions the model and enum symbol tables across every file
+  in that schema folder before resolving relation targets. As a result a `model
+  Post` in `post.prisma` carrying `author User @relation(...)` now produces a
+  resolved `Post → User` relationship edge even though `model User` lives in
+  `user.prisma`, and a field whose type names an `enum` declared in a sibling
+  file (e.g. `status Status` → `enums.prisma`) resolves to that enum instead of
+  dangling. Cross-file relation fields are no longer dropped as honest-partial.
+  Models keep their real source file and location. The single-`schema.prisma`
+  case is unchanged (one file = the union of one). Part of the framework-stack
+  coverage epic (#5479).
 - **Next.js React Server Component data-fetch edges (#5488):** an async
   App-Router Server Component (a `page.tsx`/`layout.tsx` or other server
   component with no `'use client'` directive) now emits first-class edges to the

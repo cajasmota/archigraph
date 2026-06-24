@@ -3,6 +3,7 @@ package javascript
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -125,6 +126,68 @@ func prismaModelBlocks(src string) []struct {
 	return blocks
 }
 
+// prismaModularSiblings returns the union of model and enum names declared in
+// EVERY `.prisma` file that shares the schema folder with the file at relPath,
+// realizing Prisma's modular split-schema layout (the `prismaSchemaFolder`
+// preview feature: `prisma/schema/*.prisma`, one domain per file). All sibling
+// files form ONE logical schema, so a `model Post` in `post.prisma` can carry
+// `author User @relation(...)` where `model User` lives in `user.prisma`.
+//
+// Detection is structural: the file lives in a directory that holds more than
+// one `.prisma` file (the canonical layout is a `prisma/schema/` folder, but we
+// don't hardcode the name — any multi-`.prisma` folder is treated as a split
+// schema). The single-`schema.prisma` case yields no siblings, so the union
+// collapses to just the in-file symbol table (one file = the union of one).
+//
+// Returns (modelNames, enumNames). Both are nil when repoRoot is empty (direct
+// fixture tests that don't set RepoRoot), when the directory can't be read, or
+// when the file is the only `.prisma` file in its folder.
+func prismaModularSiblings(repoRoot, relPath string) (models, enums map[string]bool) {
+	if repoRoot == "" {
+		return nil, nil
+	}
+	dirAbs := filepath.Dir(filepath.Join(repoRoot, filepath.FromSlash(relPath)))
+	entries, err := os.ReadDir(dirAbs)
+	if err != nil {
+		return nil, nil
+	}
+	var prismaFiles []string
+	for _, ent := range entries {
+		if ent.IsDir() {
+			continue
+		}
+		if strings.HasSuffix(ent.Name(), ".prisma") {
+			prismaFiles = append(prismaFiles, ent.Name())
+		}
+	}
+	// A lone `.prisma` file in the folder is the single-file case; the caller's
+	// in-file symbol table already covers it. Only a multi-file folder is a
+	// modular split schema worth unioning.
+	if len(prismaFiles) < 2 {
+		return nil, nil
+	}
+	base := filepath.Base(relPath)
+	models = make(map[string]bool)
+	enums = make(map[string]bool)
+	for _, name := range prismaFiles {
+		if name == base {
+			continue // siblings only; the current file is unioned by the caller
+		}
+		data, err := os.ReadFile(filepath.Join(dirAbs, name))
+		if err != nil {
+			continue
+		}
+		sib := string(data)
+		for _, m := range rePrismaModel.FindAllStringSubmatch(sib, -1) {
+			models[m[1]] = true
+		}
+		for _, m := range rePrismaEnum.FindAllStringSubmatch(sib, -1) {
+			enums[m[1]] = true
+		}
+	}
+	return models, enums
+}
+
 // alterTableOpSubtype maps an ALTER TABLE clause keyword to a schema-change subtype.
 func alterTableOpSubtype(clause string) string {
 	switch strings.ToUpper(clause) {
@@ -183,6 +246,21 @@ func (e *prismaExtractor) Extract(ctx context.Context, file extreg.FileInput) ([
 	// set of known model names so targets resolve in-file.
 	modelIdx := make(map[string]int)
 	knownModels := make(map[string]bool)
+	knownEnums := make(map[string]bool)
+	// Modular split schema (`prismaSchemaFolder`): a `prisma/schema/*.prisma`
+	// folder is ONE logical schema. Seed the symbol table with model/enum names
+	// declared in SIBLING `.prisma` files so cross-file @relation targets, field
+	// types, and enum references resolve. Empty (nil) for the single-file case —
+	// then the union is just this file's own symbols, added below.
+	if isPrismaSchema {
+		sibModels, sibEnums := prismaModularSiblings(file.RepoRoot, file.Path)
+		for name := range sibModels {
+			knownModels[name] = true
+		}
+		for name := range sibEnums {
+			knownEnums[name] = true
+		}
+	}
 	for _, m := range rePrismaModel.FindAllStringSubmatchIndex(src, -1) {
 		name := src[m[2]:m[3]]
 		ent := makeEntity(name, "SCOPE.Schema", "model", file.Path, file.Language, lineOf(src, m[0]))
@@ -197,6 +275,7 @@ func (e *prismaExtractor) Extract(ctx context.Context, file extreg.FileInput) ([
 	// Prisma schema enums
 	for _, m := range rePrismaEnum.FindAllStringSubmatchIndex(src, -1) {
 		name := src[m[2]:m[3]]
+		knownEnums[name] = true
 		ent := makeEntity(name, "SCOPE.Schema", "enum", file.Path, file.Language, lineOf(src, m[0]))
 		setProps(&ent, "framework", "prisma", "provenance", "INFERRED_FROM_PRISMA_ENUM")
 		addEntity(ent)
@@ -253,6 +332,13 @@ func (e *prismaExtractor) Extract(ctx context.Context, file extreg.FileInput) ([
 				setProps(&ent, "target_model", baseType)
 				ent.Relationships = append(ent.Relationships,
 					referencesClassEdge(ent.ID, baseType, "prisma", fieldName))
+			} else if knownEnums[baseType] {
+				// Enum-typed field — resolves to the enum node (possibly in a
+				// sibling `.prisma` file under the modular split layout). Record
+				// a REFERENCES edge so the cross-file enum is not a dangling type.
+				setProps(&ent, "target_enum", baseType)
+				ent.Relationships = append(ent.Relationships,
+					referencesClassEdge(ent.ID, baseType, "prisma", fieldName))
 			}
 			entities[modelIdx[owner]].Relationships = append(entities[modelIdx[owner]].Relationships,
 				containsFieldEdge(owner, ent.ID, fieldName, "prisma"))
@@ -300,8 +386,12 @@ func (e *prismaExtractor) Extract(ctx context.Context, file extreg.FileInput) ([
 		//	profile  Profile?                             → one_to_one   (back side)
 		//
 		// FromID/ToID use the Class:<Model> convention so the resolver byName
-		// index links them to the model nodes. Cross-file target types are
-		// honest-partial (no edge — the model isn't a known in-file node).
+		// index links them to the model nodes. knownModels is the UNION of this
+		// file's models and those declared in SIBLING `.prisma` files under the
+		// modular split layout (prismaSchemaFolder), so a relation whose target
+		// model lives in another file of the same `prisma/schema/` folder
+		// resolves cross-file. A capitalized type that is neither a model nor an
+		// enum (e.g. a composite `type`) is still skipped — not a model relation.
 		for _, blk := range prismaModelBlocks(src) {
 			ownerIdx, ok := modelIdx[blk.name]
 			if !ok {
@@ -313,7 +403,7 @@ func (e *prismaExtractor) Extract(ctx context.Context, file extreg.FileInput) ([
 				isList := strings.HasSuffix(rawType, "[]")
 				baseType := strings.TrimSuffix(strings.TrimSuffix(rawType, "[]"), "?")
 				if !knownModels[baseType] {
-					continue // scalar/enum/cross-file type — not a model relation
+					continue // scalar/enum/composite type — not a model relation
 				}
 				// Determine cardinality. The list side is always one_to_many.
 				// The singular side is many_to_one when this field owns the FK

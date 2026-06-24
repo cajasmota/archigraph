@@ -1,0 +1,9 @@
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Status {
+  DRAFT
+  PUBLISHED
+}
