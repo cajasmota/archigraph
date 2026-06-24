@@ -25,15 +25,15 @@ grafel implements a three-step resolution cascade for every tool call that needs
 
 3. **Singleton fallback third.** If steps 1 and 2 fail and the registry holds exactly one group, use that group. Otherwise, return a structured error explaining the ambiguity and listing registered groups, so the agent can re-issue with an explicit `group` argument.
 
-A new `grafel_whoami()` MCP tool exposes the inferred group + repo + resolution-source for the current caller session. Agents can call `grafel_whoami` for self-orientation when they are uncertain, and the tool's response is itself a teaching signal about how routing works.
+The `grafel_orient` MCP tool (`view=me`) exposes the inferred group + repo + resolution-source for the current caller session. Agents can call it for self-orientation when they are uncertain, and the tool's response is itself a teaching signal about how routing works.
 
 ## Consequences
 
 ### Positive
-- The common case ("agent is working inside a registered repo") requires no extra arguments; the agent calls `grafel_search` or any other tool naturally and routing happens silently.
+- The common case ("agent is working inside a registered repo") requires no extra arguments; the agent calls `grafel_find` or any other tool naturally and routing happens silently.
 - Cross-group queries are explicit and unambiguous via the `group` argument.
 - The error path is informative rather than guessing; agents fail loudly and recover correctly.
-- `grafel_whoami` is a small tool that pays back many agent-side debugging conversations.
+- `grafel_orient` (`view=me`) pays back many agent-side debugging conversations.
 
 ### Negative
 - Reliable CWD propagation depends on the host integration. Agents whose hosts do not pass CWD metadata fall through to step 3 and may hit the ambiguity error more often. Mitigation: the error message tells them exactly what to do.

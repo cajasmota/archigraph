@@ -33,15 +33,15 @@ The dashboard is embedded in the binary. If it shows a blank page:
 3. If not connected, re-run: `grafel install`
 4. Restart your agent session — MCP servers are loaded at session start
 
-### Agent is in the wrong group or returns `source: "none"` from `grafel_whoami`
+### Agent is in the wrong group or returns `source: "none"` from `grafel_orient` (`view=me`)
 
 The daemon resolves the group from the agent's working directory. If your CWD is not inside a registered repo:
 - Run `grafel wizard` to register the repo
 - Or pass `group=` explicitly in tool calls
 
-### Tools return "tool not found" errors with old names
+### Tools return "tool not found" errors
 
-Tool names changed in #668 and #1281. There is no backwards-compatible fallback (ADR-0017). See the renamed-tools table in [mcp-tools.md](mcp-tools.md) or `internal/mcp/SCHEMA.md`.
+Check the tool name against the 22 tools listed in [mcp-tools.md](mcp-tools.md) or `internal/mcp/SCHEMA.md`. Each tool takes a discriminator parameter (`view`/`direction`/`kind`/`aspect`/`detail`/`scope`/`action`) to select the variant you want.
 
 ---
 

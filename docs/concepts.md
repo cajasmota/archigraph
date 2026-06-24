@@ -64,9 +64,9 @@ Residual edges are not failures — they are honest signals that the relationshi
 
 Beyond residual edges, the enrichment queue holds three types of candidates:
 
-- **Residual repairs** — unresolved stubs from the indexer (`grafel_repairs`)
+- **Residual repairs** — unresolved stubs from the indexer (`grafel_docgen_apply` with `kind=repairs`)
 - **Cross-repo link candidates** — edges where the target might be in a sibling repo (`grafel_cross_links`)
-- **Enrichment candidates** — `http_endpoint`, `process_flow`, and `message_topic` entities that the indexer flagged for LLM annotation (`grafel_enrichments`)
+- **Enrichment candidates** — `http_endpoint`, `process_flow`, and `message_topic` entities that the indexer flagged for LLM annotation (`grafel_docgen_apply` with `kind=enrichments`)
 
 The dashboard **Pending** surface (`/g/:groupId/pending`) shows the full queue tiered by priority (Critical / High / Medium / Low).
 
@@ -95,7 +95,7 @@ See [user-guide/multi-branch.md](user-guide/multi-branch.md) for the full guide.
 
 ## Patterns
 
-As agents work with the graph, they can save findings via `grafel_save_finding`. Over time, recurring structural patterns are extracted and stored as first-class entities. These are visible in the **Patterns** dashboard surface and manageable via the `/grafel-patterns-discover` and `/grafel-patterns-sync` skills.
+As agents work with the graph, they can save findings via `grafel_findings` (`action=save`). Over time, recurring structural patterns are extracted and stored as first-class entities. These are visible in the **Patterns** dashboard surface and manageable via the `/grafel-patterns-discover` and `/grafel-patterns-sync` skills.
 
 See [ADR-0018](adrs/0018-agent-learned-patterns.md) for the full design.
 

@@ -106,9 +106,9 @@ The dashboard is embedded in the daemon binary — no separate server needed. De
 Open a new Claude Code session in one of your indexed repos. The MCP server is auto-registered, so you can call grafel tools immediately:
 
 ```
-grafel_whoami()      -- confirm group + repo
-grafel_stats()       -- entity counts, any unavailable repos
-grafel_clusters()    -- module map (Louvain communities)
+grafel_orient(view="me")        -- confirm group + repo
+grafel_orient(view="overview")  -- entity counts, any unavailable repos
+grafel_orient(view="clusters")  -- module map (Louvain communities)
 ```
 
 For a complete guide to navigating with the MCP tools, see [../skills/using-grafel/SKILL.md](../skills/using-grafel/SKILL.md).

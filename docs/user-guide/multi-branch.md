@@ -176,8 +176,9 @@ An agent can ask for the structural diff between two refs in a single call:
 
 ```json
 {
-  "tool": "grafel_diff_refs",
+  "tool": "grafel_diff",
   "arguments": {
+    "aspect": "refs",
     "repo": "my-repo",
     "ref_a": "main",
     "ref_b": "feature/auth"

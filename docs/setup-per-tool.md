@@ -28,7 +28,7 @@ grafel install
 
 - **Writes the MCP entry** — registers the grafel MCP server in the tool's
   config so the agent can call the `grafel_*` tools (`grafel_find`,
-  `grafel_inspect`, `grafel_traces`, …). One global entry per tool; the single
+  `grafel_inspect`, `grafel_trace`, …). One global entry per tool; the single
   daemon routes by the caller's working directory. The entry points at the
   `grafel` binary with args `["mcp-bridge"]` (a local **stdio** server).
 - **Writes the rules file** — a marker-wrapped "prefer the grafel MCP over
@@ -41,7 +41,7 @@ writes what the tool can actually consume.
 
 > **MCP tool names are `grafel_*`.** Once the MCP server is registered and the
 > tool is restarted, you'll see tools like `grafel_find`, `grafel_inspect`,
-> `grafel_expand`, and `grafel_traces` in the tool's MCP/tool list.
+> `grafel_related`, and `grafel_trace` in the tool's MCP/tool list.
 
 ---
 

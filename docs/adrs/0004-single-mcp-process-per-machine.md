@@ -29,7 +29,7 @@ Routing a tool call to the right group uses three signals (full detail in ADR-00
 2. Caller's working-directory metadata, walked upward to find a `.grafel/group.json` marker.
 3. Singleton-group fallback when only one group is registered.
 
-A new `grafel_whoami` MCP tool returns the inferred group + repo for the current caller session, useful for agent self-orientation.
+The `grafel_orient` MCP tool (`view=me`) returns the inferred group + repo for the current caller session, useful for agent self-orientation.
 
 File watchers remain **per-repo** but are not part of this process. They are short-lived units invoked by save events (or by the IDE's file-change hook), which write incremental updates to disk that the long-lived MCP process picks up via mtime polling.
 

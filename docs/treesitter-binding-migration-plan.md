@@ -210,7 +210,7 @@ For each language, before flipping its registry entry to the official adapter:
 6. **Release matrix**: re-run linux/darwin/windows × arch with `CGO_ENABLED=1`
    before shipping a batch (per-module changes the C compile units, not the
    toolchain; `osusergo` unaffected).
-7. **License + supply-chain**: `grafel_license_audit` over the ~26 new modules
+7. **License + supply-chain**: `grafel_debt` (`kind=license`) over the ~26 new modules
    (several orgs) and pin-by-digest before merge.
 
 ### Rollback

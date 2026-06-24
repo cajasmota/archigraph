@@ -213,7 +213,7 @@ Go regardless of this decision — so migrating does **not** introduce CGO, it
    (`tree-sitter`, `tree-sitter-grammars`, `fwcd`, `alex-pinkus`, `DerekStride`,
    `camdencheek`, `MichaHoffmann`, `murtaza64`, `elixir-lang`). Wider trust
    surface than one smacker dep — vendor or pin-by-digest + a license audit
-   (`grafel_license_audit`) before merge.
+   (`grafel_debt` with `kind=license`) before merge.
 
 ---
 

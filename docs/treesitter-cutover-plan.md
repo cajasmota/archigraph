@@ -240,7 +240,7 @@ the per-language batches of the superseded incremental plan):
    `CGO_ENABLED=1` (MinGW on Windows), `osusergo` tag intact. Per-module changes
    the number of C compile units, not the toolchain; **must** pass on all five
    legs before tag. (The dashboard-embed pre-step is unaffected.)
-5. **License audit of the ~26 new modules.** Run `grafel_license_audit` over the
+5. **License audit of the ~26 new modules.** Run `grafel_debt` (`kind=license`) over the
    new module set (orgs: `tree-sitter`, `tree-sitter-grammars`, `fwcd`,
    `alex-pinkus`, `DerekStride`, `elixir-lang`, plus the vendored
    `mitchellh`/`camdencheek`/`murtaza64` grammars). Pin-by-digest in `go.sum`;
