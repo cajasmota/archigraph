@@ -9,6 +9,24 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 ## [Unreleased]
 
 ### Added
+- **Common TS SaaS SDKs → external-service dependencies via one shared
+  allow-list (#5502):** the shared third-party-integration dictionary
+  (`extractor.ServiceForImportSource`) now recognises the common TypeScript
+  SaaS SDKs through ONE table — no per-SDK detector sprawl — so calls into
+  these services surface as `DEPENDS_ON_SERVICE` edges converging on a single
+  `SCOPE.ExternalService` node tagged with the service. NEW services: Stripe,
+  Plaid (`plaid`), Knock (`@knocklabs/node`), Postmark, Slack
+  (`@slack/web-api`), PostHog (`posthog-node`), Linear (`@linear/sdk`), HubSpot
+  (`@hubspot/api-client`), Intercom, AWS (`@aws-sdk/*`), UploadThing,
+  Contentful, Mapbox (`@mapbox/mapbox-sdk`), Cal.com (`@calcom/*`), the Vercel
+  AI SDK (`ai`, `@ai-sdk/*`) and OpenFeature (`@openfeature/*`). The existing
+  import-gated call-shape pass (`new Ctor()` + receiver, default-import
+  receiver call) and the converged service node are unchanged; the recorded
+  `operation` now prefers the real SDK call (`stripe.charges.create` →
+  `charges.create`) over the `new <Ctor>` construction placeholder.
+  Precision-first / honest-partial is preserved: the SDK IMPORT must be present
+  for any edge, so a bare `stripe`-named local that was never imported emits
+  nothing.
 - **OpenTelemetry span-creation sites → INSTRUMENTS edges in JS/TS (#5500):**
   the JS/TS tracing pass now reaches parity with the Python lane. OTEL presence
   was already detected, and `tracer.startSpan` / `tracer.startActiveSpan` already

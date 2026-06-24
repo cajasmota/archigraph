@@ -54,10 +54,20 @@ records:
         # in internal/extractor/external_service.go. PARTIAL: python +
         # javascript/typescript lanes only; precision-first import-gated
         # detection (dynamic boto3 -> aws-generic; non-SDK receiver -> no edge).
+        # #5502 uplift: the shared service allow-list (ServiceForImportSource)
+        # now covers the common TS SaaS SDKs — Stripe, Plaid, Knock, Postmark,
+        # Slack, PostHog, Linear, HubSpot, Intercom, AWS (@aws-sdk/*),
+        # UploadThing, Contentful, Mapbox, Cal.com, Vercel AI SDK (ai /
+        # @ai-sdk/*) and OpenFeature (@openfeature/*) — via ONE table (no
+        # per-SDK detector sprawl); the call-shape pass and convergence node are
+        # unchanged. The recorded `operation` prefers the real SDK call
+        # (stripe.charges.create -> charges.create) over the `new <Ctor>`
+        # construction placeholder. Import gate preserved: a non-imported
+        # `stripe`-named local emits no edge.
         status: partial
         symbols:
           - file: internal/extractor/external_service.go
-            functions: [ServiceForImportSource, AWSServiceFromArg, ExternalServiceEntity, ExternalServiceTargetID, ExternalServiceName, EmitServiceDependencyEdges, IsAWSImportSentinel]
+            functions: [ServiceForImportSource, AWSServiceFromArg, ExternalServiceEntity, ExternalServiceTargetID, ExternalServiceName, EmitServiceDependencyEdges, IsAWSImportSentinel, isConstructorOp, findServiceRel]
           - file: internal/extractors/python/external_service.go
             functions: [emitServiceDependencyEdges, pyServiceCall, pyAttributeRootAndTail, pyAWSServiceFromCall]
           - file: internal/extractors/javascript/external_service.go
@@ -69,7 +79,9 @@ records:
             functions: [TestPyService_Stripe, TestPyService_AWSS3FromLiteral, TestPyService_AWSDynamoResource, TestPyService_Convergence, TestPyService_TwilioConstructor, TestPyService_DynamicAWSArg_Generic, TestPyService_NonSDKReceiver_NoEdge, TestPyService_NoImport_NoEdge]
           - file: internal/extractors/javascript/external_service_test.go
             functions: [TestJSService_StripeConstructThenCall, TestJSService_SendGrid, TestJSService_AWSS3Client, TestJSService_SentryNamespaceInit, TestJSService_Convergence, TestJSService_NonSDKReceiver_NoEdge, TestTSService_Stripe]
-        issues_implemented: ["3628"]
+          - file: internal/extractors/javascript/external_service_saas_5502_test.go
+            functions: [TestSaaS_StripeChargesCreate_5502, TestSaaS_SlackPostMessage_5502, TestSaaS_AWSS3Send_5502, TestSaaS_PostHogCapture_5502, TestSaaS_ScopedFamilies_5502, TestSaaS_VercelAISubpath_5502, TestSaaS_NonImportedStripeLocal_NoEdge_5502]
+        issues_implemented: ["3628", "5502"]
         verified_at: "2026-06-02"
 
   analysis.localization.i18n-keys:
