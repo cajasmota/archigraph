@@ -145,10 +145,16 @@ func collectTools() []mcpapi.Tool {
 
 // toolsFromServer extracts the tool list from an mcp-go MCPServer via
 // the public ListTools accessor (mcp-go ≥ 0.52).
+// Hidden aliases (#5546/#5552) are registered/callable but excluded from the
+// tools/list handshake, so they must NOT count against the handshake budget —
+// the audit measures the *advertised* surface (the real per-connect cost).
 func toolsFromServer(s *mcpsrv.MCPServer) []mcpapi.Tool {
 	byName := s.ListTools()
 	out := make([]mcpapi.Tool, 0, len(byName))
-	for _, st := range byName {
+	for name, st := range byName {
+		if mcp.IsHiddenAlias(name) {
+			continue
+		}
 		out = append(out, st.Tool)
 	}
 	return out

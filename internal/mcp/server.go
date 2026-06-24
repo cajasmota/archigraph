@@ -90,6 +90,122 @@ const sentinelToolName = "grafel_status"
 // notifications/tools/list_changed (tracked in #1772).
 const sentinelToolDescription = "Grafel: no indexed group covers cwd. Run install or cd to a repo."
 
+// canonicalToolNames is the advertised allow-list — the 22 intent-named tools
+// surfaced in the tools/list handshake (#5546 consolidation). Every other
+// registered tool is an absorbed alias (see aliasToolNames) that stays callable
+// but is hidden from the handshake. The 8 CORE + 6 ANALYSIS + 3 WORKFLOW/META
+// canonicals route discriminators over the existing handlers (tickets #5549–#5551);
+// several reuse a pre-existing tool name (find, inspect, get_source, index_status,
+// cross_links, impact_radius, endpoints, trace, patterns, mcp_metrics, orient),
+// so they are inherently advertised and need no special-casing here.
+var canonicalToolNames = map[string]bool{
+	// CORE (13)
+	"grafel_orient":        true,
+	"grafel_index_status":  true,
+	"grafel_find":          true,
+	"grafel_inspect":       true,
+	"grafel_get_source":    true,
+	"grafel_related":       true,
+	"grafel_find_paths":    true,
+	"grafel_subgraph":      true,
+	"grafel_trace":         true,
+	"grafel_endpoints":     true,
+	"grafel_cross_links":   true,
+	"grafel_impact_radius": true,
+	"grafel_diff":          true,
+	// ANALYSIS (5)
+	"grafel_debt":          true,
+	"grafel_security":      true,
+	"grafel_test_analysis": true,
+	"grafel_patterns":      true,
+	"grafel_findings":      true,
+	// WORKFLOW (2)
+	"grafel_docgen":       true,
+	"grafel_docgen_apply": true,
+	// META (2)
+	"grafel_event":       true,
+	"grafel_mcp_metrics": true,
+}
+
+// aliasToolNames is the set of absorbed legacy tool names (#5546). They remain
+// REGISTERED (over their own handlers) so un-redeployed consumers can still call
+// them directly for one release, but they are hidden from the tools/list
+// handshake (see fullToolList) so the advertised surface is exactly the 22
+// canonical tools. This drops the per-connect handshake token cost from ~7,900
+// toward ~3,540 without removing any capability.
+//
+// hidden aliases — callable for back-compat, removed next release.
+//
+// Invariant (asserted by TestHiddenAliasPartition): this set must equal
+// registered − canonical − sentinel. Do not let the two drift.
+var aliasToolNames = map[string]bool{
+	// CORE absorbs
+	"grafel_whoami":              true, // → grafel_orient view=me
+	"grafel_stats":               true, // → grafel_orient view=overview
+	"grafel_clusters":            true, // → grafel_orient view=clusters
+	"grafel_module_analysis":     true, // → grafel_orient view=modules
+	"grafel_topology":            true, // → grafel_orient view=topology
+	"grafel_search_entities":     true, // → grafel_find
+	"grafel_find_callers":        true, // → grafel_related direction=callers
+	"grafel_find_callees":        true, // → grafel_related direction=callees
+	"grafel_neighbors":           true, // → grafel_related direction=neighbors
+	"grafel_navigates":           true, // → grafel_related direction=navigates
+	"grafel_expand":              true, // → grafel_subgraph
+	"grafel_data_flows":          true, // → grafel_trace kind=data
+	"grafel_control_flow":        true, // → grafel_trace kind=control
+	"grafel_def_use":             true, // → grafel_trace kind=def_use
+	"grafel_effects":             true, // → grafel_trace kind=effects
+	"grafel_flows":               true, // → grafel_trace
+	"grafel_traces":              true, // → grafel_trace
+	"grafel_effective_contract":  true, // → grafel_endpoints detail=contract
+	"grafel_endpoint_posture":    true, // → grafel_endpoints detail=posture
+	"grafel_pr_impact":           true, // → grafel_impact_radius scope=changeset
+	"grafel_response_shape_diff": true, // → grafel_diff aspect=response_shape
+	"grafel_payload_drift":       true, // → grafel_diff aspect=payload
+	"grafel_auth_posture_diff":   true, // → grafel_diff aspect=auth
+	"grafel_diff_refs":           true, // → grafel_diff aspect=refs
+	"grafel_literal_parity":      true, // → grafel_diff aspect=literals
+	// ANALYSIS absorbs
+	"grafel_dead_code":                   true, // → grafel_debt kind=dead_code
+	"grafel_find_dead_code":              true, // → grafel_debt kind=dead_code
+	"grafel_pure_functions":              true, // → grafel_debt kind=impure
+	"grafel_stub_detector":               true, // → grafel_debt kind=stubs
+	"grafel_import_cycles":               true, // → grafel_debt kind=cycles
+	"grafel_quality_cycles":              true, // → grafel_debt kind=cycles
+	"grafel_license_audit":               true, // → grafel_debt kind=license
+	"grafel_security_findings":           true, // → grafel_security kind=findings
+	"grafel_secrets":                     true, // → grafel_security kind=secrets
+	"grafel_auth_coverage":               true, // → grafel_security kind=auth_coverage
+	"grafel_test_coverage":               true, // → grafel_test_analysis kind=coverage
+	"grafel_test_reachability":           true, // → grafel_test_analysis kind=reachability
+	"grafel_contract_test_effectiveness": true, // → grafel_test_analysis kind=contract_effectiveness
+	"grafel_coverage_effectiveness":      true, // → grafel_test_analysis kind=coverage
+	"grafel_graph_patterns":              true, // → grafel_patterns kind=graph
+	"grafel_template_patterns":           true, // → grafel_patterns kind=template
+	"grafel_list_findings":               true, // → grafel_findings action=list
+	"grafel_save_finding":                true, // → grafel_findings action=save
+	// WORKFLOW absorbs
+	"grafel_docgen_start_run":     true, // → grafel_docgen action=start
+	"grafel_docgen_status":        true, // → grafel_docgen action=status
+	"grafel_docgen_list":          true, // → grafel_docgen action=list
+	"grafel_docgen_promote":       true, // → grafel_docgen action=promote
+	"grafel_docgen_abort":         true, // → grafel_docgen action=abort
+	"grafel_docgen_validate":      true, // → grafel_docgen action=validate
+	"grafel_apply_doc_semantics":  true, // → grafel_docgen_apply kind=semantics
+	"grafel_apply_docgen_repairs": true, // → grafel_docgen_apply kind=repairs
+	"grafel_repairs":              true, // → grafel_docgen_apply kind=repairs
+	"grafel_enrichments":          true, // → grafel_docgen_apply kind=enrichments
+	// META absorbs
+	"grafel_feedback_event": true, // → grafel_event kind=feedback
+	"grafel_persona_event":  true, // → grafel_event kind=persona
+}
+
+// IsHiddenAlias reports whether name is an absorbed legacy tool that is still
+// registered/callable but hidden from the tools/list handshake (#5546/#5552).
+// Exported so the handshake-budget tooling (cmd/mcp-audit) and tests can measure
+// the *advertised* surface rather than the raw registered set.
+func IsHiddenAlias(name string) bool { return aliasToolNames[name] }
+
 // Config controls server construction.
 type Config struct {
 	RegistryPath string
@@ -392,6 +508,13 @@ func (s *Server) fullToolList() ([]MCPToolEntry, error) {
 	for n := range toolMap {
 		if n == sentinelToolName {
 			continue // exclude sentinel from full handshake
+		}
+		// hidden aliases — callable for back-compat, removed next release.
+		// Absorbed legacy tools stay registered (still dispatchable) but are
+		// excluded from tools/list so the handshake advertises exactly the 22
+		// canonical tools (#5546/#5552).
+		if aliasToolNames[n] {
+			continue
 		}
 		names = append(names, n)
 	}
