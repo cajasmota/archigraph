@@ -242,6 +242,15 @@ type Server struct {
 	// Optional: when nil, events are silently dropped.
 	activityBroker *MCPActivityBroker
 
+	// quarantineRecoverer, when set, is invoked when an MCP query resolves an
+	// entity — so a directory that was quarantined as index trash but later
+	// turns out to be real (its content is queried) is auto-un-quarantined
+	// immediately (Q3, #5618). nil disables the hook (the default in tooling
+	// that has no live watcher). The daemon wires this to its
+	// watch.QuarantineTracker (which satisfies QuarantineRecoverer) via
+	// SetQuarantineRecoverer.
+	quarantineRecoverer QuarantineRecoverer
+
 	// reloadDebounceMu / reloadLastAt implement the per-call reload debounce
 	// (#2550, widened #3367). reloadLastAt is the Unix-nano timestamp of the
 	// most recent reloadBeforeCall() attempt that actually ran. Subsequent
@@ -266,6 +275,42 @@ func (s *Server) SetActivityBroker(b *MCPActivityBroker) {
 // ActivityBroker returns the wired broker, or nil when not set.
 func (s *Server) ActivityBroker() *MCPActivityBroker {
 	return s.activityBroker
+}
+
+// QuarantineRecoverer is the minimal surface the MCP query path needs from the
+// daemon's index quarantine tracker (Q3, #5618): given a repo root and the
+// absolute path of a queried/referenced file, un-quarantine the containing dir
+// if it was quarantined (and is not operator-pinned). It is satisfied by
+// *watch.QuarantineTracker without the mcp package importing daemon/watch.
+type QuarantineRecoverer interface {
+	// Recover un-quarantines the quarantined directory containing path, if any.
+	// Returns the recovered rel and whether anything changed. A no-op (and
+	// cheap) when path is not under a quarantined dir.
+	Recover(repo, path string) (rel string, recovered bool)
+}
+
+// SetQuarantineRecoverer wires the index-quarantine auto-recover hook (#5618)
+// into the server. Call this from the daemon entrypoint once the watcher (which
+// owns the QuarantineTracker) is ready. Passing nil disables the hook.
+func (s *Server) SetQuarantineRecoverer(r QuarantineRecoverer) {
+	s.quarantineRecoverer = r
+}
+
+// noteEntityAccess feeds the query/reference signal to the quarantine tracker:
+// when an MCP tool resolves an entity, the directory of its source file proves
+// to be real, so any quarantine on that directory is lifted immediately. Cheap
+// and nil-safe — a membership check that only acts on a hit. lr is the resolved
+// repo (for its root path); srcFile is the entity's recorded source file
+// (relative to the repo root, or absolute).
+func (s *Server) noteEntityAccess(lr *LoadedRepo, srcFile string) {
+	if s == nil || s.quarantineRecoverer == nil || lr == nil || lr.Path == "" || srcFile == "" {
+		return
+	}
+	abs := srcFile
+	if !filepath.IsAbs(abs) {
+		abs = filepath.Join(lr.Path, srcFile)
+	}
+	s.quarantineRecoverer.Recover(lr.Path, abs)
 }
 
 // NewServer wires everything together: loads the registry, performs an

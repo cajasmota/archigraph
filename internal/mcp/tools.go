@@ -2562,6 +2562,14 @@ func (s *Server) handleGetNodeSource(ctx context.Context, req mcpapi.CallToolReq
 	e := resn.entity
 	lr := resn.repo
 
+	// Q3 (#5618) — auto-recover on query. The caller just resolved a real
+	// entity, so the directory holding its source is genuinely needed. If that
+	// directory was quarantined as index trash, un-quarantine it immediately
+	// (the cheap on-demand counterpart to the quiet-window self-heal). No-op and
+	// nil-safe when no recoverer is wired or the dir is not quarantined; pinned
+	// dirs are respected by the tracker.
+	s.noteEntityAccess(lr, e.SourceFile)
+
 	// #3833 — MRO-aware resolution. When the entity is an INHERITED member (a
 	// bodyless DRF synthetic, or a method resolved via EXTENDS to a base that
 	// defines it) resolve it to the DEFINING class body instead of returning the

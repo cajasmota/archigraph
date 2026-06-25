@@ -474,6 +474,74 @@ func (q *QuarantineTracker) Unquarantine(repo, rel string) bool {
 	return true
 }
 
+// Recover auto-un-quarantines the quarantined directory that contains path,
+// when that path later proves to be REAL — i.e. its content is queried (an MCP
+// tool resolves an entity whose source file is under a quarantined dir) or
+// referenced (the graph has an edge into a quarantined dir's content). This is
+// the Q3 self-heal-on-demand signal (#5618): we never want to keep hiding data
+// that the rest of the system actually needs.
+//
+// It is the cheap counterpart to Sweep's quiet-window heal: a single query or
+// reference un-quarantines immediately rather than waiting out HealQuiet.
+//
+// Contract:
+//   - path is the absolute path to the referenced/queried file (e.g. an
+//     entity's source file). Its DIRECTORY is matched against the quarantine
+//     set, walking up to the nearest quarantined ancestor (so a query for
+//     `app/build/x/y.go` recovers the quarantined `app/build`).
+//   - PINNED entries are respected: an operator-pinned dir stays exactly as the
+//     user set it and is NOT auto-recovered (returns false).
+//   - On a hit it removes the entry, clears the churn bookkeeping so indexing
+//     re-arms cleanly, persists, and audits. Returns the recovered rel.
+//   - On no quarantined ancestor (the common case) it is a cheap membership
+//     check that returns ("", false) — safe to call on every query/reference.
+//
+// Anti-flap: if the dir was quarantined for genuine churn and is still
+// thrashing, the churn detector (Observe) will simply re-quarantine it on the
+// next burst — a real-but-churning dir surfaces, then re-quarantines. That is
+// the intended behaviour, not a defect.
+func (q *QuarantineTracker) Recover(repo, path string) (rel string, recovered bool) {
+	if q == nil || q.cfg.disabled {
+		return "", false
+	}
+	dirRel, ok := relDir(repo, path)
+	if !ok {
+		return "", false
+	}
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	q.ensureLoadedLocked(repo)
+
+	set := q.quarantined[repo]
+	if len(set) == 0 {
+		return "", false
+	}
+	// Walk up to the nearest quarantined ancestor of the path's directory.
+	cur := dirRel
+	for {
+		if reason, hit := set[cur]; hit {
+			if reason.Pinned {
+				// Operator-pinned: leave exactly as the user set it.
+				return "", false
+			}
+			delete(set, cur)
+			if m := q.churn[repo]; m != nil {
+				delete(m, cur)
+			}
+			q.persistLocked(repo)
+			if q.audit != nil {
+				q.audit("unquarantine", repo, cur, "recover on query/reference")
+			}
+			return cur, true
+		}
+		parent := slashDir(cur)
+		if parent == cur {
+			return "", false
+		}
+		cur = parent
+	}
+}
+
 // ---- persistence: <repo>/.grafel/quarantine.json ----
 
 // quarantineFile is the on-disk shape.

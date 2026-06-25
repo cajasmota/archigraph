@@ -190,6 +190,20 @@ func onWatcherReady(w *watch.Watcher, logger *slog.Logger) {
 		daemonTierMgr.SetWatcherHook(mgr)
 		logger.Info("tier: watcher pause/resume hook wired (M2 lazy-subscribe — 0 subscriptions at boot)")
 	}
+
+	// Q3 (#5618): wire the index-quarantine auto-recover hook into the MCP
+	// server. The watcher owns the QuarantineTracker; the MCP query path calls
+	// Recover when it resolves an entity, so a dir quarantined as index trash
+	// that later proves real (its content is queried) is un-quarantined
+	// immediately rather than waiting out the quiet-window self-heal. Best-effort:
+	// if the MCP server is not yet initialised, the hook is simply not wired (the
+	// quiet-window Sweep still recovers genuinely-idle dirs).
+	if qt := w.Quarantine(); qt != nil {
+		if srv, err := mcpServerInstance(); err == nil && srv != nil {
+			srv.SetQuarantineRecoverer(qt)
+			logger.Info("quarantine: auto-recover-on-query hook wired into MCP server (#5618)")
+		}
+	}
 }
 
 // SubscribeGroupWatcher lazily subscribes the fsnotify watcher for all repos
