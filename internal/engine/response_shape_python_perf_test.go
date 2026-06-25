@@ -173,21 +173,56 @@ func TestResponseShapePython_MemoizationIdentical(t *testing.T) {
 // asserts the larger one is not super-linearly slower. With the old per-call
 // regexp.MustCompile + full rescan this ratio blew up; with memoization it is
 // ~linear.
+//
+// De-flaking rationale (#5607): the original compared N=100 vs N=400 (a 4x
+// corpus) against a 9x bound. That gap is too narrow — for a linear extractor
+// the expected ratio is ~4x and the headroom to the 9x bound is only ~2.25x,
+// so ordinary CI jitter (cold caches, GC pauses, co-scheduled load) routinely
+// pushed it past 9x (9.28x observed on ubuntu-latest) with no real regression.
+//
+// We instead use a 10x corpus gap (N=100 vs N=1000) and take the MEDIAN of a
+// few timing runs to damp outliers. The math is what makes this robust:
+//
+//   - Linear  (O(n)):   1000/100  = 10x   time  → expected ratio ≈ 10
+//   - Quadratic (O(n²)): 1000²/100² = 100x time  → expected ratio ≈ 100
+//
+// A 25x bound sits ~2.5x above the linear expectation (generous slack for
+// fixed overhead and noise) yet ~4x below the quadratic signal, so a genuine
+// O(n²) reintroduction still fails loudly (~100x) while CI jitter never does.
 func TestResponseShapePython_NearLinearScaling(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping timing-sensitive scaling test in -short mode")
 	}
-	time1 := timeCorpus(t, 100)
-	time4 := timeCorpus(t, 400)
+	const (
+		smallN  = 100
+		largeN  = 1000 // 10x the corpus → linear≈10x time, quadratic≈100x
+		samples = 5    // median of N runs damps CI outliers
+		bound   = 25.0 // ~2.5x over linear (10x), ~4x under quadratic (100x)
+	)
+	timeSmall := medianCorpus(t, smallN, samples)
+	timeLarge := medianCorpus(t, largeN, samples)
 
-	// 4x the work. Linear would be ~4x time. Allow generous slack for noise
-	// and constant overhead, but a quadratic blowup (16x+) must fail.
-	ratio := float64(time4) / float64(time1+1)
-	t.Logf("scaling: N=100 took %v, N=400 took %v, ratio=%.2f (linear≈4.0)", time1, time4, ratio)
-	if ratio > 9.0 {
-		t.Fatalf("super-linear scaling detected: 4x corpus took %.2fx time (want <9x); "+
-			"the O(n^2) regression is back", ratio)
+	// +1µs floor on the denominator guards against a 0ns small measurement.
+	ratio := float64(timeLarge) / float64(timeSmall+time.Microsecond)
+	t.Logf("scaling: N=%d median %v, N=%d median %v, ratio=%.2f (linear≈10.0, quadratic≈100.0)",
+		smallN, timeSmall, largeN, timeLarge, ratio)
+	if ratio > bound {
+		t.Fatalf("super-linear scaling detected: %dx corpus took %.2fx time (want <%.0fx); "+
+			"the O(n^2) regression is back", largeN/smallN, ratio, bound)
 	}
+}
+
+// medianCorpus times the corpus pass `samples` times for the given corpus size
+// and returns the median, which is far more stable than a single timing under
+// CI noise (a single GC pause or co-scheduled spike can multiply one run).
+func medianCorpus(t *testing.T, nClasses, samples int) time.Duration {
+	t.Helper()
+	runs := make([]time.Duration, samples)
+	for i := range runs {
+		runs[i] = timeCorpus(t, nClasses)
+	}
+	sort.Slice(runs, func(a, b int) bool { return runs[a] < runs[b] })
+	return runs[len(runs)/2]
 }
 
 func timeCorpus(t *testing.T, nClasses int) time.Duration {
