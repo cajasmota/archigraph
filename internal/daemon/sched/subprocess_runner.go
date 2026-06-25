@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync/atomic"
 
+	"github.com/cajasmota/grafel/internal/executil"
 	"github.com/cajasmota/grafel/internal/indexstate"
 )
 
@@ -298,6 +299,9 @@ func RunSubprocessIndex(ctx context.Context, repoPath, ref string, skipPasses []
 				"gomaxprocs", n, "repo", repoPath)
 		}
 	}
+	// On Windows, prevent a console window from flashing when the daemon
+	// (running as a Task Scheduler task) spawns this subprocess.
+	executil.NoWindow(cmd)
 
 	// Pipe child stdout for IPC JSON lines.
 	stdoutPipe, err := cmd.StdoutPipe()
@@ -411,6 +415,9 @@ func RunSubprocessGroupAlgo(ctx context.Context, group string, logger *slog.Logg
 	// guarded off on platforms without setpriority (e.g. Windows). See
 	// applyGroupAlgoNice (platform-split files).
 	applyGroupAlgoNice(cmd)
+	// On Windows, prevent a console window from flashing when the daemon
+	// (running as a Task Scheduler task) spawns this subprocess.
+	executil.NoWindow(cmd)
 
 	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
