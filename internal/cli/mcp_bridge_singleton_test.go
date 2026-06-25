@@ -136,16 +136,27 @@ func TestBridgeSingleton_ReapTargetsLiveGrafel(t *testing.T) {
 // deterministic for a socket and differs across sockets (no cross-socket
 // collision).
 func TestBridgeSingleton_PathStableAndPerSocket(t *testing.T) {
-	a1 := bridgeSingletonPath("/x/y/a.sock")
-	a2 := bridgeSingletonPath("/x/y/a.sock")
-	b := bridgeSingletonPath("/x/y/b.sock")
+	// Build socket paths with filepath.Join so the separators match the host
+	// OS (backslash on Windows, slash elsewhere). Comparing against a literal
+	// "/x/y" would spuriously fail on Windows, where filepath.Dir returns the
+	// backslash form (\x\y) — the production placement is correct; only the
+	// fixture was unix-only.
+	dir := filepath.Join("x", "y")
+	aSock := filepath.Join(dir, "a.sock")
+	bSock := filepath.Join(dir, "b.sock")
+
+	a1 := bridgeSingletonPath(aSock)
+	a2 := bridgeSingletonPath(aSock)
+	b := bridgeSingletonPath(bSock)
 	if a1 != a2 {
 		t.Fatalf("path not stable: %q vs %q", a1, a2)
 	}
 	if a1 == b {
 		t.Fatalf("distinct sockets share a pidfile: %q", a1)
 	}
-	if filepath.Dir(a1) != "/x/y" {
-		t.Fatalf("pidfile not beside socket: %q", a1)
+	// The pidfile must live beside the socket: compare cleaned directories on
+	// both sides so the assertion is separator-agnostic.
+	if got, want := filepath.Clean(filepath.Dir(a1)), filepath.Clean(dir); got != want {
+		t.Fatalf("pidfile not beside socket: dir=%q want %q (path %q)", got, want, a1)
 	}
 }
