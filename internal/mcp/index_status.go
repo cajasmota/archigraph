@@ -38,6 +38,18 @@ type indexStatusReply struct {
 	// should NOT use this — it should check its repo's state==current — but it
 	// is a convenient summary when no filter is set.
 	AnyIndexing bool `json:"any_indexing"`
+	// Parsing is the number of IN-PROCESS tree-sitter parses running in the
+	// daemon right now (#5630). The reactive incremental reindex re-parses
+	// changed files inside the daemon process — work that registers in NEITHER
+	// AnyIndexing's per-repo states NOR concurrency.indexing (the IndexGate).
+	// Before this field a daemon CPU-pinned in ts_parser_parse looked idle.
+	// Reported regardless of any filter (it is process-global, not per-repo).
+	Parsing int `json:"parsing"`
+	// Busy is the true daemon-activity signal (#5630/#5631): an index job, a
+	// group-algo pass, OR an in-process parse is running. A consumer that needs
+	// "is grafel quiet?" should gate on this, not on any_indexing alone — the
+	// latter only reflects scheduler index freshness, not in-process parsing.
+	Busy bool `json:"busy"`
 	// Concurrency mirrors the daemon-wide index-concurrency gate (#5493) so a
 	// caller can see how a many-module group is draining: "indexing N, queued M"
 	// with a cap of GRAFEL_INDEX_CONCURRENCY. Reported regardless of any filter.
@@ -101,6 +113,17 @@ func (s *Server) handleIndexStatus(ctx context.Context, req mcpapi.CallToolReque
 	// visible (a 30-module group draining 2-at-a-time, not stalled).
 	ic := indexstate.GetIndexConcurrency()
 	out.Concurrency = indexConcurrency{Active: ic.Active, Queued: ic.Queued, Cap: ic.Cap}
+	// #5630: surface in-process parse activity + the true busy signal so a daemon
+	// CPU-pinned in ts_parser_parse no longer reports idle. Process-global, so it
+	// is reported regardless of the repo/group filter and OR-ed into AnyIndexing
+	// (an in-process incremental reindex IS indexing work, even though it never
+	// touched the scheduler's per-repo state or the IndexGate).
+	snap := indexstate.Get()
+	out.Parsing = snap.ParseInFlight
+	out.Busy = snap.Busy
+	if snap.ParseInFlight > 0 {
+		out.AnyIndexing = true
+	}
 	return jsonResult(out), nil
 }
 

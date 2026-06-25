@@ -37,6 +37,7 @@ import (
 	"github.com/cajasmota/grafel/internal/extractors"
 	"github.com/cajasmota/grafel/internal/graph"
 	"github.com/cajasmota/grafel/internal/graph/groupalgo"
+	"github.com/cajasmota/grafel/internal/indexstate"
 	"github.com/cajasmota/grafel/internal/jobs"
 	"github.com/cajasmota/grafel/internal/mcp"
 	"github.com/cajasmota/grafel/internal/process"
@@ -419,6 +420,19 @@ func runDaemon(argv []string) error {
 		prev := runtime.GOMAXPROCS(gmp)
 		gcLog.Printf("cpu-tune: GRAFEL_DAEMON_GOMAXPROCS=%d applied (was %d, host=%d)", gmp, prev, runtime.NumCPU())
 	}
+
+	// #5630: bound CONCURRENT in-process tree-sitter parses. The reactive
+	// incremental reindex (and the opt-out in-process full index) re-parse
+	// changed files INSIDE the daemon — work that escapes both the IndexGate
+	// (#5493, rebuild-only) and the #5602 reindex GOMAXPROCS cap (subprocess-
+	// only), so it can monopolise the box while index_status reports idle. Cap
+	// it at the daemon's effective GOMAXPROCS (the same core budget the daemon
+	// runtime itself uses) so an in-process parse burst cannot draw more cores
+	// than the daemon is allowed. Mirrors the runtime cap above; honors the same
+	// resolve path so a tightened GRAFEL_DAEMON_GOMAXPROCS also tightens parsing.
+	parseCap := runtime.GOMAXPROCS(0)
+	indexstate.SetParseConcurrency(parseCap)
+	gcLog.Printf("cpu-tune: in-process parse concurrency cap=%d (#5630)", parseCap)
 
 	// Parse daemon-only flags. The root cobra command has flag parsing
 	// disabled for "daemon" so we own the argv. Unknown flags exit

@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/cajasmota/grafel/internal/indexstate"
 	"github.com/cajasmota/grafel/internal/treesitter/ts"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -167,6 +168,20 @@ func (f *ParserFactory) parseOfficial(span trace.Span, source []byte, language s
 	}
 
 	lang, adapter, _ := tsLanguageFor(language)
+
+	// #5630 — account + cap. Every real (non-empty) tree-sitter parse passes
+	// through here, so this is the single chokepoint that makes "the daemon is
+	// parsing" ALWAYS observable (indexstate.ParseInFlight / the busy signal,
+	// surfaced by grafel_index_status) and ALWAYS bounded by the daemon-wide
+	// in-process parse ceiling. It fixes the untracked-parse bug where the
+	// reactive/incremental in-process reindex re-parsed source while
+	// index_status reported idle and the #5602 cap (subprocess-only) could not
+	// throttle it. AcquireParseSlot blocks until a slot is free (no-op when the
+	// gate is unbounded — non-daemon callers); ReleaseParseSlot frees it and
+	// clears the busy counter. The slot is held across the parse + node-walk so
+	// the whole CPU-heavy span counts and is capped.
+	indexstate.AcquireParseSlot()
+	defer indexstate.ReleaseParseSlot()
 
 	// Issue #481 — serialise parse calls across goroutines (see ParserFactory
 	// godoc for the rationale).

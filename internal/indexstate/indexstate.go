@@ -33,6 +33,21 @@ var (
 	// group-algo pass without conflating it with a reactive reindex count.
 	groupAlgoInFlight atomic.Int64
 
+	// parseInFlight counts in-flight IN-PROCESS tree-sitter parses (#5630). The
+	// reactive scheduler's incremental reindex and the opt-out in-process full
+	// index re-parse changed files INSIDE the daemon process — they never go
+	// through the IndexGate (so concurrency.indexing stays 0) and the #5602
+	// reindex GOMAXPROCS cap (which only sets env on the index-internal SUBPROCESS)
+	// does not touch them. Profiling a hot daemon showed every hot frame in
+	// ts_parser_parse while index_status reported state:current / any_indexing:false
+	// / concurrency.indexing:0 — the parse ran OUTSIDE all the accounted+capped
+	// lanes. This counter is bumped by treesitter.ParserFactory.Parse so that
+	// "the daemon is parsing" is ALWAYS observable (busy signal), regardless of
+	// which path triggered it. Note: each extract subprocess is a separate process
+	// with its own copy of this global, so a subprocess's parses never leak into
+	// the daemon's count — only true in-process daemon parses register here.
+	parseInFlight atomic.Int64
+
 	// indexConcActive / indexConcQueued mirror the daemon-wide index-concurrency
 	// gate (#5493): how many module/repo index operations are running right now
 	// vs. waiting for a free slot. They let `grafel status` / grafel_index_status
@@ -181,6 +196,25 @@ func GroupAlgoEnd() {
 	}
 }
 
+// ParseBegin records the start of an IN-PROCESS tree-sitter parse (#5630).
+// Bracketed by ParseEnd (deferred at the call site in treesitter.ParserFactory.
+// Parse). On the first parse of an otherwise-idle daemon it stamps the busy-
+// period start so indexing_started_at is populated even for a pure in-process
+// parse burst (an incremental reindex re-parsing changed files). Safe to call
+// from any goroutine, including the per-file extract loop.
+func ParseBegin() {
+	if prev := parseInFlight.Add(1); prev == 1 && inFlight.Load() == 0 && groupAlgoInFlight.Load() == 0 {
+		startedUnixNano.CompareAndSwap(0, time.Now().UnixNano())
+	}
+}
+
+// ParseEnd records the completion of an in-process parse. Clamped at 0.
+func ParseEnd() {
+	if n := parseInFlight.Add(-1); n < 0 {
+		parseInFlight.Store(0)
+	}
+}
+
 // Set records the current number of in-flight index jobs. It is idempotent and
 // safe to call from any goroutine. On the transition into a busy period
 // (previous count 0, new count > 0) it stamps the start time; on the
@@ -208,6 +242,17 @@ type Snapshot struct {
 	// GroupAlgoInFlight is the number of group-algorithm passes currently
 	// running (#5349 A3).
 	GroupAlgoInFlight int
+	// ParseInFlight is the number of IN-PROCESS tree-sitter parses currently
+	// running in THIS process (#5630). >0 means the daemon is actively parsing
+	// source (e.g. an incremental reindex re-parsing changed files) even when no
+	// index job is registered in the scheduler — the bug behind "index_status
+	// reports idle while the daemon is CPU-pinned in ts_parser_parse".
+	ParseInFlight int
+	// Busy is the true daemon-activity signal (#5630/#5631): an index job, a
+	// group-algo pass, OR an in-process parse is running. A consumer that needs
+	// "is grafel quiet?" (not just "is the index fresh?") should gate on this,
+	// not on IsIndexing/state==current alone.
+	Busy bool
 	// StartedAt is the wall-clock start of the current busy period, or the
 	// zero Time when idle.
 	StartedAt time.Time
@@ -218,10 +263,13 @@ type Snapshot struct {
 func Get() Snapshot {
 	n := inFlight.Load()
 	ga := groupAlgoInFlight.Load()
+	pf := parseInFlight.Load()
 	s := Snapshot{
 		IsIndexing:        n > 0 || ga > 0,
 		InFlight:          int(n),
 		GroupAlgoInFlight: int(ga),
+		ParseInFlight:     int(pf),
+		Busy:              n > 0 || ga > 0 || pf > 0,
 	}
 	if started := startedUnixNano.Load(); started > 0 {
 		s.StartedAt = time.Unix(0, started)
