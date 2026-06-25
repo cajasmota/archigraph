@@ -13,6 +13,16 @@ import (
 	"github.com/cajasmota/grafel/internal/executil"
 )
 
+// trySymlink is the symlink primitive used by step 1 of the fallback chain.
+// It is a package var (not a direct os.Symlink call) so a test can force it to
+// fail — simulating a non-admin process that lacks SeCreateSymbolicLinkPrivilege
+// — and thereby exercise the junction fallback even on a CI runner that happens
+// to be privileged (admin / Developer Mode). On a privileged runner os.Symlink
+// would otherwise succeed at step 1 and the junction path that #5318 actually
+// added would never run in CI, letting a junction regression pass green.
+// See TestLinkSkillDir_NonPrivilegedFallback (linkdir_windows_test.go).
+var trySymlink = os.Symlink
+
 // linkSkillDirPlatform materialises a skill directory at dst without ever
 // requiring administrator rights or Developer Mode (#5318).
 //
@@ -31,7 +41,7 @@ import (
 // every mechanism failed (callers report it and continue; never crash).
 func linkSkillDirPlatform(src, dst string) (LinkMode, error) {
 	// 1) Real symlink — free when the privilege is already held.
-	if err := os.Symlink(src, dst); err == nil {
+	if err := trySymlink(src, dst); err == nil {
 		return LinkModeSymlink, nil
 	}
 
