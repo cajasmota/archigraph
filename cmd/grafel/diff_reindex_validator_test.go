@@ -23,11 +23,12 @@
 // rebuild of the end-state would — i.e. the incremental skip logic never drops
 // or staleifies anything a full rebuild would have computed.
 //
-// These cases pass TODAY: the graph-wide phases are still full in both the
-// incremental and the full path, so B and C already agree. That is precisely
-// the point — this PR locks in the baseline so #5309's per-phase incrementalism
-// cannot regress equivalence silently. Each future layer (resolution →
-// communities → flows) lands behind these same assertions.
+// These cases lock in the invariant as #5309 makes the graph-wide phases
+// incremental one layer at a time: resolution (layer 1) and module-aggregation +
+// enrichment (layer 2) are now blast-radius-scoped on the incremental path yet
+// still land on the same graph a full rebuild computes, so B and C agree under a
+// now-EMPTY tolerance profile (see dvBaselineProfile). Remaining graph-wide
+// phases (communities, link/flow passes) land behind these same assertions.
 package main
 
 import (
@@ -126,33 +127,30 @@ func dvIncremental(t *testing.T, repo, stateDir string) *graph.Document {
 	return doc
 }
 
-// dvBaselineProfile is the tolerance profile that captures the KNOWN
-// incremental-vs-full gaps that exist TODAY, before #5309 makes the graph-wide
-// phases incremental. Each tolerance is a documented gap a later layer of #5309
-// will close; until then the validator normalizes it rather than false-alarming,
-// while staying strict on everything else (entity set, resolved call/reference
-// edges, communities). As each layer lands, the corresponding tolerance is
-// removed and the validator tightens — that is how this harness ratchets the
-// incremental path toward full-rebuild parity.
+// dvBaselineProfile is the tolerance profile for the incremental-vs-full
+// comparison. It is now EMPTY: every documented #5309 gap has been closed, so
+// the validator asserts STRICT parity on every dimension (entity set, resolved
+// call/reference edges, communities, module-aggregation edges, and all
+// enrichment properties). As each layer of #5309 landed, the corresponding
+// tolerance was removed and the validator tightened — this empty profile is the
+// end state of that ratchet for the dimensions exercised here.
 //
-// The gaps, surfaced empirically by running the harness with Strict():
-//   - module-aggregation edges (CONTAINS / DEPENDS_ON): the incremental path
-//     does not re-run the module-agg pass (#5309 link/flow layer).
-//   - enrichment-only entity properties (`module`, `test_reachable`): produced
-//     by passes the incremental path defers (module-agg + test-reachability).
-//
-// RESOLUTION PARITY — closed (#5309 layer 1). The scoped resolver previously
-// left a freshly-extracted edge's endpoint in stub form rather than the hashed
-// entity id the full resolver assigns; the validator normalized it via
-// NormalizeStubEndpoints. The scoped resolver now re-resolves the full blast
-// radius (both endpoints of every affected edge) via the same Format A ladder
-// the full resolver uses, so that tolerance is removed — the harness asserts
-// STRICT resolution parity on resolved call/reference endpoints.
+// History of the closed tolerances:
+//   - RESOLUTION PARITY — closed (#5309 layer 1). The scoped resolver now
+//     re-resolves the full blast radius (both endpoints of every affected edge)
+//     via the same Format A ladder the full resolver uses, so resolved
+//     call/reference endpoints match a full rebuild exactly.
+//   - MODULE-AGGREGATION + ENRICHMENT — closed (#5309 layer 2). The incremental
+//     path now re-runs module-aggregation scoped to the affected modules
+//     (module.AggregateIncremental → the same CONTAINS / DEPENDS_ON edges +
+//     `module` labels a full rebuild emits), plus the structural-coupling and
+//     static test-reachability re-stamps (`ca`/`ce`/`instability`/
+//     `coupling_computed`, `test_reachable`/`reaching_tests`/`reach_depth`), so
+//     those edges and properties match too. The previously-tolerated
+//     IgnoreRelKinds{CONTAINS,DEPENDS_ON} and IgnoreEntityProps{module,
+//     test_reachable} are removed.
 func dvBaselineProfile() parity.Options {
-	return parity.Options{
-		IgnoreRelKinds:    map[string]bool{"CONTAINS": true, "DEPENDS_ON": true},
-		IgnoreEntityProps: map[string]bool{"module": true, "test_reachable": true},
-	}
+	return parity.Options{}
 }
 
 // dvAssertParity runs the comparator under the baseline tolerance profile and
