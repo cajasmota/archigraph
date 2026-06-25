@@ -56,12 +56,16 @@ import (
 	"time"
 
 	"github.com/cajasmota/grafel/internal/classifier"
+	"github.com/cajasmota/grafel/internal/coverage"
+	"github.com/cajasmota/grafel/internal/engine"
 	"github.com/cajasmota/grafel/internal/extractor"
 	"github.com/cajasmota/grafel/internal/extractors/sresolver"
 	"github.com/cajasmota/grafel/internal/gitmeta"
 	"github.com/cajasmota/grafel/internal/graph"
 	"github.com/cajasmota/grafel/internal/graph/fbwriter"
 	"github.com/cajasmota/grafel/internal/indexer/diff"
+	"github.com/cajasmota/grafel/internal/install/detect"
+	"github.com/cajasmota/grafel/internal/module"
 	"github.com/cajasmota/grafel/internal/types"
 )
 
@@ -295,12 +299,19 @@ func TryIncremental(ctx context.Context, repoPath, stateDir string, logger *log.
 	}
 
 	// Collect entity IDs sourced from changed files so we can also prune
-	// their outbound relationships.
+	// their outbound relationships. Capture each removed entity's module key
+	// too (#5309 layer 2): a fully-deleted file leaves no replacement entity in
+	// newEntities, so its module would otherwise be invisible to the
+	// affected-module set and its stale CONTAINS edges would survive.
 	removedEntityIDs := make(map[string]bool)
+	removedModuleKeys := make(map[module.ModuleKey]struct{})
 	filteredEntities := doc.Entities[:0]
 	for _, e := range doc.Entities {
 		if changedSet[e.SourceFile] {
 			removedEntityIDs[e.ID] = true
+			if e.Kind != module.KindModule {
+				removedModuleKeys[entityModuleKey(&e, doc.Repo)] = struct{}{}
+			}
 		} else {
 			filteredEntities = append(filteredEntities, e)
 		}
@@ -435,9 +446,53 @@ func TryIncremental(ctx context.Context, repoPath, stateDir string, logger *log.
 	}
 	newRels = scopedResult.NewRelationships
 
+	// --- Step 7a: stamp Properties["module"] on new entities (#5309 layer 2) ---
+	// The full-rebuild path stamps every sourced entity with a deterministic
+	// module label (cmd/grafel/index.go buildDocument) BEFORE the module-agg
+	// pass. The incremental path's entityRecordToGraphEntity carries only the
+	// extractor-supplied properties, so freshly extracted entities arrive with
+	// no "module" key. Stamp them here using the SAME label rule the full path
+	// uses — single-module label for a plain repo, else the path-rollup over the
+	// package-boundary markers — so the module layer rebuilt below is
+	// byte-equivalent to a full rebuild. (Surviving entities keep the label they
+	// were stamped with on the previous build.)
+	stampModuleOnEntities(newEntities, doc, absRepo, allFiles)
+
 	// --- Step 8: merge + sort + write ---
 	doc.Entities = append(doc.Entities, newEntities...)
 	doc.Relationships = append(doc.Relationships, newRels...)
+
+	// --- Step 8a: incremental module-aggregation (#5309 layer 2) ─────────────
+	// The full path runs module.Aggregate (CONTAINS / DEPENDS_ON + Module nodes)
+	// as Pass 8 over the finalized graph. The incremental path carries the prior
+	// build's module layer forward in doc, which a file change leaves stale:
+	// CONTAINS edges to removed entities, Module nodes whose members vanished,
+	// DEPENDS_ON weights that moved. Re-run the aggregation scoped to the modules
+	// whose membership or cross-module dependencies changed — every other
+	// module's nodes/edges are preserved verbatim. The result is byte-equivalent
+	// to a full rebuild's module layer without re-aggregating the whole graph.
+	affectedModules := affectedModuleSet(doc, removedModuleKeys, newEntities, newRels)
+	module.AggregateIncremental(doc, affectedModules)
+
+	// --- Step 8a': structural coupling re-stamp (#5309 layer 2) ──────────────
+	// The full path's Pass 8.6 (engine.ApplyStructuralCoupling) annotates each
+	// Module node with afferent/efferent coupling + instability derived from the
+	// DEPENDS_ON edges module-agg just (re)emitted. It is bounded by the module
+	// count (not the entity count) and is a pure function of the module graph, so
+	// re-running it over the corrected DEPENDS_ON set lands the same ca/ce/
+	// instability/coupling_computed properties a full rebuild would — without
+	// which freshly re-emitted Module nodes would carry no coupling props and
+	// survivors could carry stale ones.
+	engine.ApplyStructuralCoupling(doc)
+
+	// --- Step 8b: static test-reachability re-stamp (#5309 layer 2) ──────────
+	// coverage.Enrich's reachability sub-pass stamps test_reachable /
+	// reaching_tests / reach_depth onto production entities from the in-graph
+	// TESTS+CALLS edges. It is a deterministic function of the (now finalized)
+	// graph with no external dependency, so re-running it after the merge lands
+	// the same property set a full rebuild would. New entities get stamped and
+	// survivors are refreshed in case a changed edge moved their reachability.
+	coverage.Enrich(doc, absRepo, coverage.Config{})
 
 	// #2706 — belt-and-suspenders prune of Django migration entities.
 	// The incremental path bypasses the per-extractor prune gates only
@@ -496,6 +551,158 @@ func TryIncremental(ctx context.Context, repoPath, stateDir string, logger *log.
 		ChangedFiles: len(reallyChanged),
 		Duration:     dur,
 	}
+}
+
+// stampModuleOnEntities stamps Properties["module"] on each entity in ents that
+// does not already carry one, matching the full-rebuild path's labeling
+// (cmd/grafel/index.go buildDocument):
+//
+//   - PLAIN repo → one label for every sourced entity. The full path uses
+//     repoSlug-or-repoTag; we recover that label from the existing graph (in a
+//     plain repo every sourced entity already shares one "module" value).
+//   - MONOREPO  → the deterministic path rollup over the package-boundary
+//     markers, via module.Derive.
+//
+// Sourceless synthetic entities are stamped "_external", mirroring the full
+// path's post-assembly _external sweep.
+func stampModuleOnEntities(ents []graph.Entity, doc *graph.Document, absRepo string, allFiles []string) {
+	if len(ents) == 0 {
+		return
+	}
+
+	// Determine the plain-repo single label, matching the full-rebuild path
+	// (cmd/grafel/index.go Run): a PLAIN (non-monorepo) repo forces every sourced
+	// entity into ONE module label == repoSlug-or-repoTag (issue #1628); a TRUE
+	// monorepo (>1 workspace package) uses the per-package path rollup.
+	//
+	// The full path's label is repoSlug (falling back to repoTag); the
+	// incremental path only has doc.Repo (the repoTag), which equals the full
+	// path's label whenever repoSlug is empty or equal to repoTag — the normal
+	// case. We cross-check against the existing graph: in a plain repo every
+	// sourced survivor already shares one "module" value, which is the
+	// authoritative label the previous full build stamped. Prefer that recovered
+	// label (exact, even when repoSlug != repoTag); fall back to doc.Repo.
+	plainLabel := ""
+	if mono, derr := detect.DetectMonorepo(absRepo); derr != nil || mono.Kind == detect.KindNone || len(mono.Packages) <= 1 {
+		// Plain repo. Recover the exact label the previous build used, if any
+		// sourced survivor carries one; otherwise use the repo tag.
+		single, multiple := "", false
+		for k := range doc.Entities {
+			e := &doc.Entities[k]
+			if e.Kind == module.KindModule || e.SourceFile == "" || e.Properties == nil {
+				continue
+			}
+			m, ok := e.Properties["module"]
+			if !ok || m == "" || m == "_external" {
+				continue
+			}
+			if single == "" {
+				single = m
+			} else if single != m {
+				multiple = true
+				break
+			}
+		}
+		switch {
+		case single != "" && !multiple:
+			plainLabel = single
+		case doc.Repo != "":
+			plainLabel = doc.Repo
+		}
+	}
+
+	// Markers for the monorepo path. BuildMarkerSet expects repo-relative
+	// forward-slash paths — exactly what walkSourceFiles produced into allFiles.
+	markers := module.BuildMarkerSet(allFiles)
+
+	for i := range ents {
+		e := &ents[i]
+		if e.Properties != nil {
+			if v, ok := e.Properties["module"]; ok && v != "" {
+				continue // extractor-supplied label preserved
+			}
+		}
+		var label string
+		switch {
+		case e.SourceFile == "":
+			label = "_external"
+		case plainLabel != "":
+			label = plainLabel
+		default:
+			label = module.Derive(e.SourceFile, markers)
+		}
+		if e.Properties == nil {
+			e.Properties = map[string]string{}
+		}
+		e.Properties["module"] = label
+	}
+}
+
+// affectedModuleSet computes the blast radius of a reindex in module-key terms:
+// the modules whose membership or cross-module dependencies could have changed.
+// This is the union of:
+//
+//   - the modules of every re-extracted (new) entity — their membership and the
+//     cross-module edges they originate changed;
+//   - the modules of every removed entity — CONTAINS/membership shrank and the
+//     edges they originated vanished;
+//   - both endpoint modules of every newly added relationship — a new
+//     cross-module edge moves a DEPENDS_ON weight.
+//
+// Returned as the ModuleKey set AggregateIncremental scopes its strip+rebuild
+// to. doc must already hold the merged (post-Step-8) entity set so endpoint
+// module lookups resolve.
+func affectedModuleSet(doc *graph.Document, removedModuleKeys map[module.ModuleKey]struct{}, newEnts []graph.Entity, newRels []graph.Relationship) map[module.ModuleKey]struct{} {
+	// id → module key over the merged graph (used to resolve relationship
+	// endpoints, including survivors).
+	idMod := make(map[string]module.ModuleKey, len(doc.Entities))
+	for k := range doc.Entities {
+		e := &doc.Entities[k]
+		if e.Kind == module.KindModule {
+			continue
+		}
+		idMod[e.ID] = entityModuleKey(e, doc.Repo)
+	}
+
+	affected := make(map[module.ModuleKey]struct{})
+	add := func(mk module.ModuleKey) { affected[mk] = struct{}{} }
+
+	for i := range newEnts {
+		add(entityModuleKey(&newEnts[i], doc.Repo))
+	}
+	// Removed entities (incl. fully-deleted files with no replacement): their
+	// module's membership shrank, so its CONTAINS / DEPENDS_ON must be re-derived.
+	for mk := range removedModuleKeys {
+		add(mk)
+	}
+
+	for i := range newRels {
+		r := &newRels[i]
+		if mk, ok := idMod[r.FromID]; ok {
+			add(mk)
+		}
+		if mk, ok := idMod[r.ToID]; ok {
+			add(mk)
+		}
+	}
+	return affected
+}
+
+// entityModuleKey mirrors module.AggregateIncremental's per-entity key
+// derivation: Properties["module"] (default "_external") + Properties["repo"]
+// (default docRepo).
+func entityModuleKey(e *graph.Entity, docRepo string) module.ModuleKey {
+	mod := "_external"
+	repo := docRepo
+	if e.Properties != nil {
+		if v, ok := e.Properties["module"]; ok && v != "" {
+			mod = v
+		}
+		if v, ok := e.Properties["repo"]; ok && v != "" {
+			repo = v
+		}
+	}
+	return module.NewModuleKey(repo, mod)
 }
 
 // fallback returns a Result with Done=false and the given reason.
