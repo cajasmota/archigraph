@@ -10,6 +10,104 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 
 ---
 
+## [0.1.6] — 2026-06-26
+
+**Self-healing indexing + incremental reindex + daemon stability.** This release
+makes the daemon resilient to bad inputs and resource pressure: it learns which
+directories are trash and quarantines them automatically, makes graph-wide reindex
+phases incremental so re-indexing a single file no longer recomputes the whole
+group, routes all parsing through an accounted-and-capped CPU lane, reclaims heap
+under memory pressure, and runs non-admin on Windows. Plus a topology crash guard,
+a scrollable sidebar, and a CI test-suite de-flaking pass.
+
+### Added
+
+#### Self-healing index quarantine (Epic #5394)
+The daemon now detects and excludes low-value, high-cost directories on its own,
+so a `node_modules`-style or generated-output folder can't bloat the graph or pin
+CPU on every reindex.
+- **Churn-based trash detection (#5394):** directories that re-churn the index
+  without adding lasting value are quarantined automatically.
+- **Auto-recover on query/reference (#5618):** a quarantined directory is
+  automatically un-quarantined the moment something in the graph actually queries or
+  references it — false positives self-heal.
+- **Transparency surface — panel + CLI + endpoint (#5617):** see exactly what was
+  quarantined and why from the dashboard Operations panel, the `grafel quarantine`
+  CLI (`list` / `remove` / `pin` / `unpin`), and a daemon API endpoint. Operators can
+  pin a directory in or override a quarantine.
+- **Value-based detection (#5619):** directories that are expensive to index *and*
+  unused by the graph are quarantined.
+- **Content-signature detection (#5620):** generated-content directories are
+  recognised by content signature and quarantined.
+
+#### Incremental reindex (Epic #5376, layer 2 — #5309)
+Graph-wide phases that previously re-ran in full on every change are now
+blast-radius scoped, so editing one file re-resolves only what that change can
+reach instead of the whole group.
+- **Differential-reindex validator harness (#5309):** a parity harness that proves
+  incremental reindex produces the same graph as a full reindex — the safety net the
+  incremental passes are built on.
+- **Incremental resolution (#5309 layer 1):** scoped re-resolution closes the stub
+  gap without a full re-resolve.
+- **Incremental module aggregation (#5309 layer 2)** and **incremental link/flow
+  passes (#5309 layer 3):** module rollups and the link/flow passes recompute only
+  for the affected blast radius, with full-reindex parity maintained.
+- **Incremental community detection (#5309, #5623):** the final layer — community
+  (Louvain) detection updates incrementally instead of recomputing the whole group.
+
+### Changed / Fixed
+
+#### Daemon CPU, lifecycle & stability
+- **All parsing runs through the accounted, capped index lane (#5630):** re-parse
+  work no longer ran outside index-job accounting, so `index_status` could report
+  *idle* while the daemon was CPU-pinned. Parsing is now routed through the same
+  accounted, CPU-capped lane as indexing.
+- **True busy/idle signal (#5631):** the daemon exposes a real busy/idle signal
+  distinct from index freshness, so "is it working right now?" is answerable
+  independently of "is the index up to date?".
+- **Watcher hygiene — own binary path + reaping (#5632):** watch subprocesses are
+  spawned via the daemon's own binary path, and orphaned or stale-version watchers
+  are reaped instead of lingering.
+- **Graceful MCP bridge drain on restart (#5633):** a daemon restart now drains
+  in-flight MCP calls, retries reconnect, and guarantees a single `mcp-bridge` with
+  no orphan — clean reconnect with no dropped calls.
+- **Heap reclaimed under memory pressure (#5392):** pressure-eviction now actually
+  returns memory — it drops the per-ref graphs and calls `FreeOSMemory`, fixing
+  retained-heap growth and the associated MCP socket loss.
+- **Overlay recomputes promptly after reindex (#5450, #5403):** debounce starvation
+  is bounded so the group-level overlay refreshes shortly after a member repo
+  re-indexes instead of serving stale results.
+
+#### Windows
+- **Runs non-admin in plain CMD (#5318):** the installer and daemon use directory
+  junctions instead of admin-only symlinks, so a standard (non-elevated) Windows
+  account can install and run grafel. Non-privileged CI coverage (#5316) now guards
+  against admin-only regressions.
+
+#### Dashboard / UI
+- **Topology view crash guard (#5613):** the Topology view no longer crashes with
+  `Cannot read properties of undefined (reading 'sourceFile')` on graphs with
+  incomplete topology data.
+- **Scrollable sidebar (#5614):** the dashboard sidebar scrolls vertically on small
+  screens and shows a macOS-style always-visible scrollbar, so lower nav items stay
+  reachable.
+
+#### Tests / CI de-flaking
+A pass to make the suite deterministic on shared/small CI runners:
+- **Timing-window tests (#5642, #5643):** debounce/coalesce/throttle tests no longer
+  straddle real wall-clock windows under CI load.
+- **Host-core-count tests (#5639):** tests that assumed `>= N` cores no longer fail
+  on small runners.
+- **Perf-ratio scaling tests (#5636, #5607):** scaling assertions use a wider corpus
+  gap, median, and margin instead of tight ratio bounds that flaked under load.
+- **`TestAnalysisFindingsDispatch` (#5628):** save-path comparison is now
+  path-insensitive (no longer compares timestamped paths).
+- **Test isolation (#5443, #5477, #5474):** subprocess-index store writes are
+  isolated and macOS `XDG_CONFIG_HOME` parity is set in CI so un-isolated config
+  tests are caught locally instead of clobbering a real fleet config.
+
+---
+
 ## [0.1.5.4] — 2026-06-25
 
 **Patch — Windows fixes + reindex resource ceiling.** Closes the remaining Windows
