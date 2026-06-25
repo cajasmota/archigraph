@@ -121,6 +121,39 @@ jobs:
         shell: bash
         run: echo "XDG_CONFIG_HOME=$HOME/.config" >> "$GITHUB_ENV"
 
+      # Non-privileged Windows regression guard (#5316).
+      #
+      # The blind spot: this windows-latest runner is PRIVILEGED (admin /
+      # Developer Mode), so os.Symlink — step 1 of the skill-link fallback chain
+      # — succeeds here. That means the junction codepath added by #5318 / #5641
+      # (what actually lets a NON-admin user install) is never exercised on CI.
+      # A regression that reintroduced an admin-only symlink requirement, or that
+      # broke `mklink /J`, would pass green while breaking every real non-admin
+      # Windows user — exactly the elevation class a user hit end-to-end.
+      #
+      # TestLinkSkillDir_NonPrivilegedFallback forces the symlink primitive to
+      # fail with the "privilege not held" error a standard user gets, then
+      # asserts the junction/copy fallback engages and the link resolves to the
+      # source content. It is deterministic (no real privilege drop needed) and
+      # goes RED if an admin-only operation is reintroduced on the link path.
+      #
+      # We run it explicitly (-run, -v) so a skip or accidental removal is loud,
+      # rather than relying on it being silently absorbed by `go test ./...`.
+      - name: Non-privileged link fallback (Windows admin-regression guard)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          out=$(go test -count=1 -v -run '^TestLinkSkillDir_NonPrivilegedFallback$' \
+            ./internal/install/skilllink/ 2>&1)
+          echo "$out"
+          # The test is build-tagged //go:build windows, so it MUST actually run
+          # here — a "no tests to run" / skipped result means the guard silently
+          # stopped protecting us; treat that as a failure.
+          if ! echo "$out" | grep -q 'PASS: TestLinkSkillDir_NonPrivilegedFallback'; then
+            echo "::error::non-privileged link fallback guard did not run/pass (#5316)"
+            exit 1
+          fi
+
       # Race detector policy (#2406):
       #   - push to main → always race (post-merge sanity)
       #   - release event → always race
