@@ -253,8 +253,26 @@ REM --- add %BINDIR% to the USER PATH (non-admin, never touches system PATH) ---
 REM `grafel install` registers MCP/hooks/watchers but does NOT manage the OS
 REM PATH, so the installer owns it here, exactly like install.ps1's
 REM Add-ToUserPath.
+REM IMPORTANT: the USER PATH in the registry often contains unexpanded %VARS%
+REM (e.g. %PNPM_HOME%, %USERPROFILE%\...). Reading it via `for /f %%B` inside
+REM this session (which runs under EnableDelayedExpansion) would silently expand
+REM those vars, so the subsequent `reg add` would write the expanded (absolute)
+REM form back and break every shell that relied on those variables. We therefore
+REM read the raw REG_EXPAND_SZ value inside a `setlocal DisableDelayedExpansion`
+REM subblock and hand it back to the outer scope via a one-line temp file.
+set "GPTMP=%TEMP%\grafel-userpath-%RANDOM%%RANDOM%.tmp"
+setlocal DisableDelayedExpansion
+for /f "usebackq skip=2 tokens=2,*" %%A in (`reg query HKCU\Environment /v Path 2^>nul`) do (
+    echo %%B> "%GPTMP%"
+)
+endlocal
+
+REM Read the raw value back (single line) into USERPATH in the outer scope.
 set "USERPATH="
-for /f "usebackq tokens=2,*" %%A in (`reg query HKCU\Environment /v Path 2^>nul ^| findstr /I "Path"`) do set "USERPATH=%%B"
+if exist "%GPTMP%" (
+    for /f "usebackq delims=" %%L in ("%GPTMP%") do set "USERPATH=%%L"
+    del /f /q "%GPTMP%" >nul 2>&1
+)
 
 set "ALREADY="
 if defined USERPATH (
