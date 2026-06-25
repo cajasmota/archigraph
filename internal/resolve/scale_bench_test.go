@@ -14,6 +14,7 @@ package resolve
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
@@ -284,45 +285,72 @@ func TestMergeModuleBatch_SingleBatch(t *testing.T) {
 // O(N log N) scaling assertion
 // ─────────────────────────────────────────────────────────────────────────────
 
-// TestBuildIndexFromModules_SubQuadratic runs BuildIndexFromModules at 100 and
-// 500 modules and asserts the 500-module build takes less than 5× longer than
-// the 100-module build (not 25×, which would be O(N²)).  This is a loose bound
-// that catches catastrophic regressions without being brittle to CPU noise.
+// TestBuildIndexFromModules_SubQuadratic times BuildIndexFromModules at two
+// corpus sizes and asserts the build does not scale quadratically in module
+// count.
 //
 // This test is intentionally NOT a benchmark (b.N loop) so it runs in the
 // normal test suite with a deterministic pass/fail gate.
+//
+// De-flaking rationale (#5636): the original compared 100 vs 500 modules (only
+// a 5x corpus) against a 12x bound. For an O(N log N) build the expected ratio
+// is ~5 × log(500)/log(100) ≈ 6.5, so the headroom to the 12x bound was barely
+// ~1.85x — and ordinary CI jitter (GC pauses, CPU throttling, co-scheduled
+// load) routinely ate that headroom with no real complexity regression
+// (12.25x observed on a loaded macOS runner). It was the third perf-ratio
+// scaling test to flake this way after #5607 and #5628.
+//
+// We apply the #5607 pattern: a wide 10x corpus gap and the MEDIAN of several
+// timing runs per size. The wide gap is what makes the bound robust — it places
+// a large window between the expected complexity and the next-worse one:
+//
+//   - O(N log N): 1000/100 × log(1000)/log(100) ≈ 10 × 1.5 = 15x
+//   - O(N²):      1000²/100²                     = 100x
+//
+// A 40x bound sits ~2.7x above the n-log-n expectation (generous slack for
+// fixed overhead and CI noise) yet ~2.5x below the quadratic signal, so a
+// genuine O(N²) reintroduction still fails loudly (~100x) while CI jitter
+// never does.
 func TestBuildIndexFromModules_SubQuadratic(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping scaling test in short mode")
 	}
 
-	const entPerMod = 50
+	const (
+		entPerMod = 50
+		smallN    = 100
+		largeN    = 1000 // 10x corpus → n-log-n ≈ 15x time, quadratic ≈ 100x
+		samples   = 5    // median of N runs damps CI outliers
+		bound     = 40.0 // ~2.7x over n-log-n (15x), ~2.5x under quadratic (100x)
+	)
 
-	run := func(numMods int) int64 {
+	// median times BuildIndexFromModules `samples` times at the given module
+	// count and returns the median, which is far more stable than a single
+	// timing under CI noise (one GC pause or co-scheduled spike can multiply a
+	// lone run).
+	median := func(numMods int) int64 {
 		modules, _ := syntheticModules(numMods, entPerMod)
-		// Time N iterations to reduce clock jitter.
-		const iters = 3
-		var total int64
-		for i := 0; i < iters; i++ {
+		runs := make([]int64, samples)
+		for i := range runs {
 			t0 := nanoTime()
 			_ = BuildIndexFromModules(modules, 0)
-			total += nanoTime() - t0
+			runs[i] = nanoTime() - t0
 		}
-		return total / iters
+		sort.Slice(runs, func(a, b int) bool { return runs[a] < runs[b] })
+		return runs[len(runs)/2]
 	}
 
-	t100 := run(100)
-	t500 := run(500)
+	tSmall := median(smallN)
+	tLarge := median(largeN)
 
-	ratio := float64(t500) / float64(t100)
-	t.Logf("100-mod avg: %dns  500-mod avg: %dns  ratio: %.2fx", t100, t500, ratio)
+	// +1µs floor on the denominator guards against a 0ns small measurement.
+	ratio := float64(tLarge) / float64(tSmall+1000)
+	t.Logf("%d-mod median: %dns  %d-mod median: %dns  ratio: %.2fx (n-log-n≈15.0, quadratic≈100.0)",
+		smallN, tSmall, largeN, tLarge, ratio)
 
-	// O(N log N): 500/100 = 5, so the theoretical ceiling is
-	// 5 × log(500)/log(100) ≈ 6.5. We allow up to 12× to absorb measurement
-	// noise, GC pauses, and CPU throttling on loaded CI runners (previously 8×,
-	// raised because the test was flaking intermittently on all platforms).
-	if ratio > 12 {
-		t.Errorf("scaling ratio %.2fx exceeds 12× threshold — possible O(N²) regression", ratio)
+	if ratio > bound {
+		t.Errorf("scaling ratio %.2fx exceeds %.0fx threshold (%dx corpus) — possible O(N²) regression",
+			ratio, bound, largeN/smallN)
 	}
 }
 
