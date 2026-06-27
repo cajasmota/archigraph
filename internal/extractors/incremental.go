@@ -231,12 +231,19 @@ func TryIncremental(ctx context.Context, repoPath, stateDir string, logger *log.
 	// config overrides the env-var / gitmeta path when non-nil.
 	limit := effectiveLimit(absRepo, cfg)
 	if totalChanged > limit {
-		// Persist the manifest-GC deletions (applied above) BEFORE falling back,
-		// so now-absent files — e.g. build artifacts newly excluded by the
-		// gitignore-aware walk — don't recur as deletedFiles and re-trip this
-		// fallback on every pass, looping the reindex forever (#5667). Without
-		// this save the GC is in-memory only and discarded on fallback.
+		// Fully reconcile + persist the manifest BEFORE falling back. Saving only
+		// the GC'd map (#5667) left file STAMPS stale and skipped the absent-entry
+		// prune, so the same files re-surfaced as changed/deleted on the next pass
+		// and re-tripped this fallback, looping the reindex even without a manual
+		// clean-manifest rebuild. UpdateManifest refreshes stamps AND prunes
+		// entries absent from the gitignore-aware walk, making the fallback path's
+		// manifest as clean as the success path's (#5668). Log a path SAMPLE so a
+		// recurrence is diagnosable, not just a bare count (#5668).
+		diff.UpdateManifest(absRepo, allFiles, manifest)
 		_ = diff.SaveManifest(stateDir, absRepo, manifest)
+		logger.Printf("incremental: too-many-changed files=%d limit=%d (changed=%d deleted=%d) changed=%v deleted=%v",
+			totalChanged, limit, len(changedFiles), len(deletedFiles),
+			samplePaths(changedFiles), samplePaths(deletedFiles))
 		return fallback(t0, fmt.Sprintf("too-many-changed files=%d limit=%d",
 			totalChanged, limit))
 	}
@@ -278,8 +285,11 @@ func TryIncremental(ctx context.Context, repoPath, stateDir string, logger *log.
 
 	// Re-check trigger limit after whitespace filtering.
 	if len(reallyChanged) > limit {
-		// Persist the manifest-GC deletions before falling back (see #5667).
+		// Fully reconcile + persist before falling back (see #5667, #5668).
+		diff.UpdateManifest(absRepo, allFiles, manifest)
 		_ = diff.SaveManifest(stateDir, absRepo, manifest)
+		logger.Printf("incremental: too-many-changed after-hash-gate files=%d limit=%d really=%v",
+			len(reallyChanged), limit, samplePaths(reallyChanged))
 		return fallback(t0, fmt.Sprintf("too-many-changed after-hash-gate files=%d limit=%d",
 			len(reallyChanged), limit))
 	}
@@ -767,6 +777,18 @@ func fallback(t0 time.Time, reason string) Result {
 		FallbackReason: reason,
 		Duration:       time.Since(t0),
 	}
+}
+
+// samplePaths returns up to 10 paths for diagnostic logging at the
+// too-many-changed fallback, so a recurrence shows WHICH files tripped it
+// instead of just a count (#5668), without flooding the log on a large
+// changeset.
+func samplePaths(s []string) []string {
+	const n = 10
+	if len(s) <= n {
+		return s
+	}
+	return append(append([]string{}, s[:n]...), fmt.Sprintf("…+%d more", len(s)-n))
 }
 
 // walkSourceFiles returns repo-relative forward-slash paths for all source

@@ -10,6 +10,26 @@ PR numbers link to https://github.com/cajasmota/grafel/pull/<N>.
 
 ---
 
+## [0.1.7.3] — 2026-06-27
+
+**Hotfix: fully reconcile the manifest on the incremental fallback.** The
+`too-many-changed` fallback now refreshes file stamps and prunes absent entries
+(via `UpdateManifest`) before persisting — not just the in-memory manifest-GC
+(0.1.7.2). Without the stamp refresh, files whose manifest stamps were stale got
+re-reported as changed on every pass, re-tripping the fallback and looping a
+full reindex until a manual clean-manifest rebuild — the residual gap behind
+0.1.7.1/0.1.7.2. The fallback also now logs a sample of the actual
+changed/deleted paths so a recurrence is diagnosable instead of a bare count.
+
+### Fixed
+- **Incremental `too-many-changed` fallback fully reconciles the manifest
+  (#5668):** refresh stamps + prune entries absent from the gitignore-aware walk
+  before persisting, so stale stamps can't recur as changes and loop the
+  reindex; plus diagnostic path-sample logging at the fallback (supersedes the
+  diagnostic-only #5669).
+
+---
+
 ## [0.1.7.2] — 2026-06-27
 
 **Hotfix: complete the 0.1.7.1 reindex-loop fix.** 0.1.7.1 made the incremental
